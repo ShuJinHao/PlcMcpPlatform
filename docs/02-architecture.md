@@ -4,9 +4,32 @@
 
 采用 DDD + Clean Architecture + Ports & Adapters 的模块化单体。Host、应用用例与平台元数据处于一个部署单元；IDE Worker 按运行时、版本和 Windows 会话进行进程隔离。
 
+## 产品与协议边界
+
+本项目交付 PLC 工程自动化 MCP Server。`McpHost` 是 ASP.NET Core 可执行项目名称；按 MCP 协议角色，它是 Server，OpenCode 是承载 Client 的 AI 应用。仓库名称中的 Platform 不代表通用 MCP 服务管理平台。
+
+| 连接边界 | 调用方式 | 职责 |
+|---|---|---|
+| OpenCode 与本服务 | MCP / Streamable HTTP | 工具发现、输入输出、执行结果 |
+| Tool、应用用例、厂商适配器之间 | 进程内 C# 端口调用 | PLC 工程规则、编排、厂商语义转换 |
+| 厂商适配器与 IDE Worker | 版本化内部 JSON 执行协议，具体传输待实现 | 隔离 IDE 运行时与执行会话；不是 MCP 上游服务 |
+| IDE 脚本与工程对象 | 官方 ScriptEngine API | 工程读取、编辑、保存、编译与诊断 |
+
+汇川适配器不是独立 MCP Server，脚本本身也不是 MCP 服务。增加西门子或欧姆龙时，优先增加内部适配器及必要的 Worker，不为每个厂商重复实现 MCP 协议。进程隔离不要求引入第二层 MCP。
+
+本项目不开发任意第三方 MCP 服务的注册/托管/聚合、通用代理路由、组织级服务目录或 LLM 网关。[Obot 官方架构](https://docs.obot.ai/concepts/architecture/)将 MCP/LLM 网关、托管、身份访问、审计和注册目录作为平台能力。未来若出现这些需求，可由既有产品管理本服务，无需在本项目复刻网关。
+
+基本鉴权、日志、超时等机制可能与网关重叠，但服务仍负责 PLC 业务约束：工程访问范围、修订冲突、IDE 串行、备份、部分执行结果与恢复。网关的工具访问控制不能替代这些工程规则。DDD 用于表达这些规则，不用于构建通用 MCP 平台。
+
+例如 `plc_pou_update` 的目标路径是：MCP Tool 将输入转换为应用请求，应用层核验工作区并提交工程任务，汇川适配器调用受控脚本，最终返回读回、保存与编译结果。此处没有向“汇川 MCP”转发 `tools/call`。该路径属于待实现设计，当前只有两个平台只读工具和内部探针。
+
+角色定义参考 [MCP 官方架构](https://modelcontextprotocol.io/docs/learn/architecture)；外部产品资料核对日期：2026-11-06。
+
+## 目标执行结构
+
 ```mermaid
 flowchart TD
-    A[OpenCode] -->|MCP HTTP| B[MCP Host]
+    A[OpenCode] -->|MCP HTTP| B[PLC MCP Server]
     B --> C[工程应用用例]
     C --> D[工作区与任务领域]
     C --> E[厂商能力端口]
