@@ -115,6 +115,14 @@ public sealed class AcceptanceTests
             Assert.Equal("acceptance_invalid", error.Message);
         }
     }
+    [Fact] public async Task Cancellation_before_admission_has_a_known_outcome_without_invoking_executor()
+    {
+        var worker = new RecordingExecutor(); var executor = new AcceptedExecution(worker, new MemoryPolicy(["project.open"]));
+        var request = new WorkerRequest(1, Guid.NewGuid(), Guid.NewGuid(), "project.open", Guid.NewGuid(), "rev", DateTimeOffset.UtcNow.AddMinutes(1), "real", Element(new EngineeringInput("x")));
+        var response = await executor.ExecuteAsync(request, new CancellationToken(true));
+        Assert.Equal("cancelled", response.Outcome); Assert.Equal("cancelled_before_execution", response.ErrorCode);
+        Assert.True(WorkerJson.Matches(request, response)); Assert.Equal(0, worker.Calls);
+    }
     private static JsonElement Element<T>(T value) => JsonSerializer.SerializeToElement(value, WorkerJson.Options);
     private sealed class RecordingExecutor : IEngineeringExecutor
     {

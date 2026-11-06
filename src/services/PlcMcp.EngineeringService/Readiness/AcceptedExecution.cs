@@ -58,13 +58,16 @@ public sealed class AcceptedExecution(IEngineeringExecutor inner, IExecutionAcce
         }
         return null;
     }
+    private static WorkerResponse Cancelled(WorkerRequest request) => new(1, request.RequestId, request.JobId,
+        "cancelled", "cancelled_before_execution", request.ExecutionMode, null);
     public async Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
     {
         var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options);
         if (input is null) return WorkerJson.Failed(request, "invalid_request");
-        token.ThrowIfCancellationRequested();
+        if (token.IsCancellationRequested) return Cancelled(request);
         var accepted = policy.GetReadiness();
         if (CheckPlan(request.Operation, input, accepted) is { } denied) return WorkerJson.Failed(request, denied.Code);
+        if (token.IsCancellationRequested) return Cancelled(request);
         var result = await inner.ExecuteAsync(request, token);
         if (result.Payload is { ValueKind: JsonValueKind.Object } payload)
         {
