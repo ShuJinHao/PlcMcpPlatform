@@ -48,6 +48,8 @@ class ConfigurationEngine(object):
         rows, self.nodes, truncated = self.tree(self.project, 2000)
         if truncated: self.fail('object_search_incomplete')
         self.rows = dict((r['id'], r) for r in rows)
+        self.child_ids = {}
+        for row in rows: self.child_ids.setdefault(row['parentId'], []).append(row['id'])
 
     def node(self, key):
         key = 'project' if key == 'project' else str(uuid.UUID(key))
@@ -71,10 +73,11 @@ class ConfigurationEngine(object):
                    else 'task_configuration' if getattr(node, 'is_task_configuration', False)
                    else 'task' if getattr(node, 'is_task', False) else 'device' if getattr(node, 'is_device', False)
                    else 'library_manager' if getattr(node, 'is_libman', False) else 'folder' if getattr(node, 'is_folder', False) else 'object')
+        row['index'] = -1 if key == 'project' else self.child_ids[row['parentId']].index(key)
         return row
 
     def children(self, key):
-        return [r['id'] for r in self.rows.values() if r['parentId'] == key]
+        return list(self.child_ids.get(key, []))
 
     def descendants(self, key):
         found, pending = [key], [key]
@@ -428,7 +431,12 @@ class ConfigurationEngine(object):
                 if parent in removed: self.fail('object_move_cycle')
                 if self.application(key) != self.application(parent): self.fail('cross_application_move_not_supported')
                 self.unique(parent, text_type(node.get_name()), key)
-                self.api(node, 'move')(target, settings.get('index', -1))
+                index = settings.get('index', -1)
+                count = len([k for k in self.children(parent) if k != key])
+                if index < -1 or index > count: self.fail('invalid_move_index')
+                self.api(node, 'move')(target, index)
+                self.refresh()
+                if self.rows[key]['parentId'] != parent or self.info(key)['index'] != (count if index == -1 else index): self.fail('object_move_readback_mismatch')
             else:
                 self.api(node, 'remove')(); self.refresh()
                 if any(k in self.nodes for k in removed): self.fail('object_removal_unconfirmed')

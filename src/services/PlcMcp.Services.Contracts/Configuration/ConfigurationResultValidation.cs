@@ -61,7 +61,7 @@ public static class ConfigurationResultValidation
                     && (m.Setter is null || Supplied(JsonSerializer.SerializeToElement(m.Setter, WorkerJson.Options), data.GetProperty("setter")));
             case C.FolderCreate: return data.GetProperty("name").GetString() == e.Name && data.GetProperty("parentId").GetString() == e.ParentId && data.GetProperty("kind").GetString() == "folder";
             case C.ObjectRename: return data.GetProperty("name").GetString() == e.Name;
-            case C.ObjectMove: return data.GetProperty("parentId").GetString() == e.ParentId;
+            case C.ObjectMove: return data.GetProperty("parentId").GetString() == e.ParentId && (change!.Object!.Index == -1 || data.GetProperty("index").GetInt32() == change.Object.Index);
             case C.LibraryAdd: return data.GetProperty("reference").GetProperty("name").GetString() == change!.Library!.Name;
             case C.LibraryRemove: return data.GetProperty("removedReference").GetString() == change!.Library!.Name;
             case C.PlaceholderSet:
@@ -70,7 +70,8 @@ public static class ConfigurationResultValidation
                     && (library.DefaultResolution is null || reference.GetProperty("defaultResolution").GetString() == library.DefaultResolution)
                     && (library.Redirection is null || reference.GetProperty("redirection").GetString() == library.Redirection);
             case C.DeviceAdd: return data.GetProperty("name").GetString() == e.Name && data.GetProperty("parentId").GetString() == e.ParentId
-                && Supplied(JsonSerializer.SerializeToElement(change!.Device!.Identification, WorkerJson.Options), data.GetProperty("identification"));
+                && Supplied(JsonSerializer.SerializeToElement(change!.Device!.Identification, WorkerJson.Options), data.GetProperty("identification"))
+                && (change.Device.Module is null || data.GetProperty("module").GetString() == change.Device.Module);
             case C.ParameterWrite: return data.GetProperty("value").GetString() == change!.Parameter!.Value
                 && Supplied(JsonSerializer.SerializeToElement(change.Parameter.Address, WorkerJson.Options), data.GetProperty("address"));
             case C.IoMap: return data.GetProperty("variable").GetString() == change!.Mapping!.Variable

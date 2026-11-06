@@ -179,6 +179,9 @@ class ConfigurationTests(unittest.TestCase):
         self.ok('object.rename',key=folder['objectId'],name='Renamed',configuration=dict(object=dict(expectedName='Group')))
         move=self.ok('object.move',key=folder['objectId'],parent=other['objectId'],configuration=dict(object=dict(expectedName='Renamed',index=-1)))
         self.assertEqual(folder['objectId'],move['objectId'])
+        first=self.ok('folder.create',parent=other['objectId'],name='First',configuration=dict(object={}))
+        ordered=self.ok('object.move',key=first['objectId'],parent=other['objectId'],configuration=dict(object=dict(expectedName='First',index=0)))
+        self.assertEqual(0,ordered['data']['index'])
         self.ok('object.delete',key=m['objectId'],configuration=dict(object=dict(expectedName='Calc',recursive=False)))
     def test_task_reference_protects_program_and_controller_is_protected(self):
         t=self.task(); self.ok('task.calls.set',key=t['objectId'],configuration=dict(calls=[dict(pouId=self.program.guid,pouName='PLC_PRG',comment='')]))

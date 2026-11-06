@@ -41,7 +41,7 @@ public sealed class FixtureConfiguration
     private static string S(JsonObject node, string key) => node[key]!.GetValue<string>();
     private JsonObject Add(string id, string name, string kind, string? parent)
     {
-        var n = new JsonObject { ["objectId"] = id, ["name"] = name, ["kind"] = kind, ["parentId"] = parent, ["typeId"] = TypeId };
+        var n = new JsonObject { ["objectId"] = id, ["name"] = name, ["kind"] = kind, ["parentId"] = parent, ["typeId"] = TypeId, ["index"] = parent is null ? -1 : Children(parent).Count() };
         nodes[id] = n; return n;
     }
     private string Create(string name, string kind, string parent)
@@ -54,7 +54,7 @@ public sealed class FixtureConfiguration
         if (nodes.Any(k => k.Key != except && k.Value!["parentId"]?.GetValue<string>() == parent && string.Equals(k.Value["name"]!.GetValue<string>(), name, StringComparison.OrdinalIgnoreCase)))
             throw new ProjectEditException("object_name_conflict");
     }
-    private IEnumerable<string> Children(string parent) => nodes.Where(k => k.Value!["parentId"]?.GetValue<string>() == parent).Select(k => k.Key);
+    private IEnumerable<string> Children(string parent) => nodes.Where(k => k.Value!["parentId"]?.GetValue<string>() == parent).OrderBy(k => k.Value!["index"]?.GetValue<int>() ?? 0).Select(k => k.Key);
     private string[] Descendants(string key) => new[] { key }.Concat(Children(key).SelectMany(Descendants)).ToArray();
     private void Kind(string id, params string[] kinds)
     { if (!kinds.Contains(S(Node(id), "kind"))) throw new ProjectEditException("object_kind_mismatch"); }
@@ -171,7 +171,13 @@ public sealed class FixtureConfiguration
                 else if (op == C.ObjectMove)
                 {
                     if (removed.Contains(parent)) throw new ProjectEditException("object_move_cycle");
-                    _ = Node(parent); Unique(parent, S(node, "name"), id); node["parentId"] = parent;
+                    _ = Node(parent); Unique(parent, S(node, "name"), id);
+                    var targetChildren = Children(parent).Where(x => x != id).ToList(); var index = change.Object.Index;
+                    if (index > targetChildren.Count) throw new ProjectEditException("invalid_move_index");
+                    var oldParent = S(node, "parentId"); node["parentId"] = parent;
+                    targetChildren.Insert(index == -1 ? targetChildren.Count : index, id);
+                    foreach (var pair in targetChildren.Select((key, position) => (key, position))) Node(pair.key)["index"] = pair.position;
+                    if (oldParent != parent) foreach (var pair in Children(oldParent).Select((key, position) => (key, position)).ToArray()) Node(pair.key)["index"] = pair.position;
                 }
                 else
                 {
