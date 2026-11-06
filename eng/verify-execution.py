@@ -179,7 +179,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-fixture-check-') as tmp, tempfil
         assert client.call('plc_project_open', dict(common, idempotencyKey='blocked'), error=True)['error']['code'] == 'execution_outcome_unknown'
         stop(process); process = start(); client = Client(env['PlcMcp__ApiKey'])
         assert client.call('plc_runtime_get_status', {})['schedulerBlocked'] is True
-        print('PASS: sixty-seven tool schemas, fixture evidence, persistent jobs, source, diagnostics, idempotency, cancellation, timeout and restart quarantine')
+        print('PASS: seventy-four tool schemas, fixture evidence, persistent jobs, source, diagnostics, idempotency, cancellation, timeout and restart quarantine')
     except Exception:
         log.seek(0); print(log.read())
         raise

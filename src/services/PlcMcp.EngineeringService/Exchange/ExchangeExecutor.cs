@@ -15,6 +15,8 @@ public sealed class ExchangeExecutor(IEngineeringExecutor worker, IExchangeArtif
     public OperationError? Unavailability => worker.Unavailability;
     public OperationError? CheckAvailability(string operation) => worker.CheckAvailability(operation);
     public ValidationEvidence? Validation => worker.Validation;
+    public RuntimeReadiness? Readiness => worker.Readiness;
+    public Task<OperationError?> CheckRequestAsync(string operation, EngineeringInput input, CancellationToken token) => worker.CheckRequestAsync(operation, input, token);
     public async Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
     {
         if (!ExchangeOperations.IsRead(request.Operation) && !ExchangeOperations.IsWrite(request.Operation)) return await worker.ExecuteAsync(request, token);

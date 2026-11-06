@@ -15,6 +15,8 @@ public sealed class BatchExecutor(IEngineeringExecutor worker, IBatchJournal jou
     public string ExecutionMode => worker.ExecutionMode;
     public OperationError? Unavailability => worker.Unavailability;
     public ValidationEvidence? Validation => worker.Validation;
+    public RuntimeReadiness? Readiness => worker.Readiness;
+    public Task<OperationError?> CheckRequestAsync(string operation, EngineeringInput input, CancellationToken token) => worker.CheckRequestAsync(operation, input, token);
     public OperationError? CheckAvailability(string operation) => worker.CheckAvailability(operation);
     public async Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
     {

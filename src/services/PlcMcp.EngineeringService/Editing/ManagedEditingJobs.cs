@@ -65,6 +65,8 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
                 if (executor.CheckAvailability(required) is { } denied) return Result<JobView>.Failure(denied.Code, denied.Message);
             if (bytes.Length + JsonSerializer.SerializeToUtf8Bytes(source.Template, WorkerJson.Options).Length + JsonSerializer.SerializeToUtf8Bytes(source.Dependencies, WorkerJson.Options).Length > WorkerJson.MaxRequestBytes - 16384)
                 return Result<JobView>.Failure("request_too_large", "Source and template requirements exceed the worker limit.");
+            if (await executor.CheckRequestAsync(operation, submission.Input, token) is { } scoped)
+                return Result<JobView>.Failure(scoped.Code, scoped.Message);
             return await jobs.SubmitAsync(submission, new(workspace, source.Revision), fingerprint, executor.ExecutionMode, token);
         }
         catch (ProjectEditException error) { return Result<JobView>.Failure(error.Code, "The workspace or template does not satisfy this operation."); }

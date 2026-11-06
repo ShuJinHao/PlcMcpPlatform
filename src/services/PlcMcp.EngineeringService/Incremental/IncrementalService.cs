@@ -64,6 +64,8 @@ public sealed class IncrementalService(IJobStore jobs, IManagedProjectFiles file
             var head = await Head(path, headRevision, token);
             foreach (var revision in new[] { query.Revision, query.CompareRevision }.OfType<string>())
                 await files.ReadVersionAsync(await history.GetAsync(path, revision, token) ?? throw new ProjectEditException("version_not_found"), head.Snapshot.Template, token);
+            if (await executor.CheckRequestAsync(submission.Operation, submission.Input, token) is { } scoped)
+                return Result<JobView>.Failure(scoped.Code, scoped.Message);
             return await jobs.SubmitAsync(submission, new(path, headRevision), fingerprint, executor.ExecutionMode, token);
         }
         catch (ProjectEditException e) { return Result<JobView>.Failure(e.Code, "Incremental query requires matching managed versions and bounded scope."); }

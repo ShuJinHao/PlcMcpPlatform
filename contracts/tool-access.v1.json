@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "localTools": [
+    "plc_batch_get",
+    "plc_capabilities_list",
+    "plc_delivery_read",
+    "plc_exchange_read",
+    "plc_exchange_stage",
+    "plc_exchange_upload_abort",
+    "plc_exchange_upload_append",
+    "plc_exchange_upload_begin",
+    "plc_exchange_upload_complete",
+    "plc_exchange_validate",
+    "plc_graph_decode",
+    "plc_graph_generate",
+    "plc_job_cancel",
+    "plc_job_get",
+    "plc_job_get_result",
+    "plc_job_reconcile",
+    "plc_project_adopt_preview",
+    "plc_project_batch_preview",
+    "plc_project_history",
+    "plc_runtime_get_status",
+    "plc_templates_list",
+    "plc_workspace_get"
+  ]
+}

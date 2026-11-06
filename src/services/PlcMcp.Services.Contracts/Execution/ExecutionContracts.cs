@@ -41,6 +41,11 @@ public interface IEngineeringExecutor
     // Production support and explicit integration validation are different execution policies.
     OperationError? CheckAvailability(string operation) => Unavailability;
     ValidationEvidence? Validation => null;
+    RuntimeReadiness? Readiness => null;
+    IReadOnlyDictionary<string, OperationError?> InspectAvailability(IEnumerable<string> operations)
+        => operations.Distinct(StringComparer.Ordinal).ToDictionary(op => op, CheckAvailability, StringComparer.Ordinal);
+    Task<OperationError?> CheckRequestAsync(string operation, EngineeringInput input, CancellationToken token)
+        => Task.FromResult(CheckAvailability(operation));
     OperationError? Unavailability { get; }
     Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken cancellationToken);
 }

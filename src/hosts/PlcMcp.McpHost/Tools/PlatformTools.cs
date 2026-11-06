@@ -16,15 +16,17 @@ public sealed class PlatformTools(IQueryHandler<ListCapabilitiesQuery, Capabilit
         => handler.Handle(new(), cancellationToken);
 
     [McpServerTool(Name = "plc_runtime_get_status", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
-    [Description("Report execution mode and scheduler state. Fixture results are simulated; real InoProShop capabilities are not yet verified.")]
+    [Description("Report local tool availability, reviewed operation scopes, identity failures and scheduler state. No persistent IDE connection or PLC runtime guarantee is implied.")]
     public async Task<RuntimeStatus> GetRuntimeStatus(CancellationToken cancellationToken)
     {
         var slot = await store.GetSlotAsync(cancellationToken);
-        return new("1.5", "P6-incremental-engineering", false, false, executor.ExecutionMode,
-            executor.ExecutionMode == "fixture" ? "simulated" : "unverified", slot.Blocked,
-            slot.Reason ?? (executor.Validation is not null ? "Explicit real validation session. Only allowlisted operations can run; compatibility remains unverified." : executor.Unavailability?.Message) ?? "Test-only execution; no IDE is connected.", executor.Validation);
+        var readiness = executor.Readiness;
+        var available = readiness?.State == "accepted" && !slot.Blocked && executor.Unavailability is null;
+        return new(PlatformRelease.ContractVersion, PlatformRelease.Stage, false, available, executor.ExecutionMode,
+            executor.ExecutionMode == "fixture" ? "simulated" : available ? "accepted_scope" : "unverified", slot.Blocked,
+            slot.Reason ?? (executor.Validation is not null ? "Explicit real validation session. Only allowlisted operations can run; compatibility remains unverified." : executor.Unavailability?.Message) ?? (available ? "Reviewed operations and conditions only. IDE processes are started per job; PLC runtime behavior remains unverified." : "No accepted IDE operations are available."), executor.Validation, readiness, ToolAccessCatalog.Inspect(executor));
     }
 }
 
 public sealed record RuntimeStatus(string ContractVersion, string Stage, bool IdeConnected,
-    bool EngineeringReady, string ExecutionMode, string EvidenceKind, bool SchedulerBlocked, string Reason, ValidationEvidence? Validation = null);
+    bool EngineeringReady, string ExecutionMode, string EvidenceKind, bool SchedulerBlocked, string Reason, ValidationEvidence? Validation = null, RuntimeReadiness? Readiness = null, ToolAvailability[]? Tools = null);

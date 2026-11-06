@@ -271,6 +271,42 @@
                   "null"
                 ],
                 "default": null
+              },
+              "acceptedScopes": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "operation": {
+                      "type": "string"
+                    },
+                    "coverage": {
+                      "type": "string"
+                    },
+                    "conditions": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "evidenceIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "operation",
+                    "coverage",
+                    "conditions",
+                    "evidenceIds"
+                  ]
+                },
+                "default": null
               }
             },
             "required": [
@@ -12265,7 +12301,7 @@
   },
   {
     "name": "plc_runtime_get_status",
-    "description": "Report execution mode and scheduler state. Fixture results are simulated; real InoProShop capabilities are not yet verified.",
+    "description": "Report local tool availability, reviewed operation scopes, identity failures and scheduler state. No persistent IDE connection or PLC runtime guarantee is implied.",
     "inputSchema": {
       "type": "object",
       "properties": {}
@@ -12337,6 +12373,147 @@
             "scriptSha256",
             "allowedOperations"
           ],
+          "default": null
+        },
+        "readiness": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "state": {
+              "type": "string"
+            },
+            "acceptanceId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "identitySha256": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "grants": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string"
+                  },
+                  "coverage": {
+                    "type": "string"
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "evidenceIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "operation",
+                  "coverage",
+                  "conditions",
+                  "evidenceIds"
+                ]
+              }
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "scope": {
+              "type": "string",
+              "default": "accepted_operations_and_conditions_only"
+            },
+            "ideVersion": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "engineVersion": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "profile": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "strategyId": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "state",
+            "acceptanceId",
+            "identitySha256",
+            "grants",
+            "errorCode"
+          ],
+          "default": null
+        },
+        "tools": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "operation": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "available": {
+                "type": "boolean"
+              },
+              "errorCode": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "kind",
+              "operation",
+              "available",
+              "errorCode"
+            ]
+          },
           "default": null
         }
       },

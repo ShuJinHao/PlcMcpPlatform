@@ -13,6 +13,8 @@ public sealed class DeliveryExecutor(IEngineeringExecutor worker, IManagedProjec
     public string ExecutionMode => worker.ExecutionMode;
     public OperationError? Unavailability => worker.Unavailability;
     public ValidationEvidence? Validation => worker.Validation;
+    public RuntimeReadiness? Readiness => worker.Readiness;
+    public Task<OperationError?> CheckRequestAsync(string operation, EngineeringInput input, CancellationToken token) => worker.CheckRequestAsync(operation, input, token);
     public OperationError? CheckAvailability(string op) => worker.CheckAvailability(op);
     public async Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
     {
@@ -55,7 +57,7 @@ public sealed class DeliveryExecutor(IEngineeringExecutor worker, IManagedProjec
             await files.VerifyAsync(source, token);
             if ((await changes.GetHeadAsync(input.ProjectPath, token))?.Snapshot.Revision != source.Revision) throw new ProjectEditException("workspace_revision_conflict");
             var manifest = new DeliveryManifest("1.4", delivery.WorkspaceName, source.Revision, source.ProjectFile, sha, source.Files, source.Template,
-                source.Dependencies, ExecutionMode, ExecutionMode == "fixture" ? "simulated" : "unverified", false, Validation);
+                source.Dependencies, ExecutionMode, ExecutionMode == "fixture" ? "simulated" : Readiness?.State == "accepted" ? "accepted_scope" : "unverified", false, Validation, Readiness);
             var artifact = await artifacts.CreateAsync(source, manifest, compile.Payload!.Value, tasks.Payload!.Value, token);
             token.ThrowIfCancellationRequested();
             if (DateTimeOffset.UtcNow >= request.DeadlineUtc) throw new ProjectEditException("deadline_expired");
