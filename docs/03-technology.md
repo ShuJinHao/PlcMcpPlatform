@@ -10,11 +10,11 @@
 | 架构 | DDD + Clean Architecture + 模块化单体 | 领域行为、应用端口与外部实现隔离 |
 | 应用用例 | Command/Query + Handler 风格 | P0 使用小型接口和构造函数注入；暂不额外引入 MediatR |
 | 持久化 | EF Core 8.0.33 + SQLite | 本机单节点工作区/任务元数据；不存全量 PLC 工程对象 |
-| 调度 | `System.Threading.Channels` + 持久化状态机 | P2 实现；内存队列只做唤醒，不承担持久性 |
+| 调度 | `System.Threading.Channels` + 持久化状态机 | 已实现单槽调度；内存队列只做唤醒，不承担持久性 |
 | 日志 | Serilog.AspNetCore 8.0.3 | 结构化事件；不记录密钥、原始工程全文或厂商凭据 |
 | 汇川执行 | IDE 内置 ScriptEngine / IronPython | 与 IDE、Profile 和设备/库环境一起验证 |
 | 汇川实现来源 | 依据供应商文档和 CODESYS 官方 API 自主编写 | 不集成第三方 PLC MCP 服务、bundle 或脚本；具体对照见 [官方接口基线](10-official-api-baseline.md) |
-| IPC | 版本化 JSON；Windows Named Pipe 为首选候选 | P1 验证脚本环境兼容，P2 定稿传输和 ACL |
+| IPC | 版本化 JSON 请求/结果文件，受控进程与环境变量 | 已实现尺寸与关联校验；目标 IDE 命令行仍待验收；不要求 Python 再实现 MCP 或 Named Pipe |
 | 测试 | xUnit 2.9.3、官方 Assert、真实 SQLite | 无须额外断言库；真实 IDE 测试单独运行 |
 | 部署 | Windows 工程师本机 | Host 与 Worker 解耦；服务化在真实会话测试后确定 |
 | OpenCode | 外部 MCP 客户端 | 不向服务端加入模型调用逻辑 |
@@ -29,7 +29,7 @@ P0 不引入 OBOT、RAG、消息中间件、分布式工作流平台或完整 Ag
 
 ## SQLite 使用约束
 
-P2 启用迁移、连接超时、并发令牌与短数据库事务，按实测决定 WAL 配置。数据库必须位于本机可靠磁盘，不将共享网络目录作为多节点数据库；IDE 长操作不能占着数据库事务。租约和原子领取要由数据库约束验证，而不能只用进程内锁。
+已启用迁移、连接超时、并发令牌与短数据库事务，单实例单槽运行；WAL 调整按后续实测决定。数据库必须位于本机可靠磁盘，不将共享网络目录作为多节点数据库；IDE 长操作不能占着数据库事务。租约和原子领取要由数据库约束验证，而不能只用进程内锁。
 
 ## 依据
 

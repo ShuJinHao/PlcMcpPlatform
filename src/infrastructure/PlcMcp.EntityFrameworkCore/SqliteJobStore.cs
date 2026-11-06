@@ -9,9 +9,22 @@ using PlcMcp.SharedKernel.Results;
 namespace PlcMcp.EntityFrameworkCore;
 
 /// <summary>Singleton within the exclusive data-directory owner. All transactions are short.</summary>
-public sealed class SqliteJobStore(DbContextOptions<PlcMcpDbContext> options, string mode) : IJobStore, IDisposable
+public sealed class SqliteJobStore(DbContextOptions<PlcMcpDbContext> options, string mode, int maxPendingJobs = 256) : IJobStore, IDisposable
 {
     private readonly SemaphoreSlim gate = new(1, 1);
+
+    public async Task<Result<JobView>?> FindSubmissionAsync(string projectPath, string operation, string idempotencyKey,
+        string fingerprint, CancellationToken cancellationToken)
+    {
+        await using var db = new PlcMcpDbContext(options);
+        var query = from job in db.Jobs.AsNoTracking() join workspace in db.Workspaces on job.WorkspaceId equals workspace.Id
+                    where workspace.ProjectPath == projectPath && job.Operation == operation && job.IdempotencyKey == idempotencyKey select job;
+        var existing = await query.SingleOrDefaultAsync(cancellationToken);
+        if (existing is null) return null;
+        return existing.RequestFingerprint == fingerprint
+            ? Result<JobView>.Success(View(existing, await db.JobRecords.AsNoTracking().SingleAsync(x => x.JobId == existing.Id, cancellationToken)))
+            : Result<JobView>.Failure("idempotency_conflict", "This key belongs to a different request.");
+    }
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
@@ -51,6 +64,8 @@ public sealed class SqliteJobStore(DbContextOptions<PlcMcpDbContext> options, st
             }
             if ((await db.ExecutionStates.SingleAsync(cancellationToken)).Blocked)
                 return Result<JobView>.Failure("execution_outcome_unknown", "The execution slot requires reconciliation.");
+            if (await db.Jobs.CountAsync(x => x.Status == JobStatus.Queued || x.Status == JobStatus.Running || x.Status == JobStatus.CancelRequested, cancellationToken) >= maxPendingJobs)
+                return Result<JobView>.Failure("queue_full", "The execution queue is full; retry later with the same request key.", true);
             if (submission.ExpectedRevision is not null && submission.ExpectedRevision != project.Revision)
                 return Result<JobView>.Failure("workspace_revision_conflict", "Project file changed; read the current revision.");
             if (workspace is null)

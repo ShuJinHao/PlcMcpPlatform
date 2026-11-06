@@ -2,7 +2,7 @@
 
 ## 状态规则
 
-本表是完整覆盖目标，不是支持声明。P0 没有连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
+本表是完整覆盖目标，不是支持声明。当前 P1 尚未连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
 
 | 状态 | 含义 |
 |---|---|
@@ -17,7 +17,7 @@ API 名称、重载及版本依据供应商提供的 `ScriptEngine.chm` 与 CODE
 
 ## 全量能力登记
 
-| 能力 ID | 风险类别 | P0 状态 |
+| 能力 ID | 风险类别 | 真实能力状态 |
 |---|---|---|
 | `project.create` | ModifyProject | Unverified |
 | `project.open` | Read | Unverified |

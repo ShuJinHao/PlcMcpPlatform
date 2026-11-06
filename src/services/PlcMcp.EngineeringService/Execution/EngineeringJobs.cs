@@ -18,17 +18,21 @@ public sealed class EngineeringJobs(IJobStore store, IWorkspaceFiles files, IEng
             || submission.Operation == EngineeringOperations.ReadProgram && !Guid.TryParse(submission.Input.ObjectId, out _)
             || submission.Operation == EngineeringOperations.Compile && !Guid.TryParse(submission.Input.ApplicationId, out _))
             return Result<JobView>.Failure("invalid_request", "Invalid operation, identity or limits.");
-        if (executor.Unavailability is { } error)
-            return Result<JobView>.Failure(error.Code, error.Message);
-        var resolved = await files.ResolveAsync(submission.Input.ProjectPath, cancellationToken);
-        if (!resolved.IsSuccess) return Result<JobView>.Failure(resolved.Error!.Code, resolved.Error.Message);
-        var normalized = submission with { Input = submission.Input with { ProjectPath = resolved.Value!.Path,
+        var path = files.NormalizePath(submission.Input.ProjectPath);
+        if (!path.IsSuccess) return Result<JobView>.Failure(path.Error!.Code, path.Error.Message);
+        var normalized = submission with { Input = submission.Input with { ProjectPath = path.Value!,
             ObjectId = Guid.TryParse(submission.Input.ObjectId, out var objectId) ? objectId.ToString() : submission.Input.ObjectId,
             ApplicationId = Guid.TryParse(submission.Input.ApplicationId, out var appId) ? appId.ToString() : submission.Input.ApplicationId } };
         // File revision is deliberately not added to the fingerprint: retrying the same
         // command after execution must return its durable job, even if the file changed.
         var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(normalized, WorkerJson.Options));
         var fingerprint = Convert.ToHexString(SHA256.HashData(bytes));
+        var existing = await store.FindSubmissionAsync(path.Value!, normalized.Operation, normalized.IdempotencyKey, fingerprint, cancellationToken);
+        if (existing is not null) return existing;
+        if (executor.Unavailability is { } error)
+            return Result<JobView>.Failure(error.Code, error.Message);
+        var resolved = await files.ResolveAsync(path.Value!, cancellationToken);
+        if (!resolved.IsSuccess) return Result<JobView>.Failure(resolved.Error!.Code, resolved.Error.Message);
         return await store.SubmitAsync(normalized, resolved.Value!, fingerprint, executor.ExecutionMode, cancellationToken);
     }
 

@@ -7,7 +7,7 @@ namespace PlcMcp.Inovance;
 
 public sealed record InovanceOptions(string ExecutablePath, string Profile, string ScriptPath, string WorkDirectory);
 
-public sealed class InovanceExecutor(InovanceOptions options) : IEngineeringExecutor
+public sealed class InovanceExecutor(InovanceOptions options, IInovanceLaunchProfile? launchProfile = null) : IEngineeringExecutor
 {
     public string ExecutionMode => "real";
     public OperationError? Unavailability => !OperatingSystem.IsWindows() || !File.Exists(options.ExecutablePath)
@@ -20,9 +20,8 @@ public sealed class InovanceExecutor(InovanceOptions options) : IEngineeringExec
         if (!OperatingSystem.IsWindows() || !File.Exists(options.ExecutablePath) || !File.Exists(options.ScriptPath)
             || string.IsNullOrWhiteSpace(options.Profile) || request.ExecutionMode != ExecutionMode)
             return Task.FromResult(WorkerJson.Failed(request, "ide_unavailable"));
-        var worker = new ProcessWorker(options.WorkDirectory, (input, output) => new(options.ExecutablePath,
-            ["--profile=" + options.Profile, "--runscript=" + Path.GetFullPath(options.ScriptPath), "--noUI"],
-            new Dictionary<string, string> { ["PLCMCP_REQUEST_PATH"] = input, ["PLCMCP_RESULT_PATH"] = output }));
+        var profile = launchProfile ?? new ScriptEngine35LaunchProfile(options);
+        var worker = new ProcessWorker(options.WorkDirectory, profile.CreateInvocation);
         return worker.RunAsync(request, cancellationToken);
     }
 }

@@ -1,0 +1,419 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ShuJinHao/PlcMcpPlatform/contracts/worker-v1.schema.json",
+  "title": "PLC MCP internal worker protocol v1",
+  "description": "UTF-8 JSON files, 128 KiB request and 1 MiB result limits. Not MCP. Execution mode is not proof of vendor compatibility.",
+  "$defs": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "objectId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "applicationId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxObjects": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        }
+      },
+      "required": [
+        "projectPath",
+        "objectId",
+        "applicationId",
+        "maxObjects"
+      ]
+    },
+    "request": {
+      "type": "object",
+      "properties": {
+        "protocolVersion": {
+          "const": 1
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "not": {
+            "const": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "jobId": {
+          "type": "string",
+          "format": "uuid",
+          "not": {
+            "const": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "workspaceId": {
+          "type": "string",
+          "format": "uuid",
+          "not": {
+            "const": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "operation": {
+          "enum": [
+            "project.open",
+            "project.tree.read",
+            "pou.read",
+            "project.compile"
+          ]
+        },
+        "expectedRevision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "deadlineUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "executionMode": {
+          "enum": [
+            "real",
+            "fixture"
+          ]
+        },
+        "payload": {
+          "$ref": "#/$defs/input"
+        }
+      },
+      "required": [
+        "protocolVersion",
+        "requestId",
+        "jobId",
+        "workspaceId",
+        "operation",
+        "expectedRevision",
+        "deadlineUtc",
+        "executionMode",
+        "payload"
+      ]
+    },
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "severity": {
+          "enum": [
+            "error",
+            "warning",
+            "information"
+          ]
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "objectId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "line": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "column": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "severity",
+        "code",
+        "message"
+      ]
+    },
+    "projectObject": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "parentId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "parentId",
+        "name",
+        "kind"
+      ]
+    },
+    "openResult": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "opened": {
+          "const": true
+        },
+        "sessionClosedAfterOperation": {
+          "const": true
+        }
+      },
+      "required": [
+        "revision",
+        "opened",
+        "sessionClosedAfterOperation"
+      ]
+    },
+    "structureResult": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "objects": {
+          "type": "array",
+          "maxItems": 2000,
+          "items": {
+            "$ref": "#/$defs/projectObject"
+          }
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "revision",
+        "objects",
+        "truncated"
+      ]
+    },
+    "sourceResult": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "declaration": {
+          "type": "string"
+        },
+        "implementation": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "revision",
+        "objectId",
+        "language",
+        "declaration",
+        "implementation"
+      ]
+    },
+    "compileResult": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "applicationId": {
+          "type": "string"
+        },
+        "succeeded": {
+          "type": "boolean"
+        },
+        "diagnostics": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          }
+        }
+      },
+      "required": [
+        "revision",
+        "applicationId",
+        "succeeded",
+        "diagnostics"
+      ]
+    },
+    "response": {
+      "type": "object",
+      "properties": {
+        "protocolVersion": {
+          "const": 1
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "not": {
+            "const": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "jobId": {
+          "type": "string",
+          "format": "uuid",
+          "not": {
+            "const": "00000000-0000-0000-0000-000000000000"
+          }
+        },
+        "outcome": {
+          "enum": [
+            "succeeded",
+            "failed",
+            "cancelled",
+            "unknown"
+          ]
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[a-z0-9_]+$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "executionMode": {
+          "enum": [
+            "real",
+            "fixture"
+          ]
+        },
+        "payload": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "protocolVersion",
+        "requestId",
+        "jobId",
+        "outcome",
+        "errorCode",
+        "executionMode",
+        "payload"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "succeeded"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "errorCode": {
+                "type": "null"
+              },
+              "payload": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/openResult"
+                  },
+                  {
+                    "$ref": "#/$defs/structureResult"
+                  },
+                  {
+                    "$ref": "#/$defs/sourceResult"
+                  },
+                  {
+                    "$ref": "#/$defs/compileResult"
+                  }
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "errorCode": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/response"
+    }
+  ]
+}

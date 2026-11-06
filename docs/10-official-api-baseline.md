@@ -22,7 +22,7 @@ PLC 工程用例、汇川适配器、脚本与工具契约由本项目自主编�
 
 ## CHM、官网与 MCP 能力对照
 
-表中的工具名称为规划名称；当前 Host 仍仅注册 P0 的两个平台只读工具。
+表中包含已实现及后续规划的工具名称。生产 Host 当前只注册两个平台查询工具；第一批四个工程工具和三个任务工具已在独立测试宿主接通，真实能力仍未开放，见 [执行实现](12-execution.md)。
 
 | 工程能力 | CHM 证据 | 官网核对 | 实现目标与待验证项 |
 |---|---|---|---|
@@ -73,7 +73,7 @@ PLC 工程用例、汇川适配器、脚本与工具契约由本项目自主编�
 4. 核对 `status`、`issues`、`truncated` 和具体对象的 `members`。没有打开工程时返回 `no_primary_project`；缺少脚本绑定时返回 `scriptengine_bindings_missing`。
 5. `evidenceKind=api_presence_only`、`engineeringReady=false` 是有意保留的边界。探针成功不能使工程能力自动变为支持。
 
-[官方命令行文档][cli]提供 `--profile`、`--runscript`、`--scriptargs` 和 `--noUI`。命令行与用户会话路径分别实测；本探针不传工程路径、不自动打开样例，因此命令行新会话无主工程时只产生环境证据。后续进程执行器再增加受控工程生命周期。
+[官方命令行文档][cli]提供 `--profile`、`--runscript`、`--scriptargs` 和 `--noUI`。命令行与用户会话路径分别实测；本探针不传工程路径、不自动打开样例，因此命令行新会话无主工程时只产生环境证据。已实现的工程执行脚本使用自己的受控工程生命周期，但目标 IDE 启动方式尚未验证。
 
 普通 `python inspect_session.py` 不具备 IDE 对象；其返回 `unavailable` 是预期行为。CPython 只用于以下边界测试：
 
@@ -83,14 +83,14 @@ python -m unittest discover -s tests/script_engine -v
 
 测试覆盖无 IDE/无工程、只读约束、Task 成员检查、节点/深度上限、循环、部分枚举失败、属性异常与结果序列化。测试替身不模拟厂商真实实现，不能作为 IronPython 或 InoProShop 验收证据。
 
-## 后续实现顺序
+## 实现顺序与当前进度
 
 1. 固定请求/结果契约，先实现持久化任务、互斥、进程执行器、超时和结果未知恢复；无需目标 IDE 即可进行服务开发和自动测试。
 2. 按官方 API 编写工程打开、结构读取、程序读取和编译诊断脚本，接入 .NET 应用端口与 MCP 工具；解析本次诊断，不从进程退出码推断编译成功。
 3. 在工作区修订、备份和读回规则就绪后实现程序创建/修改/保存，再扩展 Task、IO、库和各图形语言。独立测试宿主用于离线契约与流程验证，不改变真实能力状态。
 4. 以后取得 Windows/InoProShop 环境，再运行探针并完成各项真实操作验收，补齐版本、Profile、样例与证据，逐项开放生产能力。
 
-完整顺序和每批验收标准见[下一阶段开发与交付计划](11-offline-development-plan.md)。
+上述第 1～2 项已完成离线实现与测试，真实 IDE 仍未验证。完整顺序和每批验收标准见[下一阶段开发与交付计划](11-offline-development-plan.md)。
 
 [projects]: https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProjects.html
 [project]: https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProject.html

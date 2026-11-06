@@ -133,7 +133,33 @@ public sealed class ExecutionTests
         await h.Dispatcher.RunNextAsync(default);
         Assert.Equal("workspace_revision_conflict", (await h.Store.GetAsync(first.JobId, default))!.ErrorCode);
         Assert.Equal(first.JobId, (await h.Submit(key: "stable")).Value!.JobId);
+        File.Delete(h.Path);
+        Assert.Equal(first.JobId, (await h.Submit(key: "stable")).Value!.JobId);
     }
+
+    [Fact] public async Task Migration_snapshot_matches_the_runtime_model()
+    {
+        await using var h = await Harness.Create();
+        await using var db = new PlcMcpDbContext(h.Options);
+        Assert.False(db.Database.HasPendingModelChanges());
+        await db.Database.MigrateAsync();
+        Assert.Single(await db.ExecutionStates.ToListAsync());
+    }
+
+    [Fact] public async Task Backpressure_does_not_reject_a_retry_of_an_already_accepted_job()
+    {
+        await using var h = await Harness.Create();
+        using var store = new SqliteJobStore(h.Options, "fixture", 1);
+        var jobs = new EngineeringJobs(store, new WorkspaceFiles(h.Root), h.Executor);
+        var request = new Submission(EngineeringOperations.Open, new(h.Path), "accepted");
+        var first = await jobs.SubmitAsync(request, default);
+        Assert.True(first.IsSuccess);
+        Assert.Equal("queue_full", (await jobs.SubmitAsync(request with { IdempotencyKey = "new" }, default)).Error?.Code);
+        Assert.Equal(first.Value!.JobId, (await jobs.SubmitAsync(request, default)).Value!.JobId);
+    }
+
+    [Fact] public void Production_host_has_no_fixture_assembly_dependency()
+        => Assert.DoesNotContain(typeof(PlcMcp.McpHost.HostApplication).Assembly.GetReferencedAssemblies(), name => name.Name!.Contains("TestHost", StringComparison.Ordinal));
 
     [Fact] public async Task Workspace_access_rejects_sibling_prefix_and_linked_paths()
     {

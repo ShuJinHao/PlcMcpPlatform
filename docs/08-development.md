@@ -2,7 +2,7 @@
 
 ## 环境
 
-核心工程需要 .NET 8 SDK；`global.json` 允许已安装的 .NET 8 新 feature band。P0 可在 Windows/Linux 构建；汇川 IDE 执行必须在后续目标 Windows 环境验证。运行 Host 不需要安装 InoProShop，但它目前只能查询平台能力和状态。
+核心工程需要 .NET 8 SDK；`global.json` 允许已安装的 .NET 8 新 feature band。CI 已扩展到 Windows/Linux/macOS；汇川 IDE 执行必须在后续目标 Windows 环境验证。运行 Host 不需要安装 InoProShop，但它目前只能查询平台能力和状态。
 
 ## 构建与启动
 
@@ -16,7 +16,7 @@ $env:PlcMcp__ApiKey = [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToStri
 dotnet run --project src/hosts/PlcMcp.McpHost --no-launch-profile
 ```
 
-P0 固定回环端口 5088，避免误配成公网监听。`/health/live` 只说明进程存活；`engineeringReady=false` 表示尚不具备真实工程操作能力。
+Host 固定回环端口 5088，避免误配成公网监听。`/health/live` 只说明进程存活；`engineeringReady=false` 表示尚不具备真实工程操作能力。
 
 首次锁文件需要已提交到仓库；有意升级依赖时先修改集中版本、重新 restore，再审查锁文件变化并运行验证。普通开发不删除锁文件绕过依赖漂移。
 
@@ -36,12 +36,10 @@ OpenCode 提示示例：“使用 plc MCP 查询平台状态和汇川能力，�
 
 `type: remote` 表示 HTTP MCP 传输，即使服务运行在本机也使用该类型。示例禁用 OAuth 自动发现，使用环境变量提供的 Bearer 密钥。当前没有浏览器交互入口，Host 拒绝带 Origin 的 MCP 请求。
 
-## 后续真实执行准备
+## 离线开发与真实执行准备
 
-当前可以在没有 InoProShop 的环境继续开发服务、调度、执行器与官方 API 调用脚本。用户当前使用 Mac，Windows/IDE 验收后置；macOS CI 和开发测试宿主属于下一批交付，不能宣称已完成。开发顺序、测试模式边界和验收标准见[下一阶段计划](11-offline-development-plan.md)。
+第一批已实现任务持久化、执行器、读取/编译调用脚本，以及独立测试宿主。Mac/Windows 启动、测试命令和故障行为见 [第一批执行说明](12-execution.md)。默认真实宿主仅注册两个查询工具；测试宿主提供九个工具，明确标注 fixture/simulated，不能将模拟结果视为汇川支持证据。
 
-P1 已增加 [原创只读会话探针与官方接口对照](10-official-api-baseline.md)。以后在已打开脱敏样例的目标 IDE 中验证接口可见性；普通 CPython 用于边界测试，无法提供厂商工程对象。
+真实环境后续确认 InoProShop 脚本入口、Profile、无 UI、进程归属和官方 API 兼容性。`IInovanceLaunchProfile` 隔离启动差异；当前首个策略仍为未验证。目标工程脚本由 IDE 内置环境执行，普通 CPython 只用于测试调用逻辑。
 
-实际 InoProShop 脚本入口与 `--runscript`/`--noUI` 支持情况留待目标环境确认，相关参数通过版本策略隔离。受控工程脚本由 IDE 内置环境执行，不自行安装一个 IronPython 后假定能访问工程 API。加入 Worker 时一并提供配置、内部通信文档和无需 IDE 的自动测试入口。
-
-目标 Windows 机的路径、版本、模板和运行账户通过本地配置填写，不提交用户绝对路径、生产程序、访问令牌、IDE 安装包或商业库。离线依赖包在恢复构建成功后按版本和许可单独制作，当前仓库不是完整离线安装包。
+用户当前没有 Windows/IDE 不阻塞下一批程序写入开发。目标机器的安装路径、版本、模板和运行账户通过本地配置填写，不提交生产程序、凭据、IDE 安装包或商业库。当前仓库不是包含所有供应商依赖的离线安装包。

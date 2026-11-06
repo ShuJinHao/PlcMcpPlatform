@@ -40,7 +40,7 @@ def revision(path):
 
 
 def validate(request):
-    if request.get("protocolVersion") != 1 or request.get("executionMode") != "real":
+    if type(request.get("protocolVersion")) is not int or request.get("protocolVersion") != 1 or request.get("executionMode") != "real":
         raise WorkerError("invalid_worker_request")
     if request.get("operation") not in OPERATIONS:
         raise WorkerError("invalid_operation")
@@ -48,7 +48,7 @@ def validate(request):
         if uuid.UUID(request[key]).int == 0:
             raise WorkerError("invalid_worker_request")
     payload = request["payload"]
-    if not os.path.isabs(payload["projectPath"]) or not 1 <= payload.get("maxObjects", 256) <= 2000:
+    if not os.path.isabs(payload["projectPath"]) or type(payload.get("maxObjects", 256)) is not int or not 1 <= payload.get("maxObjects", 256) <= 2000:
         raise WorkerError("invalid_worker_request")
     if request["operation"] == "pou.read":
         uuid.UUID(payload["objectId"])

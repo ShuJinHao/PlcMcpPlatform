@@ -26,6 +26,7 @@ public sealed record ClaimedJob(WorkerRequest Request);
 
 public interface IWorkspaceFiles
 {
+    Result<string> NormalizePath(string path);
     Task<Result<ResolvedProject>> ResolveAsync(string path, CancellationToken cancellationToken);
 }
 public interface IEngineeringExecutor
@@ -38,6 +39,8 @@ public interface IEngineeringExecutor
 public interface IJobStore
 {
     Task InitializeAsync(CancellationToken cancellationToken);
+    Task<Result<JobView>?> FindSubmissionAsync(string projectPath, string operation, string idempotencyKey,
+        string fingerprint, CancellationToken cancellationToken);
     Task<Result<JobView>> SubmitAsync(Submission submission, ResolvedProject project,
         string fingerprint, string executionMode, CancellationToken cancellationToken);
     Task<JobView?> GetAsync(Guid id, CancellationToken cancellationToken);

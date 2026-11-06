@@ -8,20 +8,15 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
 
-## 当前阶段：P0 核心架构
+## 当前阶段 P1 离线执行开发
 
-本仓库提供 .NET 8 / C# 12 核心工程与中文设计文档。当前 MCP Host 只开放两个真实只读工具：
+已实现持久化任务、串行调度、进程执行器、七个工程/任务工具和原创工程读取/编译脚本。默认生产宿主仍只注册 `plc_capabilities_list` 与 `plc_runtime_get_status`，汇川能力全部为 `Unverified`，`engineeringReady=false`。
 
-| 工具 | 当前行为 |
-|---|---|
-| `plc_capabilities_list` | 返回汇川能力规划；工程操作全部标为 `Unverified` |
-| `plc_runtime_get_status` | 明确返回 `ideConnected=false`、`engineeringReady=false` |
+独立的 `tests/PlcMcp.TestHost` 注册九个工具，在 Mac、Windows、Linux 上用明确标识的测试进程验证完整流程。测试宿主不调用 InoProShop，也不编译 PLC 程序。生产宿主不包含 fixture 依赖或自动模拟回退。
 
-**当前不能生成或编译真实 PLC 工程。** InoProShop Worker、脚本实现、持久化调度和工程写入属于后续阶段；没有模拟成功的工程工具。SQLite 当前提供领域映射与测试，Host 尚未接入运行数据库。
+**当前尚不能生成、修改或保存真实 PLC 工程。** 原创脚本已包含官方 API 调用，但真实 InoProShop/IronPython 兼容性待验收；程序写入、备份和完整修订约束属于下一批。SQLite 已接入 Host，保存任务、工作区元数据与执行结果。
 
-P0 已通过 Windows/Linux 的 Release 构建、9 项测试和 HTTP MCP 冒烟验证，详见 [验收记录](docs/07-validation.md)。
-
-P1 开始依据供应商 API 参考与 CODESYS 官网自主实现汇川脚本，不接入第三方 PLC MCP。已增加[官方接口对照与只读探针](docs/10-official-api-baseline.md)；探针用于确认实际 IDE 暴露的接口，尚未接入 MCP 工程工具，也不改变能力的 `Unverified` 状态。
+开始使用见 [第一批实现与 Mac/Windows 启动说明](docs/12-execution.md)，开发路线见 [下一阶段计划](docs/11-offline-development-plan.md)。CI 运行锁定还原、Release 构建、.NET/Python 测试及真实模式/测试模式 HTTP 验证，执行环境包含 Windows、Ubuntu、macOS；真实 IDE 与 OpenCode 客户端验收单独记录。
 
 ## 文档入口
 
@@ -39,6 +34,7 @@ P1 开始依据供应商 API 参考与 CODESYS 官网自主实现汇川脚本，
 | [架构决策记录](docs/09-decisions.md) | 关键取舍与调整条件 |
 | [官方接口对照与原创探针](docs/10-official-api-baseline.md) | CHM 与官网如何对应，如何验证目标 IDE 接口 |
 | [下一阶段开发与交付计划](docs/11-offline-development-plan.md) | 无汇川环境时先开发什么，各批如何交付与验收 |
+| [第一批执行实现与使用说明](docs/12-execution.md) | 已实现什么、Mac 如何运行、故障处理与验证边界 |
 
 ## 核心工程
 
@@ -47,10 +43,10 @@ P1 开始依据供应商 API 参考与 CODESYS 官网自主实现汇川脚本，
 | `src/shared` | `PlcMcp.SharedKernel` |
 | `src/core` | `PlcMcp.Core.Workspaces`、`PlcMcp.Core.Automation` |
 | `src/services` | `PlcMcp.Services.Contracts`、`PlcMcp.EngineeringService` |
-| `src/infrastructure` | `PlcMcp.EntityFrameworkCore` |
+| `src/infrastructure` | `PlcMcp.EntityFrameworkCore`、`PlcMcp.Execution` |
 | `src/adapters` | `PlcMcp.Inovance` |
 | `src/hosts` | `PlcMcp.McpHost` |
-| `tests` | `PlcMcp.Tests` |
+| `tests` | `PlcMcp.Tests`、独立 `PlcMcp.TestHost` |
 
 按 `Core / Services / Contracts / Infrastructure / Host` 分层，领域对象通过行为维护状态，应用层通过接口访问外部依赖，Host 作为组合根。
 
@@ -68,4 +64,4 @@ dotnet run --project src/hosts/PlcMcp.McpHost --no-launch-profile
 
 Host 固定监听 `http://127.0.0.1:5088`，MCP 路径为 `/mcp`。OpenCode 配置参考 [示例](config/opencode.example.json)，从另一个继承相同 `PlcMcp__ApiKey` 的终端启动 OpenCode。密钥不写入仓库。完整步骤见开发文档。
 
-下一项工程交付是：先实现持久化任务、进程执行器、工程读取与编译工具，并通过离线自动测试，再开发程序写入及其他工程能力。Windows/InoProShop 验证不阻塞这些开发工作，实际支持声明仍须真实 IDE 证据。所有编程语言均在能力范围内，具体实现路径按证据决定。详见[下一阶段计划](docs/11-offline-development-plan.md)。
+第一批已落地任务持久化、执行器、读取与编译调用流程；下一项工程交付是程序写入、备份、读回和保存，再扩展其他工程能力。Windows/InoProShop 验证不阻塞这些开发工作，实际支持声明仍须真实 IDE 证据。所有编程语言均在能力范围内，具体实现路径按证据决定。详见[下一阶段计划](docs/11-offline-development-plan.md)。
