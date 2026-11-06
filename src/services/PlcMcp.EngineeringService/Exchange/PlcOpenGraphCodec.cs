@@ -35,7 +35,7 @@ public static class PlcOpenGraphCodec
             var variables = p.Variables.Where(v => v.Scope == scope).ToArray();
             if (variables.Length == 0) continue;
             iface.Add(E(scope + "Vars", variables.Select(v => E("variable", A("name", v.Name),
-                E("type", PrimitiveTypes.Contains(v.Type) ? E(v.Type) : E("derived", A("name", v.Type))),
+                E("type", PrimitiveTypes.Contains(v.Type) ? E(v.Type) : v.Type is "STRING" or "WSTRING" ? E(v.Type.ToLowerInvariant()) : E("derived", A("name", v.Type))),
                 v.InitialValue is null ? null : E("initialValue", E("simpleValue", A("value", v.InitialValue)))))));
         }
         return E("pou", A("name", p.Name), A("pouType", p.PouType), iface,
@@ -87,7 +87,7 @@ public static class PlcOpenGraphCodec
             if (body.Name.Namespace != P || body.Name.LocalName is not ("LD" or "FBD" or "SFC")) throw new ProjectEditException("graph_language_outside_profile");
             var variables = pou.Element(P + "interface")!.Elements().SelectMany(group => group.Elements(P + "variable").Select(v => {
                 var type = v.Element(P + "type")!.Elements().Single();
-                return new GraphVariable(S(v, "name")!, type.Name.LocalName == "derived" ? S(type, "name")! : type.Name.LocalName,
+                return new GraphVariable(S(v, "name")!, type.Name.LocalName == "derived" ? S(type, "name")! : type.Name.LocalName is "string" or "wstring" ? type.Name.LocalName.ToUpperInvariant() : type.Name.LocalName,
                     group.Name.LocalName.Replace("Vars", "", StringComparison.Ordinal), (string?)v.Element(P + "initialValue")?.Element(P + "simpleValue")?.Attribute("value"));
             })).ToArray();
             var actions = pou.Element(P + "actions")?.Elements(P + "action").Select(a => new GraphAction(S(a, "name")!, a.Element(P + "body")!.Element(P + "ST")!.Element(H + "xhtml")!.Value)).ToArray() ?? [];
@@ -98,6 +98,11 @@ public static class PlcOpenGraphCodec
             if (Canonical(pou) != Canonical(EncodePou(program))) throw new ProjectEditException("graph_contains_unrepresented_data");
             var allowedRoot = new[] { "fileHeader", "contentHeader", "types", "instances" };
             if (root.Elements().Any(e => e.Name.Namespace != P || !allowedRoot.Contains(e.Name.LocalName))
+                || root.Elements().GroupBy(e => e.Name).Any(g => g.Count() > 1)
+                || root.Descendants(P + "addData").Any()
+                || root.Element(P + "types")!.Elements().Any(e => e.Name != P + "dataTypes" && e.Name != P + "pous")
+                || root.Element(P + "types")!.Elements().GroupBy(e => e.Name).Any(g => g.Count() > 1)
+                || root.Element(P + "types")!.Element(P + "pous")!.Elements().Any(e => e.Name != P + "pou")
                 || root.Element(P + "types")!.Element(P + "dataTypes")?.HasElements == true
                 || root.Element(P + "instances")!.Descendants().Any(e => e.Name != P + "configurations")) throw new ProjectEditException("graph_document_contains_other_objects");
             return new(program, SemanticHash(program));

@@ -29,7 +29,7 @@ def parse_xml(xml, fail):
     if re.search(r'<!\s*(DOCTYPE|ENTITY)', xml, re.I) or '\0' in xml:
         fail('invalid_exchange_xml')
     try:
-        root = ET.fromstring(xml.encode('utf-8'))
+        root = ET.fromstring(re.sub(r'(<\?xml\s[^?]*?)encoding\s*=\s*[\"\'][^\"\']*[\"\']', r'\1', xml, count=1, flags=re.I).encode('utf-8'))
     except (ValueError, ET.ParseError):
         fail('invalid_exchange_xml')
     queue, count = [(root, 0)], 0
@@ -140,7 +140,7 @@ class ExchangeEngine(object):
 
     def select(self, ids, recursive):
         self.configuration.refresh()
-        if not isinstance(ids, list) or not 1 <= len(ids) <= 128 or len(set(ids)) != len(ids): self.fail('invalid_exchange_selection')
+        if not isinstance(ids, list) or not 1 <= len(ids) <= 2000 or len(set(ids)) != len(ids): self.fail('invalid_exchange_selection')
         if 'project' in ids:
             if ids != ['project']: self.fail('invalid_exchange_selection')
             ids = [self.identity(n) for n in self.project.get_children(False)]
@@ -167,7 +167,7 @@ class ExchangeEngine(object):
                                            one_file_per_subtree=False, reporter=reporter)
                 with open(path, 'rb') as source: raw = source.read(MAX_XML + 1)
                 if len(raw) > MAX_XML: self.fail('exchange_size_invalid')
-                xml = raw.decode('utf-8-sig')
+                xml = raw.decode('utf-16') if raw.startswith((b'\xff\xfe', b'\xfe\xff')) else raw.decode('utf-8-sig')
             finally:
                 if os.path.exists(path): os.remove(path)
         reporter.check(allow_warnings=not strict_warnings)
@@ -208,7 +208,10 @@ class ExchangeEngine(object):
             if root.tag == P + 'project': self.fail('exchange_format_mismatch')
             fd, path = tempfile.mkstemp(suffix='.export'); os.close(fd)
             try:
-                with open(path, 'wb') as target: target.write(xml.encode('utf-8'))
+                with open(path, 'wb') as target:
+                    # String artifacts are UTF-8; normalize only the XML encoding declaration for the private SDK file.
+                    normalized = re.sub(r'(<\?xml\s[^?]*?)encoding\s*=\s*[\"\'][^\"\']*[\"\']', r'\1encoding="utf-8"', xml, count=1, flags=re.I)
+                    target.write(normalized.encode('utf-8'))
                 outcome = parent.import_native(filenames=[path], handler=reporter)
                 kinds = self.binding('NativeImportResult')
                 if outcome not in (kinds.ok, kinds.no_changes, kinds.skipped): self.fail('native_import_failed')

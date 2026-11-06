@@ -20,7 +20,7 @@ public sealed class PlatformTools(IQueryHandler<ListCapabilitiesQuery, Capabilit
     public async Task<RuntimeStatus> GetRuntimeStatus(CancellationToken cancellationToken)
     {
         var slot = await store.GetSlotAsync(cancellationToken);
-        return new("1.2", "P3-engineering-configuration", false, false, executor.ExecutionMode,
+        return new("1.3", "P4-exchange-graphs", false, false, executor.ExecutionMode,
             executor.ExecutionMode == "fixture" ? "simulated" : "unverified", slot.Blocked,
             slot.Reason ?? (executor.Validation is not null ? "Explicit real validation session. Only allowlisted operations can run; compatibility remains unverified." : executor.Unavailability?.Message) ?? "Test-only execution; no IDE is connected.", executor.Validation);
     }

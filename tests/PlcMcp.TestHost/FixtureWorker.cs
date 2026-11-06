@@ -57,6 +57,7 @@ public static class FixtureWorker
                         imported.Result["objectIds"]!.Deserialize<string[]>(WorkerJson.Options)!) };
                     var proof = FixtureExchange.Export(exchangeReopen, exportInput, op == ExchangeOperations.WriteGraph);
                     if (fixture.Fault == "reopen_mismatch" || proof["xml"]!.GetValue<string>() != imported.Result["xml"]!.GetValue<string>()) { error = "exchange_reopen_mismatch"; break; }
+                    if (fixture.Fault == "graph_loss") imported.Result["xml"] = imported.Result["xml"]!.GetValue<string>().Replace("Start", "Other", StringComparison.Ordinal);
                     payload["exchange"] = imported.Result;
                     payload["dependencySnapshot"] = new FixtureConfiguration(exchangeReopen, input.Requirements).Dependencies();
                     payload["baseRevision"] = revision;

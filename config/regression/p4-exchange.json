@@ -1,0 +1,1407 @@
+{
+  "schemaVersion": 1,
+  "description": "Original LD/FBD/basic-SFC exchange and candidate regression. Requires a template Application without Task Configuration. Real results remain unverified until reviewed.",
+  "cases": [
+    {
+      "id": "create",
+      "tool": "plc_project_create",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "templateId": "${templateId}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "ld-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "StartStop",
+          "pouType": "program",
+          "language": "LD",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "leftPowerRail",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "contact",
+              "expression": "Start",
+              "x": 40,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "contact",
+              "expression": "Running",
+              "x": 40,
+              "y": 60,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "contact",
+              "expression": "Stop",
+              "negated": true,
+              "x": 120,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    },
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "coil",
+              "expression": "Running",
+              "x": 200,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "executionOrder": 1
+            },
+            {
+              "id": 6,
+              "kind": "rightPowerRail",
+              "x": 280,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "artifactId": "/value/artifact/artifactId",
+        "expectedHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "ld-inspect",
+      "tool": "plc_exchange_validate",
+      "arguments": {
+        "artifactId": "${artifactId}"
+      },
+      "expect": [
+        {
+          "path": "/value/format",
+          "equals": "plcopen"
+        },
+        {
+          "path": "/value/languages",
+          "equals": [
+            "LD"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ld-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${artifactId}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${expectedHash}"
+        }
+      ]
+    },
+    {
+      "id": "ld-read-chunk",
+      "tool": "plc_exchange_read",
+      "arguments": {
+        "artifactId": "${artifactId}",
+        "maxChars": 128
+      },
+      "expect": [
+        {
+          "path": "/value/offset",
+          "equals": 0
+        },
+        {
+          "path": "/value/nextOffset",
+          "equals": 128
+        },
+        {
+          "path": "/value/complete",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "id": "ld-write",
+      "tool": "plc_pou_graph_write",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "artifactId": "${artifactId}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "objectId": "/result/engineeringResult/exchange/objectIds/0"
+      },
+      "expect": [
+        {
+          "path": "/result/engineeringResult/exchange/graph/semanticSha256",
+          "equals": "${expectedHash}"
+        },
+        {
+          "path": "/result/published",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "ld-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${objectId}"
+      },
+      "bind": {
+        "graphHash": "/result/exchange/graph/semanticSha256"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${expectedHash}"
+        }
+      ]
+    },
+    {
+      "id": "ld-generate-update",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "StartStop",
+          "pouType": "program",
+          "language": "LD",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "leftPowerRail",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "contact",
+              "expression": "Start",
+              "x": 40,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "contact",
+              "expression": "Running",
+              "x": 40,
+              "y": 60,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "contact",
+              "expression": "Stop",
+              "negated": true,
+              "x": 120,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    },
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "coil",
+              "expression": "Running",
+              "x": 200,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "executionOrder": 1,
+              "negated": true
+            },
+            {
+              "id": 6,
+              "kind": "rightPowerRail",
+              "x": 280,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "artifactId": "/value/artifact/artifactId",
+        "updatedHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "ld-update",
+      "tool": "plc_pou_graph_write",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "artifactId": "${artifactId}",
+        "objectId": "${objectId}",
+        "expectedGraphSha256": "${graphHash}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "ldId": "/result/engineeringResult/exchange/objectIds/0"
+      },
+      "expect": [
+        {
+          "path": "/result/engineeringResult/exchange/graph/semanticSha256",
+          "equals": "${updatedHash}"
+        }
+      ]
+    },
+    {
+      "id": "stale-graph",
+      "tool": "plc_pou_graph_write",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "artifactId": "${artifactId}",
+        "objectId": "${ldId}",
+        "expectedGraphSha256": "${graphHash}"
+      },
+      "expect": [
+        {
+          "path": "/status",
+          "equals": "Failed"
+        },
+        {
+          "path": "/errorCode",
+          "equals": "graph_revision_conflict"
+        }
+      ]
+    },
+    {
+      "id": "stale-kept-head",
+      "tool": "plc_workspace_get",
+      "arguments": {
+        "workspaceName": "p4-${runId}"
+      },
+      "expect": [
+        {
+          "path": "/value/revision",
+          "equals": "${revision}"
+        }
+      ]
+    },
+    {
+      "id": "fbd-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "DelayAndCount",
+          "pouType": "functionBlock",
+          "language": "FBD",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Reset",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            },
+            {
+              "name": "CountValue",
+              "type": "INT"
+            },
+            {
+              "name": "Delay",
+              "type": "TON"
+            },
+            {
+              "name": "Count",
+              "type": "CTU"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "expression": "Start",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "inVariable",
+              "expression": "T#1s",
+              "y": 40,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "block",
+              "typeName": "TON",
+              "instanceName": "Delay",
+              "executionOrder": 1,
+              "x": 80,
+              "inputs": [
+                {
+                  "name": "IN",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "PT",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "Q"
+                },
+                {
+                  "name": "ET"
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "outVariable",
+              "expression": "Running",
+              "x": 180,
+              "executionOrder": 2,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3,
+                      "sourcePin": "Q"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "inVariable",
+              "expression": "Reset",
+              "y": 120,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 6,
+              "kind": "inVariable",
+              "expression": "10",
+              "y": 160,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "kind": "block",
+              "typeName": "CTU",
+              "instanceName": "Count",
+              "executionOrder": 3,
+              "x": 80,
+              "y": 100,
+              "inputs": [
+                {
+                  "name": "CU",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "R",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                },
+                {
+                  "name": "PV",
+                  "connections": [
+                    {
+                      "sourceId": 6
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "Q"
+                },
+                {
+                  "name": "CV"
+                }
+              ]
+            },
+            {
+              "id": 8,
+              "kind": "outVariable",
+              "expression": "CountValue",
+              "x": 180,
+              "y": 100,
+              "executionOrder": 4,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 7,
+                      "sourcePin": "CV"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "artifactId": "/value/artifact/artifactId",
+        "expectedHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "fbd-inspect",
+      "tool": "plc_exchange_validate",
+      "arguments": {
+        "artifactId": "${artifactId}"
+      },
+      "expect": [
+        {
+          "path": "/value/format",
+          "equals": "plcopen"
+        },
+        {
+          "path": "/value/languages",
+          "equals": [
+            "FBD"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fbd-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${artifactId}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${expectedHash}"
+        }
+      ]
+    },
+    {
+      "id": "fbd-read-chunk",
+      "tool": "plc_exchange_read",
+      "arguments": {
+        "artifactId": "${artifactId}",
+        "maxChars": 128
+      },
+      "expect": [
+        {
+          "path": "/value/offset",
+          "equals": 0
+        },
+        {
+          "path": "/value/nextOffset",
+          "equals": 128
+        },
+        {
+          "path": "/value/complete",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "id": "fbd-write",
+      "tool": "plc_pou_graph_write",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "artifactId": "${artifactId}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "objectId": "/result/engineeringResult/exchange/objectIds/0"
+      },
+      "expect": [
+        {
+          "path": "/result/engineeringResult/exchange/graph/semanticSha256",
+          "equals": "${expectedHash}"
+        },
+        {
+          "path": "/result/published",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "fbd-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${objectId}"
+      },
+      "bind": {
+        "graphHash": "/result/exchange/graph/semanticSha256"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${expectedHash}"
+        }
+      ]
+    },
+    {
+      "id": "sfc-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "Sequence",
+          "pouType": "program",
+          "language": "SFC",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            }
+          ],
+          "actions": [
+            {
+              "name": "ResetOutput",
+              "implementation": "Running := FALSE;"
+            },
+            {
+              "name": "DriveOutput",
+              "implementation": "Running := TRUE;"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "step",
+              "name": "Idle",
+              "initial": true,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "transition",
+              "expression": "Start",
+              "y": 50,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "step",
+              "name": "Run",
+              "y": 100,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "actionBlock",
+              "action": "DriveOutput",
+              "x": 100,
+              "y": 100,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "transition",
+              "expression": "Stop",
+              "y": 150,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 6,
+              "kind": "jumpStep",
+              "name": "Idle",
+              "y": 200,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "kind": "actionBlock",
+              "action": "ResetOutput",
+              "x": 100,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "artifactId": "/value/artifact/artifactId",
+        "expectedHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "sfc-inspect",
+      "tool": "plc_exchange_validate",
+      "arguments": {
+        "artifactId": "${artifactId}"
+      },
+      "expect": [
+        {
+          "path": "/value/format",
+          "equals": "plcopen"
+        },
+        {
+          "path": "/value/languages",
+          "equals": [
+            "SFC"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sfc-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${artifactId}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${expectedHash}"
+        }
+      ]
+    },
+    {
+      "id": "sfc-read-chunk",
+      "tool": "plc_exchange_read",
+      "arguments": {
+        "artifactId": "${artifactId}",
+        "maxChars": 128
+      },
+      "expect": [
+        {
+          "path": "/value/offset",
+          "equals": 0
+        },
+        {
+          "path": "/value/nextOffset",
+          "equals": 128
+        },
+        {
+          "path": "/value/complete",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "id": "sfc-write",
+      "tool": "plc_pou_graph_write",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "artifactId": "${artifactId}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "objectId": "/result/engineeringResult/exchange/objectIds/0"
+      },
+      "expect": [
+        {
+          "path": "/result/engineeringResult/exchange/graph/semanticSha256",
+          "equals": "${expectedHash}"
+        },
+        {
+          "path": "/result/published",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "sfc-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${objectId}"
+      },
+      "bind": {
+        "graphHash": "/result/exchange/graph/semanticSha256"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${expectedHash}"
+        }
+      ]
+    },
+    {
+      "id": "export-plcopen",
+      "tool": "plc_project_export",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectIds": [
+          "${ldId}"
+        ],
+        "format": "plcopen",
+        "recursive": false
+      },
+      "bind": {
+        "importArtifact": "/result/exchange/artifact/artifactId"
+      }
+    },
+    {
+      "id": "conflict-reject",
+      "tool": "plc_project_import",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "artifactId": "${importArtifact}"
+      },
+      "expect": [
+        {
+          "path": "/status",
+          "equals": "Failed"
+        },
+        {
+          "path": "/errorCode",
+          "equals": "exchange_reported_error"
+        }
+      ]
+    },
+    {
+      "id": "conflict-preserved-head",
+      "tool": "plc_workspace_get",
+      "arguments": {
+        "workspaceName": "p4-${runId}"
+      },
+      "expect": [
+        {
+          "path": "/value/revision",
+          "equals": "${revision}"
+        }
+      ]
+    },
+    {
+      "id": "conflict-skip",
+      "tool": "plc_project_import",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "artifactId": "${importArtifact}",
+        "conflictPolicy": "skip"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      },
+      "expect": [
+        {
+          "path": "/result/engineeringResult/exchange/reexportVerified",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "export-native",
+      "tool": "plc_project_export",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectIds": [
+          "${ldId}"
+        ],
+        "format": "codesys-native",
+        "recursive": false
+      },
+      "bind": {
+        "nativeArtifact": "/result/exchange/artifact/artifactId"
+      }
+    },
+    {
+      "id": "native-validate",
+      "tool": "plc_exchange_validate",
+      "arguments": {
+        "artifactId": "${nativeArtifact}"
+      },
+      "expect": [
+        {
+          "path": "/value/validationScope",
+          "equals": "well_formed_xml_only"
+        }
+      ]
+    },
+    {
+      "id": "native-skip",
+      "tool": "plc_project_import",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "artifactId": "${nativeArtifact}",
+        "conflictPolicy": "skip"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "task-config",
+      "tool": "plc_task_configuration_create",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "applicationId": "${applicationId}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "taskConfigId": "/result/engineeringResult/configuration/objectId"
+      }
+    },
+    {
+      "id": "task-create",
+      "tool": "plc_task_create",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "taskConfigurationId": "${taskConfigId}",
+        "name": "GraphCycle",
+        "settings": {
+          "kind": "Cyclic",
+          "priority": "2",
+          "interval": "10",
+          "intervalUnit": "ms"
+        }
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "taskId": "/result/engineeringResult/configuration/objectId"
+      }
+    },
+    {
+      "id": "task-bind",
+      "tool": "plc_task_set_calls",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}",
+        "taskId": "${taskId}",
+        "calls": [
+          {
+            "pouId": "${ldId}",
+            "pouName": "StartStop",
+            "comment": "P4 graph regression"
+          }
+        ]
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "compile",
+      "tool": "plc_project_compile",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "applicationId": "${applicationId}"
+      },
+      "expect": [
+        {
+          "path": "/result/succeeded",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "save",
+      "tool": "plc_project_save",
+      "arguments": {
+        "workspaceName": "p4-${runId}",
+        "expectedRevision": "${revision}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      },
+      "expect": [
+        {
+          "path": "/result/isDelivery",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "reject-dtd",
+      "tool": "plc_exchange_stage",
+      "arguments": {
+        "format": "plcopen",
+        "xml": "<!DOCTYPE x [<!ENTITY e SYSTEM \"file:///not-read\">]><x>&e;</x>"
+      },
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "invalid_exchange_xml"
+        }
+      ],
+      "expectToolError": true
+    },
+    {
+      "id": "reject-artifact-path",
+      "tool": "plc_exchange_read",
+      "arguments": {
+        "artifactId": "../not-an-artifact"
+      },
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "invalid_artifact_id"
+        }
+      ],
+      "expectToolError": true
+    },
+    {
+      "id": "reject-dangling-edge",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "StartStop",
+          "pouType": "program",
+          "language": "LD",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "leftPowerRail",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "contact",
+              "expression": "Start",
+              "x": 40,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 999
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "contact",
+              "expression": "Running",
+              "x": 40,
+              "y": 60,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "contact",
+              "expression": "Stop",
+              "negated": true,
+              "x": 120,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    },
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "coil",
+              "expression": "Running",
+              "x": 200,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "executionOrder": 1
+            },
+            {
+              "id": 6,
+              "kind": "rightPowerRail",
+              "x": 280,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "dangling_graph_connection"
+        }
+      ],
+      "expectToolError": true
+    }
+  ]
+}

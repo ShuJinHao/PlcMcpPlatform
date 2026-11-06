@@ -16,8 +16,9 @@ public sealed class ExchangeArtifacts(string directory) : IExchangeArtifacts
     private void CheckRoot()
     {
         Directory.CreateDirectory(root);
-        for (var dir = new DirectoryInfo(root); dir is not null; dir = dir.Parent)
-            if ((dir.Attributes & FileAttributes.ReparsePoint) != 0) throw new ProjectEditException("artifact_path_not_allowed");
+        // The configured storage root is trusted, like WorkspaceFiles. System ancestors
+        // may be aliases (e.g. macOS /var -> /private/var); the root and artifact may not be links.
+        if ((File.GetAttributes(root) & FileAttributes.ReparsePoint) != 0) throw new ProjectEditException("artifact_path_not_allowed");
     }
     public async Task<ExchangeArtifact> PutAsync(string format, string xml, CancellationToken token)
     {

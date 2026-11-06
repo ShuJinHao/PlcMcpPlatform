@@ -24,6 +24,8 @@ public static class ExchangeValidation
             || !change.ArtifactId.All(Uri.IsHexDigit)) return "invalid_exchange_request";
         try
         {
+            var digest = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(change.Format + "\0" + change.Xml))).ToLowerInvariant();
+            if (digest != change.ArtifactId) return "artifact_integrity_mismatch";
             _ = ExchangeXml.Inspect(change.Format, change.Xml);
             if (operation == ExchangeOperations.WriteGraph)
             {

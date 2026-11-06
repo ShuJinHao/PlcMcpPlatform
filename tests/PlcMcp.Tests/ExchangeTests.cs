@@ -2,10 +2,13 @@ using System.Text.Json;
 using System.Xml.Linq;
 using PlcMcp.Core.Workspaces;
 using PlcMcp.EngineeringService.Exchange;
+using PlcMcp.EngineeringService.Editing;
+using PlcMcp.EngineeringService.Execution;
 using PlcMcp.Execution;
 using PlcMcp.Services.Contracts.Editing;
 using PlcMcp.Services.Contracts.Exchange;
 using PlcMcp.Services.Contracts.Workers;
+using PlcMcp.TestHost;
 using Xunit;
 
 namespace PlcMcp.Tests;
@@ -81,5 +84,38 @@ public sealed class ExchangeTests
             Assert.Equal("artifact_integrity_mismatch", (await Assert.ThrowsAsync<ProjectEditException>(() => store.GetAsync(a.ArtifactId, default))).Code);
         }
         finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+    }
+    [Theory]
+    [InlineData(null, "Succeeded", null)]
+    [InlineData("graph_loss", "Failed", "graph_semantic_readback_mismatch")]
+    public async Task Semantic_proof_runs_before_candidate_publication(string? fault, string status, string? error)
+    {
+        await using var h = await ManagedEditingTests.Harness.Create(fault);
+        var initial = await h.Complete(EditOperations.CreateProject, new("demo", TemplateId: "sample"));
+        var revision = initial.Result!.Value.GetProperty("revision").GetString()!;
+        var artifacts = new ExchangeArtifacts(Path.Combine(h.Root, "exchange"));
+        var worker = new ManagedProjectExecutor(new ExchangeExecutor(new FixtureExecutor(Path.Combine(h.Root, "exchange-calls")), artifacts), h.Files, h.Changes);
+        var jobs = new ManagedEditingJobs(h.Store, h.Changes, h.Files, worker);
+        var service = new ExchangeService(artifacts, jobs);
+        var graph = await service.GenerateAsync(Sample("ld-start-stop"), default);
+        var submitted = await service.ImportAsync("demo", revision, h.Fixture.ApplicationId, graph.Artifact.ArtifactId,
+            "reject", false, "create-graph", 120, default, graph: true);
+        Assert.True(submitted.IsSuccess, submitted.Error?.Code);
+        await new JobDispatcher(h.Store, worker).RunNextAsync(default);
+        var result = (await h.Store.GetAsync(submitted.Value!.JobId, default))!;
+        Assert.Equal(status, result.Status); Assert.Equal(error, result.ErrorCode);
+        var head = (await jobs.GetWorkspaceAsync("demo", default)).Value!;
+        if (error is not null) Assert.Equal(revision, head.Revision);
+        else
+        {
+            Assert.NotEqual(revision, head.Revision);
+            var exchange = result.Result!.Value.GetProperty("engineeringResult").GetProperty("exchange");
+            Assert.False(exchange.TryGetProperty("xml", out _));
+            Assert.Equal(graph.Graph.SemanticSha256, exchange.GetProperty("graph").GetProperty("semanticSha256").GetString());
+            var repeated = await service.ImportAsync("demo", revision, h.Fixture.ApplicationId, graph.Artifact.ArtifactId,
+                "reject", false, "create-graph", 120, default, graph: true);
+            Assert.Equal(result.JobId, repeated.Value!.JobId);
+        }
+        Assert.False((await h.Store.GetSlotAsync(default)).Blocked);
     }
 }

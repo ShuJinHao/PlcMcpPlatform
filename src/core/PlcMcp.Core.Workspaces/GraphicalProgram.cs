@@ -62,7 +62,12 @@ public static class GraphRules
             { if (!Text(n.Expression, 1024)) return "graph_expression_required"; }
             else if (n.Expression is not null) return "graph_field_not_applicable";
             if (n.Kind is "contact" or "coil")
-            { if (!Regex.IsMatch(n.Expression!, "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$")) return "invalid_graph_variable_reference"; }
+            {
+                if (!Regex.IsMatch(n.Expression!, "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$")) return "invalid_graph_variable_reference";
+                if (!n.Expression!.Contains('.') && !variables.Any(v => v.Name.Equals(n.Expression, StringComparison.OrdinalIgnoreCase) && v.Type == "BOOL")) return "graph_bool_variable_required";
+            }
+            if (n.Kind is "coil" or "outVariable" && n.ExecutionOrder is null or <= 0) return "graph_execution_order_required";
+            if (n.Kind == "outVariable" && !Regex.IsMatch(n.Expression!, "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$")) return "invalid_graph_variable_reference";
             if (n.Edge is not ("none" or "rising" or "falling") || n.Edge != "none" && n.Kind is not ("contact" or "coil")
                 || n.Storage is not ("none" or "set" or "reset") || n.Storage != "none" && n.Kind != "coil"
                 || n.Negated && n.Kind is not ("contact" or "coil" or "inVariable" or "outVariable")) return "invalid_graph_modifier";
@@ -101,6 +106,7 @@ public static class GraphRules
         else
         {
             if (actions.Length > 0) return "graph_field_not_applicable";
+            if (program.Language == "LD" && (!nodes.Any(n => n.Kind == "coil") || !nodes.Any(n => n.Kind == "leftPowerRail") || !nodes.Any(n => n.Kind == "rightPowerRail"))) return "incomplete_ld_network";
             var visited = new HashSet<int>(); var active = new HashSet<int>();
             bool Cycle(int id)
             {
