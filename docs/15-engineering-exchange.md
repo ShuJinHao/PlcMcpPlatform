@@ -1,8 +1,8 @@
 # 第四批：工程交换与图形程序内容编辑
 
-本批为 OpenCode 调用同一个 MCP 服务增加 9 个工具，TestHost / ValidationHost 共 58 个。实现包含应用用例、领域图形规则、原创 PLCopen 编解码器、制品存储、原始 ScriptEngine 调用、候选工程发布保护及回归场景。没有引入第三方 PLC MCP、第二层 MCP 服务或模型编排层。
+本批为 OpenCode 调用同一个 MCP 服务增加 9 个工具，P4 交付时 TestHost / ValidationHost 共 58 个，P5 当前共 67 个。实现包含应用用例、领域图形规则、原创 PLCopen 编解码器、制品存储、原始 ScriptEngine 调用、候选工程发布保护及回归场景。没有引入第三方 PLC MCP、第二层 MCP 服务或模型编排层。
 
-**交付状态：代码与离线回归；真实 InoProShop / IronPython / OpenCode 客户端尚未验证。** 所有汇川能力继续 Unverified，默认生产宿主仍只开放两个查询工具。当前无需 Windows 或 PLC；将来使用独立 ValidationHost 集中验证。
+**当前状态：代码与离线回归；真实 InoProShop / IronPython 与模型生成闭环尚未验证。** P5 已补 OpenCode CLI 连接检查，见 docs/16。 所有汇川能力继续 Unverified，默认生产宿主仍只开放两个查询工具。当前无需 Windows 或 PLC；将来使用独立 ValidationHost 集中验证。
 
 ## 实现范围
 
@@ -49,11 +49,11 @@ replace 可能改变 GUID，后续调用使用返回的新标识。已知任务�
 
 ## 大小和解析限制
 
-- 每个 XML 制品最多 65,536 个 UTF-8 字节；XML 最深 32 层、最多 4,096 个元素，禁用 DTD 和外部实体。大工程先选对象或子树；目前没有多制品事务或大文件流式导入。
+- P5 后通用 XML 制品默认 8 MiB、可配置最高 64 MiB；内联 stage 与 graph-v1 XML 仍限制 65,536 个 UTF-8 字节。XML 最深 32 层、最多 100,000 个元素，禁用 DTD 和外部实体。分块上传与私有 Worker 文件传递见 docs/16；这是有界文件传递，IDE 解析仍可能在内存中加载完整 XML。
 - 请求最多选择 128 个对象或单独 `["project"]`；内部展开和结果最多 2,000 个对象。PLCopen 对不可导出对象明确失败，不能假设整个硬件工程可用 PLCopen 表达。
 - graph-v1 最多 256 节点、512 变量、256 动作、每节点每侧 64 引脚。检查重复 ID、悬空连接、引脚名、执行顺序、无状态反馈环和基础 SFC 拓扑；真实类型/库解析仍靠 IDE 编译。
 - 制品分块最多 8,192 个 UTF-16 代码单元，沿用返回的 nextOffset；不在代理对中间截断。字节数、XML 哈希和读取偏移不是同一单位。
-- Worker 请求仍有 128 KiB 总上限；JSON 转义后超限的请求会被拒绝，即使原 XML 未达到 64 KiB。
+- Worker JSON 请求仍有 128 KiB 总上限；超过 64 KiB 的 XML 改用私有侧文件，较小的内联 XML 若 JSON 转义后总请求超限仍拒绝。
 - PLCopen 检查是有界结构检查；原生格式仅检查 XML 可解析。产品未内置官方 XSD 或声明完整标准一致性。
 
 ## 源码分工

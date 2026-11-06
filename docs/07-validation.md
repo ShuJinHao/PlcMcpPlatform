@@ -80,3 +80,13 @@ P2 历史的 35 项 Python 测试包含 10 项探针、12 项读取/编译与 13
 新增断言覆盖 LD/FBD/SFC 往返、几何与语义区别、重复/悬空连接、执行顺序、未知扩展、不可应用字段、DTD/实体、制品损坏、图形失真不能发布、幂等重试；脚本测试覆盖官方重载、冲突/替换身份、跳过/警告/部分失败、原生取消/丢失成员、保存重开失真。标准 .NET 检查在三系统 CI 执行；当前本地托管运行环境的进程信息限制导致 dotnet CLI/MSBuild 无法完整启动，本地 Roslyn 核心编译、图形往返和 Python 检查仅作开发证据。
 
 三个原创图形样例产生的 XML 已在开发时用官方 TC6 2.01 XSD 校验通过，未复制 schema 入库。XSD 样例校验、fixture、CPython、Windows CI 都不能替代 InoProShop、IronPython 和实际 OpenCode 回归。真实验收入口与剩余范围见 [docs/15](15-engineering-exchange.md)。
+
+## P5 批量与交付验证
+
+本批为 81 项 .NET 测试、71 项 Python 测试、六组 HTTP 检查和发布回归。最新结果见 [PR #6 checks](https://github.com/ShuJinHao/PlcMcpPlatform/pull/6/checks)。P3/P4/P5 场景分别为 42/38/18 步；plc 工具快照为 67 个，另有 graph-v1 与 batch-v1 快照。正常 CI 只比对，不自动重写契约。
+
+新增覆盖一次批量发布、已完成步骤保留、编译/重复名/跨 Application 失败、未知操作中止、前向引用、上传断点恢复/幂等块/摘要/DTD/UTF-8、私有文件完整性、准确版本 ZIP 与完整下载校验，以及大失败 XML 的制品化证据。发布测试实际构建 production/fixture 包，启动并诊断两者，在已发布 fixture 上执行 P5 场景；Windows 另构建 validation 包，不启动 IDE。篡改发布文件必须被拒绝。
+
+Linux CI 安装固定官方 OpenCode 1.19.5，独立配置执行 mcp list，已得到 plc connected。HTTP 工具发现为 67 个。检查不提供模型凭据、不请求 LLM，因此实际模型的生成/修复行为仍未验证。Windows CI 没有 InoProShop，不能作为真实 IDE/IronPython 或设备运行证据。
+
+统一开发入口为 python eng/verify.py；后续真实 Windows 集中验收入口为 eng/run-regressions.py，版本、模式、配置和任务结果随报告保留，失败后停止，不自动重放未知操作。

@@ -38,7 +38,7 @@ OpenCode 提示示例：“使用 plc MCP 查询平台状态和汇川能力，�
 
 ## 离线开发与真实执行准备
 
-P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编辑启动见 [第二批说明](13-managed-editing.md)，读取/调度背景见 [第一批说明](12-execution.md)。默认真实宿主仅注册两个查询工具；测试宿主提供 58 个工具，明确标注 fixture/simulated，不能将模拟结果视为汇川支持证据。
+P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编辑启动见 [第二批说明](13-managed-editing.md)，读取/调度背景见 [第一批说明](12-execution.md)。默认真实宿主仅注册两个查询工具；测试宿主提供 67 个工具，明确标注 fixture/simulated，不能将模拟结果视为汇川支持证据。
 
 真实环境后续确认 InoProShop 脚本入口、Profile、无 UI、进程归属和官方 API 兼容性。`IInovanceLaunchProfile` 隔离启动差异；当前首个策略仍为未验证。目标工程脚本由 IDE 内置环境执行，普通 CPython 只用于测试调用逻辑。
 
@@ -51,3 +51,9 @@ P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编�
 ## P4 图形与交换
 
 使用同一 TestHost / ValidationHost 和 OpenCode MCP 配置。构建后运行 `python eng/verify-exchange.py` 自动执行 38 步场景；手工 OpenCode 提示见 [config/opencode-exchange-scenario.md](../config/opencode-exchange-scenario.md)。完整模型、工具、实际导入策略与后续 Windows 回归见 [第四批说明](15-engineering-exchange.md)。不需要额外启动汇川 MCP 或模型服务。
+
+## P5 批量、发布与集中回归
+
+运行 `python eng/verify.py` 进行完整代码检查，或 `python eng/verify-delivery.py` 检查 P5 的 HTTP 场景和大文件。发布入口 `eng/publish.py`，已发布宿主启动前检查 `eng/start.py --check-only`，连接诊断 `eng/doctor.py`，大文件助手 `eng/transfer.py`，跨 P3/P4/P5 场景入口 `eng/run-regressions.py`。
+
+[第五批说明](16-engineering-delivery.md) 包含 Mac fixture 和 Windows validation 的配置约束、准确版本 ZIP、上传恢复与错误含义；[OpenCode 完整提示](../config/opencode-delivery-scenario.md) 用于后续模型回归。CLI 连接已验证到固定 1.19.5，模型闭环与真实 IDE 仍待验证。已有脚本全部调用本项目同一个 MCP 端点，不依赖第三方 PLC MCP。

@@ -6,7 +6,7 @@
 
 ## 27 个新增工具
 
-第三批交付时加上前两批 22 个共有 49 个工具；第四批追加后当前为 58 个，见 docs/15。所有写操作都提交持久化任务，使用工作区的 m2 修订，修改独立候选副本。成功后返回新版本；原版本和原模板保留。
+第三批交付时加上前两批 22 个共有 49 个工具；第五批追加后当前为 67 个，见 docs/16。所有写操作都提交持久化任务，使用工作区的 m2 修订，修改独立候选副本。成功后返回新版本；原版本和原模板保留。
 
 | 工具 | 工程行为 |
 |---|---|
@@ -83,12 +83,12 @@ IO 映射按 `is_mappable_io` 和映射对象是否存在判断可映射性，�
 | 入口 | 用途 | 工具/执行来源 |
 |---|---|---|
 | `src/hosts/PlcMcp.McpHost` | 默认生产入口 | 2 个状态查询；不执行未验证工程能力 |
-| `tests/PlcMcp.TestHost` | Mac/Linux/Windows 自动开发检查 | 当前 58 个工具；fixture/simulated |
-| `src/hosts/PlcMcp.ValidationHost` | 后续真实 Windows 集中回归 | 当前 58 个工具；real/unverified；仅显式操作白名单可执行 |
+| `tests/PlcMcp.TestHost` | Mac/Linux/Windows 自动开发检查 | 当前 67 个工具；fixture/simulated |
+| `src/hosts/PlcMcp.ValidationHost` | 后续真实 Windows 集中回归 | 当前 67 个工具；real/unverified；仅显式操作白名单可执行 |
 
 验证宿主不是默认宿主的一个配置开关。它要求 Windows、独立且明确的数据目录和工作区、验证配置文件、实际 IDE 路径与匹配 Profile。执行器在入队及实际执行时检查白名单；模板创建/保存的内部 project.verify 也受原操作范围约束。没有模拟回退，也不会自动提升能力状态。
 
-`plc_runtime_get_status.validation` 和真实操作结果记录验证 ID、声明的 IDE/ScriptEngine 版本、Profile、允许操作和脚本包 SHA-256。包指纹由 engineering_worker.py 与 configuration_worker.py 的文件名和各文件摘要组成；脚本变更后必须重启宿主。`versionsVerified=false` 明确版本是操作者登记值，尚未由本服务确认。IDE 命令行和进程模型也仍待真实验证。
+`plc_runtime_get_status.validation` 和真实操作结果记录验证 ID、声明的 IDE/ScriptEngine 版本、Profile、允许操作和脚本包 SHA-256。包指纹由 engineering_worker.py、configuration_worker.py、exchange_worker.py 的文件名和各文件摘要组成；脚本变更后必须重启宿主。`versionsVerified=false` 明确版本是操作者登记值，尚未由本服务确认。IDE 命令行和进程模型也仍待真实验证。
 
 ### Mac 自动回归
 

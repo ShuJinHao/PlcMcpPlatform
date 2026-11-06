@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-delivery-check-') as tmp, tempfi
                '<fileHeader companyName="PlcMcpPlatform" productName="Fixture" productVersion="1" creationDateTime="2000-01-01T00:00:00Z"/>'
                '<contentHeader name="Bulk"><coordinateInfo/></contentHeader><types><dataTypes/><pous><pou name="Bulk" pouType="program"><interface/>'
                '<body><ST><x:xhtml>' + '(* original large exchange sample 测试 *)\n' * 4000 + '</x:xhtml></ST></body></pou></pous></types><instances><configurations/></instances></project>')
-        source = directory/'large.xml'; source.write_bytes(xml.encode('utf-8'))
+        source = directory/'large.xml'; source.write_bytes(('\ufeff'+xml).encode('utf-8'))
         artifact = upload_xml(client, source, 'plcopen', 'large-'+variables['runId'])
         assert artifact['byteLength'] > 65536 and artifact == upload_xml(client, source, 'plcopen', 'large-'+variables['runId'])
         invalid = client.call('plc_exchange_upload_begin', dict(uploadKey='too-large', format='plcopen', byteLength=1048577, sha256='0'*64), allow_error=True)

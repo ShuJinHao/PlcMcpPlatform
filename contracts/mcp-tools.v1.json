@@ -8383,7 +8383,7 @@
   },
   {
     "name": "plc_project_batch_preview",
-    "description": "Preview an ordered, bounded plan for one Application. Steps can reference prior step identities as @stepId. Returns a plan hash bound to the exact workspace revision; this does not validate or modify an IDE.",
+    "description": "Preview up to 32 ordered steps for one Application. Allowed operations: dut.create, dut.update, gvl.create, gvl.update, pou.create, pou.update, pou.graph.write, task.configuration.create, task.create, task.update, task.calls.set. Parent/object IDs and task-call pouId can reference prior identities as @stepId; source text is never interpolated. Returns a plan hash bound to the exact workspace revision; this does not validate or modify an IDE.",
     "inputSchema": {
       "type": "object",
       "properties": {

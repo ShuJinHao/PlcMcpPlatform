@@ -15,7 +15,9 @@ public static class ExchangeXml
         if (string.IsNullOrWhiteSpace(xml) || Encoding.UTF8.GetByteCount(xml) > maxBytes) throw new ProjectEditException("exchange_size_invalid");
         try
         {
-            using var input = new StringReader(xml);
+            // A decoded UTF-8 BOM is an encoding marker, not XML content. Keep the
+            // original bytes/string for artifact identity; strip it only for parsing.
+            using var input = new StringReader(xml[0] == '\uFEFF' ? xml[1..] : xml);
             using var reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit,
                 XmlResolver = null, MaxCharactersInDocument = maxBytes, IgnoreComments = false });
             var document = XDocument.Load(reader, LoadOptions.PreserveWhitespace);

@@ -142,7 +142,7 @@ public sealed class DeliveryTests
             var artifacts = new ExchangeArtifacts(Path.Combine(root, "artifacts"));
             async Task<ExchangeArtifact> Accept(string f, string xml, CancellationToken t) { _ = ExchangeXml.Inspect(f, xml); return await artifacts.PutAsync(f, xml, t); }
             var store = new ExchangeUploads(Path.Combine(root, "uploads"), Accept);
-            var bytes = Encoding.UTF8.GetBytes("<Native><content>" + new string('测', 50000) + "</content></Native>");
+            var bytes = Encoding.UTF8.GetBytes("\uFEFF<Native><content>" + new string('测', 50000) + "</content></Native>");
             var sha = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
             var start = await store.BeginAsync("large", "codesys-native", bytes.Length, sha, default);
             Assert.Equal("upload_incomplete", (await Assert.ThrowsAsync<ProjectEditException>(() => store.CompleteAsync(start.UploadId, default))).Code);

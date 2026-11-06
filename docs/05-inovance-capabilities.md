@@ -2,7 +2,7 @@
 
 ## 状态规则
 
-本表是完整覆盖目标，不是支持声明。当前 P4 尚未连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
+本表是完整覆盖目标，不是支持声明。当前 P5 尚未连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
 
 | 状态 | 含义 |
 |---|---|
@@ -105,3 +105,14 @@ Task、Member、Object、Library、Device/Parameter/IO 已有完整工具和原�
 ## P4 实现范围
 
 新增 project.export / project.import / pou.graph.read / pou.graph.write 操作与 5 个本地制品/图形工具。LD、FBD、基础 SFC 的 graph-v1 内容已实现；CFC 仅走不透明原生交换调用路径，EtherCAT PDO 仍无独立编辑实现。SFC 子成员、复杂声明与未知扩展有明确拒绝规则，见 [第四批说明](15-engineering-exchange.md)。这些实现与自动检查均不改变厂商能力的 Unverified 状态。
+
+## P5 实现范围
+
+| 能力 | 代码状态 | 支持声明 |
+|---|---|---|
+| project.batch | 单 Application、有序 32 步上限、逐步保存重开、最终编译、一次发布 | 复用基础操作，仍 Unverified；不是新的厂商 SDK 方法 |
+| project.package | 私有副本读取任务/编译，准确版本 ZIP 与摘要 | 真实环境、编译缓存与依赖兼容待验收 |
+| XML 大文件 | 默认 8 MiB、上限 64 MiB、分块与固定私有文件 | 传输扩容不扩大图形语言或 XML 无损声明 |
+| OpenCode CLI | 1.19.5 连接成功；HTTP 契约 67 工具 | 只证明连接；LLM 生成仍未验收 |
+
+复杂 SFC、图形 POU 子成员、CFC 结构和 PDO 的证据调查见 docs/10；本批没有据语言枚举或通用 IO 参数接口提升这些能力。

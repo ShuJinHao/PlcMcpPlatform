@@ -20,7 +20,7 @@ public sealed class DeliveryTools(BatchService batches, DeliveryService delivery
     IDeliveryArtifacts packages, IBatchJournal journals, IJobStore jobs, IEngineeringExecutor executor, ExecutionSignal signal)
 {
     [McpServerTool(Name = "plc_project_batch_preview", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<BatchPreview>))]
-    [Description("Preview an ordered, bounded plan for one Application. Steps can reference prior step identities as @stepId. Returns a plan hash bound to the exact workspace revision; this does not validate or modify an IDE.")]
+    [Description("Preview up to 32 ordered steps for one Application. Allowed operations: dut.create, dut.update, gvl.create, gvl.update, pou.create, pou.update, pou.graph.write, task.configuration.create, task.create, task.update, task.calls.set. Parent/object IDs and task-call pouId can reference prior identities as @stepId; source text is never interpolated. Returns a plan hash bound to the exact workspace revision; this does not validate or modify an IDE.")]
     public Task<CallToolResult> Preview(string workspaceName, string expectedRevision, BatchPlan plan, CancellationToken cancellationToken)
         => Query(() => batches.PreviewAsync(workspaceName, expectedRevision, plan, cancellationToken));
 
