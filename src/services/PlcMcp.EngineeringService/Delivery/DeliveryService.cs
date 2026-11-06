@@ -29,6 +29,8 @@ public sealed class DeliveryService(IJobStore jobs, IManagedProjectFiles files, 
             if (head.Snapshot.Revision != revision) throw new ProjectEditException("workspace_revision_conflict");
             if (head.Snapshot.Template.ExecutionMode != executor.ExecutionMode) throw new ProjectEditException("execution_mode_mismatch");
             await files.VerifyAsync(head.Snapshot, token);
+            if (await executor.CheckRequestAsync(submission.Operation, submission.Input, token) is { } scoped)
+                return Result<JobView>.Failure(scoped.Code, scoped.Message);
             return await jobs.SubmitAsync(submission, new(path, revision), fingerprint, executor.ExecutionMode, token);
         }
         catch (ProjectEditException e) { return Result<JobView>.Failure(e.Code, "Delivery requires a matching managed revision and application."); }

@@ -2,7 +2,7 @@
 
 本批扩展同一个标准 MCP Server 的工程能力。OpenCode 负责生成程序、选择工具和根据诊断修正；服务负责模型校验、官方 ScriptEngine 交换调用、工程修改及结果反馈。没有新增客户端业务适配、会话管理或模型编排。
 
-当前交付为代码与离线回归，真实 InoProShop/IronPython、模型生成与 PLC 运行仍未验收。TestHost / ValidationHost 保持 74 个工具；默认生产宿主仍只开放两个查询工具，厂商能力均为 Unverified、engineeringReady=false。
+当前交付为代码与离线回归，真实 InoProShop/IronPython、模型生成与 PLC 运行仍未验收。TestHost / ValidationHost 保持 74 个工具；当时的生产宿主仅开放两个查询工具；P9 已改为本地工具及按范围验收的 IDE 工具，见 docs/20，厂商能力均为 Unverified、engineeringReady=false。
 
 ## 模型与兼容性
 

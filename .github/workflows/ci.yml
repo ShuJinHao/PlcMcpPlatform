@@ -37,3 +37,14 @@ jobs:
       - run: python eng/verify-graphs.py
       - run: python eng/verify-publish.py
       - run: python -m unittest discover -s tests/script_engine -v
+      - name: Package P9 prerelease modes
+        if: runner.os == 'Windows'
+        run: python eng/package-release.py --output artifacts/prerelease
+      - name: Upload immutable prerelease bundles
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlcMcpPlatform-P9-windows-bundles
+          path: artifacts/prerelease/*
+          if-no-files-found: error
+          retention-days: 30

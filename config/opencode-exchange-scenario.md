@@ -1,6 +1,6 @@
 # OpenCode 图形程序与交换场景
 
-先按 docs/13 在 Mac 启动 TestHost，或按 docs/14 在 Windows 启动独立 ValidationHost。两者使用 config/opencode.example.json 的同一个 /mcp 配置；默认生产入口仍只有两个状态工具。实际 OpenCode 联调尚未完成，下面是可执行的验收任务说明。
+先按 docs/13 在 Mac 启动 TestHost，或按 docs/14 在 Windows 启动独立 ValidationHost。两者使用 config/opencode.example.json 的同一个 /mcp 配置；P9 生产入口开放本地工具及已验收的 IDE 操作范围，见 docs/20。OpenCode CLI 连接已验证，模型生成与真实 IDE 联调尚未完成，下面是可执行的验收任务说明。
 
 可以向 OpenCode 提出：
 

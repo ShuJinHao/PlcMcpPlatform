@@ -2,7 +2,7 @@
 
 本批为 OpenCode 调用同一个 MCP 服务增加 9 个工具，P4 交付时 TestHost / ValidationHost 共 58 个，P5 当前共 67 个。实现包含应用用例、领域图形规则、原创 PLCopen 编解码器、制品存储、原始 ScriptEngine 调用、候选工程发布保护及回归场景。没有引入第三方 PLC MCP、第二层 MCP 服务或模型编排层。
 
-**当前状态：代码与离线回归；真实 InoProShop / IronPython 与模型生成闭环尚未验证。** P5 已补 OpenCode CLI 连接检查，见 docs/16。 所有汇川能力继续 Unverified，默认生产宿主仍只开放两个查询工具。当前无需 Windows 或 PLC；将来使用独立 ValidationHost 集中验证。
+**当前状态：代码与离线回归；真实 InoProShop / IronPython 与模型生成闭环尚未验证。** P5 已补 OpenCode CLI 连接检查，见 docs/16。 所有汇川能力继续 Unverified，当时的生产宿主仅开放两个查询工具；P9 已改为本地工具及按范围验收的 IDE 工具，见 docs/20。当前无需 Windows 或 PLC；将来使用独立 ValidationHost 集中验证。
 
 ## 实现范围
 

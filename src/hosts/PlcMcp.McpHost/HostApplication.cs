@@ -1,4 +1,8 @@
 using System.Net;
+using System.Text.Json;
+using ModelContextProtocol.Protocol;
+using PlcMcp.EngineeringService.Readiness;
+using PlcMcp.Services.Contracts.Workers;
 using PlcMcp.Services.Contracts.Incremental;
 using PlcMcp.EngineeringService.Incremental;
 using PlcMcp.EngineeringService.Exchange;
@@ -55,7 +59,11 @@ public static class HostApplication
         builder.Services.AddSingleton(_ => new InstanceOwnership(paths.DataDirectory));
         IEngineeringExecutor rawWorker = testExecutor?.Invoke(paths) ?? new InovanceExecutor(new(
             builder.Configuration["PlcMcp:Inovance:ExecutablePath"] ?? "", builder.Configuration["PlcMcp:Inovance:Profile"] ?? "",
-            Path.Combine(AppContext.BaseDirectory, "Scripts", "engineering_worker.py"), Path.Combine(data, "invocations"), maximum), validationProfile: validationProfile);
+            Path.Combine(AppContext.BaseDirectory, "Scripts", "engineering_worker.py"), Path.Combine(data, "invocations"), maximum,
+            builder.Configuration["PlcMcp:Inovance:EngineAssemblyPath"] ?? "",
+            builder.Configuration.GetSection("PlcMcp:Inovance:IdentityFiles").Get<string[]>(),
+            validation ? null : builder.Configuration["PlcMcp:Inovance:AcceptancePath"],
+            validation ? Path.Combine(data, "validation-evidence") : null), validationProfile: validationProfile);
         builder.Services.AddSingleton<IWorkspaceFiles>(new WorkspaceFiles(paths.WorkspaceRoot));
         var options = new DbContextOptionsBuilder<PlcMcpDbContext>().UseSqlite(
             new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path.Combine(data, "execution.db"), DefaultTimeout = 10 }.ToString()).Options;
@@ -75,9 +83,14 @@ public static class HostApplication
         builder.Services.AddSingleton<BatchService>();
         builder.Services.AddSingleton<IDeliveryArtifacts>(new DeliveryArtifacts(Path.Combine(data, "deliveries")));
         builder.Services.AddSingleton<DeliveryService>();
-        builder.Services.AddSingleton<IEngineeringExecutor>(sp => new IncrementalReadExecutor(new DeliveryExecutor(
+        builder.Services.AddSingleton<IEngineeringExecutor>(sp =>
+        {
+            IEngineeringExecutor composed = new IncrementalReadExecutor(new DeliveryExecutor(
             new ManagedProjectExecutor(new BatchExecutor(new IncrementalEditExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>())), sp.GetRequiredService<IBatchJournal>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>()),
-            sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IDeliveryArtifacts>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>()));
+            sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IDeliveryArtifacts>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>());
+            return !fixture && !validation && rawWorker is InovanceExecutor inovance
+                ? new AcceptedExecution(composed, inovance.Acceptance) : composed;
+        });
         builder.Services.AddSingleton<ManagedEditingJobs>();
         builder.Services.AddSingleton<EngineeringJobs>();
         builder.Services.AddSingleton<JobDispatcher>();
@@ -85,7 +98,39 @@ public static class HostApplication
         builder.Services.AddHostedService<ExecutionService>();
         var mcp = builder.Services.AddMcpServer()
             .WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless).WithTools<PlatformTools>();
-        if (fixture || validation) mcp.WithTools<EngineeringTools>().WithTools<EditingTools>().WithTools<ConfigurationTools>().WithTools<ExchangeTools>().WithTools<DeliveryTools>().WithTools<IncrementalTools>();
+        mcp.WithTools<EngineeringTools>().WithTools<EditingTools>().WithTools<ConfigurationTools>().WithTools<ExchangeTools>().WithTools<DeliveryTools>().WithTools<IncrementalTools>();
+        mcp.WithRequestFilters(filters =>
+        {
+            filters.AddListToolsFilter(next => async (context, token) =>
+            {
+                var result = await next(context, token);
+                var executor = context.Services!.GetRequiredService<IEngineeringExecutor>();
+                var available = ToolAccessCatalog.Inspect(executor).Where(tool => tool.Available).Select(tool => tool.Name).ToHashSet(StringComparer.Ordinal);
+                result.Tools = result.Tools.Where(tool => available.Contains(tool.Name)).ToList();
+                return result;
+            });
+            filters.AddCallToolFilter(next => async (context, token) =>
+            {
+                var executor = context.Services!.GetRequiredService<IEngineeringExecutor>();
+                var name = context.Params?.Name ?? "";
+                if (ToolAccessCatalog.Check(name, executor) is { } error)
+                {
+                    var body = JsonSerializer.SerializeToElement(new JobToolReply("1.9", executor.ExecutionMode, "unverified", false, null, error), WorkerJson.Options);
+                    return new CallToolResult { IsError = true, StructuredContent = body, Content = [new TextContentBlock { Text = body.GetRawText() }] };
+                }
+                var reply = await next(context, token);
+                // Evidence describes this response, not a global IDE certification.
+                if (executor.ExecutionMode == "real" && ToolAccessCatalog.Operations.TryGetValue(name, out var operation) && operation is null
+                    && reply.StructuredContent is { } content && name is not ("plc_capabilities_list" or "plc_runtime_get_status"))
+                {
+                    var node = System.Text.Json.Nodes.JsonNode.Parse(content.GetRawText())!.AsObject();
+                    node["evidenceKind"] = "local";
+                    reply.StructuredContent = JsonSerializer.SerializeToElement(node, WorkerJson.Options);
+                    reply.Content = [new TextContentBlock { Text = reply.StructuredContent.Value.GetRawText() }];
+                }
+                return reply;
+            });
+        });
         var app = builder.Build();
         try
         {
@@ -105,7 +150,14 @@ public static class HostApplication
             }
             await next(context);
         });
-        app.MapGet("/health/live", () => Results.Ok(new { status = "alive", stage = "P6-incremental-engineering", engineeringReady = false, executionMode = fixture ? "fixture" : "real", validationSession = validation }));
+        app.MapGet("/health/live", async () =>
+        {
+            var executor = app.Services.GetRequiredService<IEngineeringExecutor>();
+            var slot = await app.Services.GetRequiredService<IJobStore>().GetSlotAsync(CancellationToken.None);
+            return Results.Ok(new { status = "alive", stage = PlatformRelease.Stage,
+                engineeringReady = executor.Readiness?.State == "accepted" && executor.Unavailability is null && !slot.Blocked,
+                executionMode = fixture ? "fixture" : "real", validationSession = validation });
+        });
         app.MapMcp("/mcp");
         return app;
     }

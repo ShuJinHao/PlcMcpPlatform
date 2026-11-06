@@ -17,6 +17,8 @@ public sealed class IncrementalEditExecutor(IEngineeringExecutor worker) : IEngi
     public OperationError? Unavailability => worker.Unavailability;
     public OperationError? CheckAvailability(string operation) => worker.CheckAvailability(operation);
     public ValidationEvidence? Validation => worker.Validation;
+    public RuntimeReadiness? Readiness => worker.Readiness;
+    public Task<OperationError?> CheckRequestAsync(string operation, EngineeringInput input, CancellationToken token) => worker.CheckRequestAsync(operation, input, token);
     public async Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
     {
         if (request.Operation is not (IncrementalOperations.Patch or IncrementalOperations.Restore)) return await worker.ExecuteAsync(request, token);

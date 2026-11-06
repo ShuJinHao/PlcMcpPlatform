@@ -31,6 +31,13 @@ def prepare(bundle, data, workspace, dotnet='dotnet', environment=None):
         if any(not profile.get(k) or 'REPLACE_' in profile[k] for k in required) or not profile.get('allowedOperations'):
             raise ValueError('Complete the validation identity, exact versions, Profile and operation allowlist.')
         if profile['profile'] != env.get('PlcMcp__Inovance__Profile'): raise ValueError('Executable Profile and validation Profile must agree.')
+    acceptance_path = env.get('PlcMcp__Inovance__AcceptancePath')
+    if mode == 'production' and acceptance_path:
+        if sys.platform != 'win32': raise ValueError('Reviewed IDE execution requires Windows; omit AcceptancePath to use local tools.')
+        for setting in ('PlcMcp__Inovance__ExecutablePath', 'PlcMcp__Inovance__EngineAssemblyPath', 'PlcMcp__Inovance__AcceptancePath'):
+            path = Path(env.get(setting, ''))
+            if not path.is_absolute() or not path.is_file(): raise ValueError('Set '+setting+' to an existing absolute file.')
+    if mode != 'production': env.pop('PlcMcp__Inovance__AcceptancePath', None)
     env.update(PlcMcp__DataDirectory=str(data), PlcMcp__WorkspaceRoot=str(workspace),
                DOTNET_ENVIRONMENT='Development' if mode == 'fixture' else 'Production',
                DOTNET_HOST_PATH=str(Path(shutil.which(dotnet) or dotnet).resolve()))
@@ -42,7 +49,7 @@ def main():
     parser.add_argument('--data-directory', required=True); parser.add_argument('--workspace-root', required=True)
     parser.add_argument('--dotnet', default='dotnet'); parser.add_argument('--check-only', action='store_true'); args = parser.parse_args()
     manifest, command, env = prepare(args.bundle, args.data_directory, args.workspace_root, args.dotnet)
-    print(json.dumps(dict(mode=manifest['mode'], engineeringReady=False, checked=True, foreground=not args.check_only)), flush=True)
+    print(json.dumps(dict(mode=manifest['mode'], readiness='query_runtime_after_start', checked=True, foreground=not args.check_only)), flush=True)
     if args.check_only: return 0
     return subprocess.call(command, env=env, cwd=Path(args.bundle).resolve()/'bin')
 

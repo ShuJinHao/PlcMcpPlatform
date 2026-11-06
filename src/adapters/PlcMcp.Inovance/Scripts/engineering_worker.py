@@ -298,6 +298,13 @@ def execute(request, bindings):
     exchange_history = []
     try:
         validate(request)
+        runtime = None
+        if request["payload"].get("runtimeIdentityExpected") is not None:
+            try:
+                from runtime_identity import observe
+                runtime = observe(request["payload"]["runtimeIdentityExpected"])
+            except Exception:
+                raise WorkerError("runtime_identity_mismatch")
         projects, system = bindings.get("projects"), bindings.get("system")
         flags = bindings.get("VersionUpdateFlags")
         if projects is None or system is None or flags is None:
@@ -397,6 +404,8 @@ def execute(request, bindings):
                 response["errorCode"] = "compile_failed"
         if not editing and revision(path) != before:
             raise WorkerError("workspace_revision_conflict")
+        if runtime is not None:
+            result["runtimeIdentity"] = runtime
         response["payload"] = result
         response["outcome"] = "failed" if response["errorCode"] else "succeeded"
     except WorkerError as error:

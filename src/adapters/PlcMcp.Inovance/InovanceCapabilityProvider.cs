@@ -1,12 +1,15 @@
 using PlcMcp.Services.Contracts.Capabilities;
+using PlcMcp.Services.Contracts.Execution;
 
 namespace PlcMcp.Inovance;
 
 /// <summary>仅登记覆盖目标。没有真实 IDE 证据时，所有工程能力均为 Unverified。</summary>
-public sealed class InovanceCapabilityProvider : IPlcCapabilityProvider
+public sealed class InovanceCapabilityProvider(IEngineeringExecutor? executor = null) : IPlcCapabilityProvider
 {
     public string VendorId => "inovance";
-    public IReadOnlyList<CapabilityDescriptor> GetCapabilities() => Array.AsReadOnly(new CapabilityDescriptor[]
+    public IReadOnlyList<CapabilityDescriptor> GetCapabilities()
+    {
+        var capabilities = new CapabilityDescriptor[]
     {
         Describe("project.adopt", OperationRisk.ModifyProject),
         Describe("project.restore", OperationRisk.ModifyProject),
@@ -83,8 +86,14 @@ public sealed class InovanceCapabilityProvider : IPlcCapabilityProvider
         Describe("online.download", OperationRisk.OnlineControl),
         Describe("online.start", OperationRisk.OnlineControl),
         Describe("online.stop", OperationRisk.OnlineControl),
-    });
-    private static CapabilityDescriptor Describe(string id, OperationRisk risk) =>
-        new(id, "inovance", "unverified", CapabilityStatus.Unverified, risk,
-            "Real InoProShop validation is pending. Offline implementation and fixture tests do not establish vendor support.");
+        };
+        var state = executor?.Readiness;
+        if (state?.State != "accepted") return capabilities;
+        var available = executor!.InspectAvailability(capabilities.Select(c => c.Id));
+        return capabilities.Select(c => available[c.Id] is null ? c with { IdeVersion = state.IdeVersion ?? "unknown", Status = CapabilityStatus.Supported,
+            Reason = "Accepted only within the listed conditions and exact environment identity. Composite operations also require their dependencies.",
+            EvidenceReference = state.AcceptanceId, AcceptedScopes = state.Grants.Where(g => g.Operation == c.Id || CompositeRequirements.Dependencies(c.Id).Contains(g.Operation)).ToArray() } : c).ToArray();
+    }
+    private static CapabilityDescriptor Describe(string id, OperationRisk risk) => new(id, "inovance", "unverified", CapabilityStatus.Unverified, risk,
+        "No reviewed real execution evidence for this operation. Offline tests do not establish vendor support.");
 }

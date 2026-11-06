@@ -1,3 +1,5 @@
+> P9：正式执行、范围验收与预发布交付，见 [docs/20-production-readiness.md](docs/20-production-readiness.md)。
+
 # PLC MCP Platform
 
 让 **OpenCode 通过 MCP 操作 InoProShop，生成、修改和编译汇川 PLC 工程**。
@@ -8,15 +10,15 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
 
-## 当前阶段 P8 图形编程扩展
+## 当前阶段 P9 正式运行与预发布交付
 
-在保留 graph-v1 的基础上新增 graph-v2：函数返回类型、数组边界、字符串长度、LD/FBD 连接标签、FBD 双向引脚及结构化 SFC 选择/并行分支与汇合。新结构通过既有 MCP 工具生成、读取、修改，接入批量发布、版本差异和准确修订交付包。
+正式宿主提供 22 个不依赖 IDE 的本地工具；其余工程工具根据实际安装、Profile、脚本与执行代码指纹及人工验收范围开放。发现、调用、任务提交和执行共用门禁；批次缺少依赖或参数越界时先拒绝再写入。
 
-沿用 P7 成员/访问器与共享组态批量修改、P6 工程接入和历史恢复。TestHost / ValidationHost 仍为 **74 个工具**；.NET 8、DDD 分层、官方 MCP C# SDK 和原创厂商脚本保持不变。OpenCode 侧使用标准 MCP 连接。
+共保留 **74 个工具实现**。TestHost 可离线回归全部实现；ValidationHost 按显式 allowlist 收集真实执行证据。当前没有真实验收记录，所有汇川能力仍为 `Unverified`、`engineeringReady=false`。真实 IDE、模型生成与 PLC 运行验证留待后续集中开展，Mac 可以继续开发和离线测试。
 
-默认生产宿主只开放两个查询工具，所有汇川能力仍为 `Unverified`、`engineeringReady=false`。目标 InoProShop/IronPython、模型生成和 PLC 运行尚未验收，Mac 可以继续开发与离线回归。图形子对象、未知 XML 数据保护保持启用。
+既有 graph-v1/v2、POU/成员、设备/任务/库、批量编辑、修订历史、精确补丁与交付包能力继续保留。.NET 8、DDD、官方 MCP C# SDK、原创厂商脚本和 OpenCode 标准 MCP 连接保持不变。
 
-详情见 [第八批说明](docs/19-graph-v2-engineering.md)。统一检查 `python eng/verify.py`，集中场景 `eng/run-regressions.py --suite all` 包含 P3～P8；本批 31 个场景和 11 步混合语言工程创建见 [回归文件](config/regression/p8-graph-v2.json)。三系统检查见 [PR #9 checks](https://github.com/ShuJinHao/PlcMcpPlatform/pull/9/checks)。
+详见 [P9 运行和验收手册](docs/20-production-readiness.md)。统一检查 `python eng/verify.py`；集中工程场景 `eng/run-regressions.py --suite all` 包含 P3～P8。CI 的 Windows 作业生成 production / validation / fixture 三种预发布 ZIP、SHA256 和来源提交清单，保存在 Actions artifacts 中。
 
 ## 文档入口
 
@@ -42,6 +44,7 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 | [第六批已有工程与增量编程](docs/17-incremental-engineering.md) | 工程接入、上下文、精确补丁、历史、差异和恢复 |
 | [第七批成员与批量修改](docs/18-members-batch.md) | 工程对象查询、访问器修改、设备/库作用范围和多应用检查 |
 | [第八批图形扩展](docs/19-graph-v2-engineering.md) | graph-v2 类型、LD/FBD 连线、SFC 分支、混合语言与回归边界 |
+| [第九批正式执行与预发布](docs/20-production-readiness.md) | 实际身份、验收范围、正式工具门禁、三种交付包与诊断 |
 
 ## 核心工程
 

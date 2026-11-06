@@ -1,4 +1,5 @@
 """Run against an already started P0 Host; uses Python standard library only."""
+from pathlib import Path
 import json
 import os
 import urllib.error
@@ -54,7 +55,7 @@ protocol = response["result"]["protocolVersion"]
 request({"jsonrpc": "2.0", "method": "notifications/initialized"})
 response, _ = request({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
 names = {tool["name"] for tool in response["result"]["tools"]}
-assert names == {"plc_capabilities_list", "plc_runtime_get_status"}, names
+assert names == set(json.loads((Path(__file__).resolve().parents[1]/"contracts/tool-access.v1.json").read_text())["localTools"]), names
 response, _ = request({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {
     "name": "plc_runtime_get_status", "arguments": {}}})
 status = tool_value(response)
@@ -67,6 +68,13 @@ assert all(cap["status"] == "Unverified" for cap in catalog["capabilities"]), ca
 response, _ = request({"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {
     "name": "plc_project_compile", "arguments": {}}})
 assert "error" in response or response.get("result", {}).get("isError") is True, response
+# Local graphical and XML processing is usable in production without an installed IDE.
+program = json.loads((Path(__file__).resolve().parents[1]/"tests/fixtures/graphs/ld-start-stop.json").read_text())
+response, _ = request({"jsonrpc":"2.0", "id":6, "method":"tools/call", "params":{"name":"plc_graph_generate", "arguments":{"program":program}}})
+generated = tool_value(response)
+assert generated["evidenceKind"] == "local" and generated["engineeringReady"] is False, generated
+response, _ = request({"jsonrpc":"2.0", "id":7, "method":"tools/call", "params":{"name":"plc_graph_decode", "arguments":{"artifactId":generated["value"]["artifact"]["artifactId"]}}})
+assert tool_value(response)["value"]["semanticSha256"] == generated["value"]["graph"]["semanticSha256"]
 with urllib.request.urlopen(BASE + "/health/live", timeout=5) as health:
     assert json.load(health)["engineeringReady"] is False
 print("PASS: auth, Origin rejection, initialize, discovery, tool results, unavailable engineering tool, liveness")

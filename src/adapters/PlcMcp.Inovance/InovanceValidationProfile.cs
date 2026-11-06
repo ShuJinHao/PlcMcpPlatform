@@ -34,10 +34,7 @@ public sealed record InovanceValidationProfile(string ValidationId, string IdeVe
     public ValidationEvidence Evidence(string scriptPath)
     {
         Validate();
-        var directory = Path.GetDirectoryName(Path.GetFullPath(scriptPath))!;
-        var hashes = new[] { Path.GetFileName(scriptPath), "configuration_worker.py", "exchange_worker.py" }.Select(name =>
-            name + ":" + Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Path.Combine(directory, name)))).ToLowerInvariant());
-        var bundle = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", hashes)))).ToLowerInvariant();
+        var bundle = InovanceIdentity.Scripts(scriptPath);
         return new(ValidationId, IdeVersion, EngineVersion, Profile, bundle, AllowedOperations.ToArray());
     }
 }

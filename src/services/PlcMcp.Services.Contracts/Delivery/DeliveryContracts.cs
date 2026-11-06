@@ -11,7 +11,7 @@ public sealed record DeliveryArtifact(string ArtifactId, string Sha256, long Byt
 public sealed record DeliveryChunk(DeliveryArtifact Artifact, long Offset, long NextOffset, bool Complete, string Base64, string ChunkSha256);
 public sealed record DeliveryManifest(string ContractVersion, string WorkspaceName, string Revision, string ProjectFile,
     string ProjectSha256, FileStamp[] Files, TemplateDefinition Template, PlcMcp.Services.Contracts.Configuration.DependencySnapshot? Dependencies,
-    string ExecutionMode, string EvidenceKind, bool EngineeringReady, ValidationEvidence? Validation);
+    string ExecutionMode, string EvidenceKind, bool EngineeringReady, ValidationEvidence? Validation, RuntimeReadiness? Acceptance = null);
 public interface IDeliveryArtifacts
 {
     Task<DeliveryArtifact> CreateAsync(ProjectSnapshot source, DeliveryManifest manifest, JsonElement compilation, JsonElement tasks, CancellationToken token);

@@ -38,7 +38,7 @@ public sealed class EngineeringJobs(IJobStore store, IWorkspaceFiles files, IEng
         var fingerprint = Convert.ToHexString(SHA256.HashData(bytes));
         var existing = await store.FindSubmissionAsync(path.Value!, normalized.Operation, normalized.IdempotencyKey, fingerprint, cancellationToken);
         if (existing is not null) return existing;
-        if (executor.CheckAvailability(submission.Operation) is { } error)
+        if (await executor.CheckRequestAsync(normalized.Operation, normalized.Input, cancellationToken) is { } error)
             return Result<JobView>.Failure(error.Code, error.Message);
         var resolved = await files.ResolveAsync(path.Value!, cancellationToken);
         if (!resolved.IsSuccess) return Result<JobView>.Failure(resolved.Error!.Code, resolved.Error.Message);
