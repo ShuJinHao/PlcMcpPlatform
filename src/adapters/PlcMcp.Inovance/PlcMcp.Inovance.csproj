@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../../services/PlcMcp.Services.Contracts/PlcMcp.Services.Contracts.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+name: foundation
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet restore PlcMcpPlatform.sln --locked-mode
+      - run: dotnet build PlcMcpPlatform.sln -c Release --no-restore
+      - run: dotnet test PlcMcpPlatform.sln -c Release --no-build --no-restore
+      - run: python eng/verify-mcp.py

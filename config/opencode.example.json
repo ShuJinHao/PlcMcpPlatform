@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "plc": {
+      "type": "remote",
+      "url": "http://127.0.0.1:5088/mcp",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:PlcMcp__ApiKey}"
+      }
+    }
+  }
+}

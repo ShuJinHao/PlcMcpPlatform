@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><IsTestProject>true</IsTestProject><IsPackable>false</IsPackable></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/services/PlcMcp.EngineeringService/PlcMcp.EngineeringService.csproj" />
+    <ProjectReference Include="../../src/adapters/PlcMcp.Inovance/PlcMcp.Inovance.csproj" />
+    <ProjectReference Include="../../src/infrastructure/PlcMcp.EntityFrameworkCore/PlcMcp.EntityFrameworkCore.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

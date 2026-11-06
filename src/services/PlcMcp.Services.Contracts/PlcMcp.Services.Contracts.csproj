@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../../core/PlcMcp.Core.Workspaces/PlcMcp.Core.Workspaces.csproj" />
+    <ProjectReference Include="../../core/PlcMcp.Core.Automation/PlcMcp.Core.Automation.csproj" />
+  </ItemGroup>
+</Project>
