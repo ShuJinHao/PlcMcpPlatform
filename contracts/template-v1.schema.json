@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ShuJinHao/PlcMcpPlatform/contracts/template-v1.schema.json",
+  "title": "Managed project template descriptor",
+  "description": "Declared local files and expected project references; not evidence of installed IDE dependencies. Real templates require an exact device type/id/version.",
+  "allOf": [
+    {
+      "$ref": "#/$defs/template"
+    },
+    {
+      "if": {
+        "properties": {
+          "executionMode": {
+            "const": "real"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "controller"
+        ],
+        "properties": {
+          "controller": {
+            "$ref": "#/$defs/deviceRequirement"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "template": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,47}$"
+        },
+        "projectFile": {
+          "type": "string"
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "ideProfile": {
+          "type": "string"
+        },
+        "targetController": {
+          "type": "string"
+        },
+        "requiredLibraries": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "string"
+          }
+        },
+        "executionMode": {
+          "enum": [
+            "real",
+            "fixture"
+          ]
+        },
+        "controller": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/deviceRequirement"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "projectFile",
+        "files",
+        "ideProfile",
+        "targetController",
+        "requiredLibraries",
+        "executionMode"
+      ]
+    },
+    "deviceRequirement": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "version"
+      ]
+    }
+  }
+}

@@ -11,6 +11,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Production MCP checks failed' }
     python eng/verify-execution.py
     if ($LASTEXITCODE -ne 0) { throw 'Fixture MCP checks failed' }
+    python eng/verify-editing.py
+    if ($LASTEXITCODE -ne 0) { throw 'Managed editing checks failed' }
     python -m unittest discover -s tests/script_engine -v
     if ($LASTEXITCODE -ne 0) { throw 'Script tests failed' }
 } finally { Pop-Location }

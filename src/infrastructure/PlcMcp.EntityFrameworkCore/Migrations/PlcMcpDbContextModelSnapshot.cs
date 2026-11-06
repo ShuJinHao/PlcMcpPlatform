@@ -50,6 +50,23 @@ public sealed class PlcMcpDbContextModelSnapshot : ModelSnapshot
             b.Property<bool>("Blocked").HasColumnType("INTEGER"); b.Property<string>("Reason").HasColumnType("TEXT");
             b.HasKey("Id"); b.ToTable("ExecutionStates");
         });
+        modelBuilder.Entity("PlcMcp.EntityFrameworkCore.ManagedProjectRow", b =>
+        {
+            b.Property<string>("WorkspacePath").HasColumnType("TEXT");
+            b.Property<string>("Revision").IsRequired().IsConcurrencyToken().HasColumnType("TEXT");
+            b.Property<string>("HeadJson").IsRequired().HasColumnType("TEXT");
+            b.HasKey("WorkspacePath"); b.ToTable("ManagedProjects");
+        });
+        modelBuilder.Entity("PlcMcp.EntityFrameworkCore.ProjectChangeRow", b =>
+        {
+            b.Property<Guid>("JobId").HasColumnType("TEXT");
+            b.Property<string>("WorkspacePath").IsRequired().HasColumnType("TEXT");
+            b.Property<string>("Stage").IsRequired().HasColumnType("TEXT");
+            b.Property<string>("EvidenceJson").IsRequired().HasColumnType("TEXT");
+            b.HasKey("JobId"); b.ToTable("ProjectChanges");
+        });
+        modelBuilder.Entity("PlcMcp.EntityFrameworkCore.ProjectChangeRow", b => b.HasOne("PlcMcp.Core.Automation.AutomationJob", null)
+            .WithOne().HasForeignKey("PlcMcp.EntityFrameworkCore.ProjectChangeRow", "JobId").OnDelete(DeleteBehavior.Cascade).IsRequired());
         modelBuilder.Entity("PlcMcp.Core.Automation.AutomationJob", b => b.HasOne("PlcMcp.Core.Workspaces.ProjectWorkspace", null)
             .WithMany().HasForeignKey("WorkspaceId").OnDelete(DeleteBehavior.Restrict).IsRequired());
         modelBuilder.Entity("PlcMcp.EntityFrameworkCore.JobRecord", b => b.HasOne("PlcMcp.Core.Automation.AutomationJob", null)

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ShuJinHao/PlcMcpPlatform/contracts/worker-v1.schema.json",
   "title": "PLC MCP internal worker protocol v1",
-  "description": "UTF-8 JSON files, 128 KiB request and 1 MiB result limits. Not MCP. Execution mode is not proof of vendor compatibility.",
+  "description": "Internal JSON envelope v1, additive managed-editing operations. Raw IDE requests use candidate=true and a file hash; durable managed jobs use manifest revisions. Runtime validation also checks cross-message IDs, operation-specific results, limits and ownership. Schema validity alone is not execution evidence.",
   "$defs": {
     "input": {
       "type": "object",
@@ -38,6 +38,40 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 2000
+        },
+        "edit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/editInput"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate": {
+          "type": "boolean",
+          "default": false
+        },
+        "ideProfile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requirements": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/template"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -79,12 +113,23 @@
             "project.open",
             "project.tree.read",
             "pou.read",
-            "project.compile"
+            "project.compile",
+            "gvl.read",
+            "dut.read",
+            "project.create",
+            "project.save",
+            "project.verify",
+            "pou.create",
+            "pou.update",
+            "gvl.create",
+            "gvl.update",
+            "dut.create",
+            "dut.update"
           ]
         },
         "expectedRevision": {
           "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
+          "pattern": "^(?:[a-f0-9]{64}|t2:[a-f0-9]{64}|m2:[a-f0-9]{32}:[a-f0-9]{64})$"
         },
         "deadlineUtc": {
           "type": "string",
@@ -392,6 +437,15 @@
                   },
                   {
                     "$ref": "#/$defs/compileResult"
+                  },
+                  {
+                    "$ref": "#/$defs/editWorkerResult"
+                  },
+                  {
+                    "$ref": "#/$defs/managedEditResult"
+                  },
+                  {
+                    "$ref": "#/$defs/declarationResult"
                   }
                 ]
               }
@@ -405,6 +459,403 @@
             }
           }
         }
+      ]
+    },
+    "editInput": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,47}$"
+        },
+        "templateId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,47}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parentId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "objectId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,127}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "declaration": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 65536
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "implementation": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 65536
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pouType": {
+          "anyOf": [
+            {
+              "enum": [
+                "Program",
+                "FunctionBlock",
+                "Function"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "language": {
+          "anyOf": [
+            {
+              "enum": [
+                "ST",
+                "IL",
+                "LD",
+                "FBD",
+                "SFC",
+                "CFC"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dutType": {
+          "anyOf": [
+            {
+              "enum": [
+                "Structure",
+                "Enumeration",
+                "Alias",
+                "Union"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "baseType": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workspaceName"
+      ]
+    },
+    "deviceRequirement": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "version"
+      ]
+    },
+    "template": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,47}$"
+        },
+        "projectFile": {
+          "type": "string"
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "ideProfile": {
+          "type": "string"
+        },
+        "targetController": {
+          "type": "string"
+        },
+        "requiredLibraries": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "string"
+          }
+        },
+        "executionMode": {
+          "enum": [
+            "real",
+            "fixture"
+          ]
+        },
+        "controller": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/deviceRequirement"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "projectFile",
+        "files",
+        "ideProfile",
+        "targetController",
+        "requiredLibraries",
+        "executionMode"
+      ]
+    },
+    "dependencyResult": {
+      "type": "object",
+      "properties": {
+        "controllerMatched": {
+          "const": true
+        },
+        "libraryReferencesMatched": {
+          "const": true
+        },
+        "installedDependenciesVerified": {
+          "const": false
+        }
+      },
+      "required": [
+        "controllerMatched",
+        "libraryReferencesMatched",
+        "installedDependenciesVerified"
+      ]
+    },
+    "editWorkerResult": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "baseRevision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "saved": {
+          "const": true
+        },
+        "reopened": {
+          "const": true
+        },
+        "readBackVerified": {
+          "const": true
+        },
+        "sessionClosedAfterOperation": {
+          "const": true
+        },
+        "objectId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "declaration": {
+          "type": "string"
+        },
+        "implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dependencies": {
+          "$ref": "#/$defs/dependencyResult"
+        }
+      },
+      "required": [
+        "revision",
+        "baseRevision",
+        "saved",
+        "reopened",
+        "readBackVerified",
+        "sessionClosedAfterOperation",
+        "dependencies"
+      ]
+    },
+    "managedEditResult": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,47}$"
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^m2:[a-f0-9]{32}:[a-f0-9]{64}$"
+        },
+        "baseRevision": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{64}|t2:[a-f0-9]{64}|m2:[a-f0-9]{32}:[a-f0-9]{64})$"
+        },
+        "revisionScope": {
+          "const": "managed_project_manifest_v2"
+        },
+        "projectPath": {
+          "type": "string"
+        },
+        "backupPath": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidatePath": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "published": {
+          "const": true
+        },
+        "isDelivery": {
+          "type": "boolean"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "engineeringResult": {
+          "$ref": "#/$defs/editWorkerResult"
+        },
+        "dependencyValidation": {
+          "const": "project_references_checked_installation_unverified"
+        },
+        "simulated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "workspaceName",
+        "revision",
+        "baseRevision",
+        "revisionScope",
+        "projectPath",
+        "backupPath",
+        "candidatePath",
+        "published",
+        "isDelivery",
+        "steps",
+        "engineeringResult",
+        "dependencyValidation",
+        "simulated"
+      ]
+    },
+    "declarationResult": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "objectId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "kind": {
+          "enum": [
+            "gvl",
+            "dut"
+          ]
+        },
+        "declaration": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "revision",
+        "objectId",
+        "kind",
+        "declaration"
       ]
     }
   },

@@ -15,7 +15,7 @@ public sealed class EngineeringJobs(IJobStore store, IWorkspaceFiles files, IEng
             || submission.IdempotencyKey.Length > 128 || submission.TimeoutSeconds is < 1 or > 600
             || submission.Input.MaxObjects is < 1 or > 2000
             || submission.ExpectedRevision is { Length: > 128 }
-            || submission.Operation == EngineeringOperations.ReadProgram && !Guid.TryParse(submission.Input.ObjectId, out _)
+            || submission.Operation is EngineeringOperations.ReadProgram or EngineeringOperations.ReadGvl or EngineeringOperations.ReadDut && !Guid.TryParse(submission.Input.ObjectId, out _)
             || submission.Operation == EngineeringOperations.Compile && !Guid.TryParse(submission.Input.ApplicationId, out _))
             return Result<JobView>.Failure("invalid_request", "Invalid operation, identity or limits.");
         var path = files.NormalizePath(submission.Input.ProjectPath);

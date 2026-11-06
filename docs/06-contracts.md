@@ -4,7 +4,7 @@
 
 端点为 `http://127.0.0.1:5088/mcp`，协议由官方 C# SDK 实现。默认真实宿主注册 `plc_capabilities_list`、`plc_runtime_get_status` 两个查询工具；真实汇川能力尚未验证，不注册工程工具。
 
-独立测试宿主已注册以下七个新增工具，复用生产用例与基础设施，执行结果显式标识 fixture/simulated。它们有实际实现，不是返回常量成功的占位工具；当前不能据此宣称目标 InoProShop 已支持。
+独立测试宿主共 22 个工具，以下是第一批七个工程/任务工具，复用生产用例与基础设施，执行结果显式标识 fixture/simulated。它们有实际实现，不是返回常量成功的占位工具；当前不能据此宣称目标 InoProShop 已支持。
 
 | 工具 | 主要输入 | 结果 |
 |---|---|---|
@@ -16,6 +16,26 @@
 | `plc_job_cancel` | jobId | 取消请求后的实际状态；CancelRequested 不表示已停止 |
 | `plc_job_get_result` | jobId | 终态结果；失败、取消、未知或未完成时 isError=true |
 
+第二批新增以下 13 个工具；编辑工具返回 `contractVersion=1.1`，既有工具维持 1.0，内部 Worker 主版本仍为 1（可选字段扩展）。
+
+| 工具 | 主要输入 | 结果 |
+|---|---|---|
+| `plc_templates_list` | 无 | 模板描述、t2 修订或该模板错误 |
+| `plc_workspace_get` | workspaceName | 当前 m2 修订、版本工程路径、文件清单、交付标记 |
+| `plc_project_create` | workspaceName、templateId、idempotencyKey、expectedTemplateRevision? | 从登记源复制并保存重开，创建工作区任务 |
+| `plc_project_save` | workspaceName、expectedRevision、idempotencyKey | 新交付版本任务，不表示编译/绑定/运行验收 |
+| `plc_pou_create` | workspaceName、expectedRevision、parentId、name、pouType、language、declaration、implementation?、returnType?、idempotencyKey | 新 POU 与版本；图形语言仅空对象 |
+| `plc_pou_update` | workspaceName、expectedRevision、objectId、declaration?、implementation?、idempotencyKey | 候选修改、保存重开后发布版本 |
+| `plc_gvl_create` | workspaceName、expectedRevision、parentId、name、declaration、idempotencyKey | 创建 GVL 任务 |
+| `plc_gvl_read` | projectPath、objectId、idempotencyKey、expectedRevision? | GVL 声明读取任务，修订是主文件 SHA |
+| `plc_gvl_update` | workspaceName、expectedRevision、objectId、declaration、idempotencyKey | 更新声明任务 |
+| `plc_dut_create` | workspaceName、expectedRevision、parentId、name、dutType、declaration、baseType?、idempotencyKey | 创建 DUT 任务 |
+| `plc_dut_read` | projectPath、objectId、idempotencyKey、expectedRevision? | DUT 声明读取任务，修订是主文件 SHA |
+| `plc_dut_update` | workspaceName、expectedRevision、objectId、declaration、idempotencyKey | 更新声明任务 |
+| `plc_job_reconcile` | jobId | 根据服务已有证据确认未知任务；无证据时保持阻塞 |
+
+查询工具返回 value/error；异步工程操作返回 job/error。写入成功的 job.result 包含 baseRevision、revision、revisionScope、projectPath、backupPath、candidatePath、published、isDelivery、steps、engineeringResult 与依赖验证范围。候选失败返回 published=false 与已知路径/步骤，不承诺候选未修改。详细语义见 [第二批说明](13-managed-editing.md)。
+
 可选参数与实际 Schema 以 [mcp-tools.v1.json](../contracts/mcp-tools.v1.json) 为准。结果统一携带 contractVersion、executionMode、evidenceKind、engineeringReady、job、error。job 内保留 jobId、workspaceId、operation、status、errorCode、result 和时间；错误具有 code、message、retryable。查询一个 Failed 任务本身可以成功，而取其业务结果必须返回错误语义。
 
 工具注解只是客户端提示，不能替代服务端鉴权、路径限制和业务校验。提交任务的 Tool 标为 ReadOnly=false，因为会持久化执行意图；第一批脚本不修改 PLC 程序内容。
@@ -26,7 +46,7 @@
 
 幂等身份为 `(workspaceId, operation, idempotencyKey)`，指纹包含规范化路径、操作参数、预期修订与超时。同键同请求返回原任务，包括源文件后来被删除的情况；同键不同请求返回 `idempotency_conflict`。默认最多 256 个未结束任务，队列满时不会拒绝查询/重试已有请求。
 
-当前 expectedRevision 表示主工程文件 SHA-256；它不是完整工程/IDE 会话的事务修订，不能直接支撑下一批写入。未指定时，提交时采集该文件修订，执行前后再次检查。
+读取/编译的 expectedRevision 是主工程文件 SHA-256，未指定时采集文件修订。创建的 expectedTemplateRevision 是可选 t2 模板修订；更新/保存必须使用 plc_workspace_get 的 m2 修订。m2 覆盖版本身份及已复制文件清单，不能替代 IDE 会话状态、全局库/设备仓库验证。不同作用域的修订不能混用。
 
 ## 错误语义
 
@@ -39,9 +59,15 @@
 | `idempotency_conflict` / `queue_full` | 同键请求内容冲突，或执行队列已满 |
 | `ide_unavailable` / `capability_unverified` | IDE 环境不可用，或尚无真实版本支持证据 |
 | `compile_failed` | 当前编译有错误，诊断保留在结果中；fixture 来源表示模拟诊断 |
+| `expected_revision_required` / `workspace_not_found` / `workspace_exists` | 缺少写入修订、工作区未创建或名称已存在 |
+| `template_unavailable` / `invalid_template` | 模板不可用或执行模式不匹配 |
+| `object_kind_mismatch` / `object_name_conflict` | 对象种类与请求不匹配，或同级名称冲突 |
+| `graphical_content_requires_specialized_editor` | 不能用文本写入图形网络 |
+| `save_failed` / `reopen_readback_mismatch` | 候选保存失败，或重开后读回不一致，不能发布 |
+| `reconciliation_unproven` / `reconciliation_conflict` / `reconciliation_raced` | 终止证据不足、文件事实冲突或证据并发变化，不能据此解除阻塞 |
 | `execution_outcome_unknown` | 结果无法确认，执行槽阻塞，禁止自动重放 |
 
-Worker 还会返回更具体的原因，例如 `worker_protocol_error`、`execution_timeout`、`project_close_unconfirmed`。任务进入 OutcomeUnknown 时对外统一给出结果未知，运行状态保留执行槽阻塞原因。无自动重试写操作或自动解锁工具。
+Worker 还会返回更具体的原因，例如 `worker_protocol_error`、`execution_timeout`、`project_close_unconfirmed`。任务进入 OutcomeUnknown 时对外统一给出结果未知，运行状态保留执行槽阻塞原因。无自动重试写操作或强制解锁工具；plc_job_reconcile 的有限恢复必须匹配持久化证据。
 
 应用层使用 `Result<T>`；MCP 工具将业务失败映射为 `isError=true` 和结构化错误。SDK 处理协议层错误。未知状态、退出码 0、没有错误文本都不能单独证明工程操作成功。
 
@@ -59,4 +85,10 @@ Worker 还会返回更具体的原因，例如 `worker_protocol_error`、`execut
 
 ## 下一批能力
 
-工程创建/保存、POU 创建/更新、GVL/DUT、设备/任务/库、导入导出和各语言编辑仍按能力域开发，尚未注册为工具。不提供通用 execute_python 代替这些业务接口。第一批行为与使用限制见 [执行说明](12-execution.md)。
+POU 成员、设备/任务/库、导入导出和图形网络编辑继续按能力域开发，尚未注册为工具。不提供通用 execute_python 代替这些业务接口。第一批行为与使用限制见 [执行说明](12-execution.md)。
+
+## 编辑 Worker 扩展
+
+外层托管任务以 workspace 路径和 t2/m2 修订记录意图。ManagedProjectExecutor 将候选实际文件路径、主文件 SHA、candidate=true、edit、ideProfile、requirements 传入原始 Worker；外层 project.create/save 转为内部 project.verify。原始 Worker 不接受任意输出路径或绕开候选的写入请求。
+
+成功写入必须包含保存、重开、读回、自有会话关闭证明，以及请求内容/对象 ID 和修订匹配；只返回退出码 0 或 saved=true 不足以发布。dependencies 明确 controllerMatched、libraryReferencesMatched 与 installedDependenciesVerified=false，后者不能被错误提升成真实安装验证。

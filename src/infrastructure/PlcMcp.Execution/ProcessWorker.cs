@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using PlcMcp.Services.Contracts.Execution;
+using PlcMcp.Services.Contracts.Editing;
 using PlcMcp.Services.Contracts.Workers;
 
 namespace PlcMcp.Execution;
@@ -15,9 +16,12 @@ public sealed class ProcessWorker(string workRoot, Func<string, string, ProcessI
     public async Task<WorkerResponse> RunAsync(WorkerRequest request, CancellationToken cancellationToken)
     {
         if (request.ProtocolVersion != 1 || request.JobId == Guid.Empty || request.RequestId == Guid.Empty
-            || request.WorkspaceId == Guid.Empty || !EngineeringOperations.Contains(request.Operation)
+            || request.WorkspaceId == Guid.Empty || !(EngineeringOperations.Contains(request.Operation) || request.Operation == EditOperations.VerifyProject
+                || EditOperations.CreatesObject(request.Operation) || EditOperations.UpdatesObject(request.Operation))
             || request.ExecutionMode is not ("real" or "fixture") || request.Payload.ValueKind != JsonValueKind.Object)
             return WorkerJson.Failed(request, "invalid_worker_request");
+        if (!EngineeringOperations.Contains(request.Operation) && (!request.Payload.TryGetProperty("candidate", out var candidate) || candidate.ValueKind != JsonValueKind.True))
+            return WorkerJson.Failed(request, "managed_candidate_required");
         var remaining = request.DeadlineUtc - DateTimeOffset.UtcNow;
         if (remaining <= TimeSpan.Zero) return WorkerJson.Failed(request, "deadline_expired");
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

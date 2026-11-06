@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using ModelContextProtocol.AspNetCore;
 using ModelContextProtocol.Server;
 using PlcMcp.EngineeringService.Execution;
+using PlcMcp.EngineeringService.Editing;
+using PlcMcp.Services.Contracts.Editing;
 using PlcMcp.EntityFrameworkCore;
 using PlcMcp.Execution;
 using PlcMcp.Inovance;
@@ -37,20 +39,24 @@ public static class HostApplication
         builder.Services.AddPlcMcpApplication();
         builder.Services.AddSingleton(paths);
         builder.Services.AddSingleton(_ => new InstanceOwnership(paths.DataDirectory));
-        builder.Services.AddSingleton<IEngineeringExecutor>(_ => testExecutor?.Invoke(paths) ?? new InovanceExecutor(new(
+        IEngineeringExecutor rawWorker = testExecutor?.Invoke(paths) ?? new InovanceExecutor(new(
             builder.Configuration["PlcMcp:Inovance:ExecutablePath"] ?? "", builder.Configuration["PlcMcp:Inovance:Profile"] ?? "",
-            Path.Combine(AppContext.BaseDirectory, "Scripts", "engineering_worker.py"), Path.Combine(data, "invocations"))));
+            Path.Combine(AppContext.BaseDirectory, "Scripts", "engineering_worker.py"), Path.Combine(data, "invocations")));
         builder.Services.AddSingleton<IWorkspaceFiles>(new WorkspaceFiles(paths.WorkspaceRoot));
         var options = new DbContextOptionsBuilder<PlcMcpDbContext>().UseSqlite(
             new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path.Combine(data, "execution.db"), DefaultTimeout = 10 }.ToString()).Options;
         builder.Services.AddSingleton<IJobStore>(_ => new SqliteJobStore(options, fixture ? "fixture" : "real"));
+        builder.Services.AddSingleton<IManagedProjectFiles>(new ManagedProjectFiles(paths.WorkspaceRoot));
+        builder.Services.AddSingleton<IProjectChangeStore>(new SqliteProjectChangeStore(options));
+        builder.Services.AddSingleton<IEngineeringExecutor>(sp => new ManagedProjectExecutor(rawWorker, sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>()));
+        builder.Services.AddSingleton<ManagedEditingJobs>();
         builder.Services.AddSingleton<EngineeringJobs>();
         builder.Services.AddSingleton<JobDispatcher>();
         builder.Services.AddSingleton<ExecutionSignal>();
         builder.Services.AddHostedService<ExecutionService>();
         var mcp = builder.Services.AddMcpServer()
             .WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless).WithTools<PlatformTools>();
-        if (fixture) mcp.WithTools<EngineeringTools>();
+        if (fixture) mcp.WithTools<EngineeringTools>().WithTools<EditingTools>();
         var app = builder.Build();
         try
         {
@@ -70,7 +76,7 @@ public static class HostApplication
             }
             await next(context);
         });
-        app.MapGet("/health/live", () => Results.Ok(new { status = "alive", stage = "P1-offline-execution", engineeringReady = false, executionMode = fixture ? "fixture" : "real" }));
+        app.MapGet("/health/live", () => Results.Ok(new { status = "alive", stage = "P2-managed-editing", engineeringReady = false, executionMode = fixture ? "fixture" : "real" }));
         app.MapMcp("/mcp");
         return app;
     }

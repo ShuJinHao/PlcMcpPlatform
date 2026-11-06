@@ -1,13 +1,13 @@
 # 第一批执行实现与使用说明
 
-本批交付持久化任务、进程执行器、四个工程工具、三个任务工具和对应的原创 ScriptEngine 调用脚本。独立测试宿主可以在没有 InoProShop 的环境中验证完整 MCP 流程。真实汇川能力仍为 Unverified，程序创建、修改、保存属于下一批。
+本批交付持久化任务、进程执行器、四个工程工具、三个任务工具和对应的原创 ScriptEngine 调用脚本。独立测试宿主可以在没有 InoProShop 的环境中验证完整 MCP 流程。本页保留第一批行为说明；第二批已经增加创建、修改、保存和对账，当前入口见 [第二批交付](13-managed-editing.md)。真实汇川能力仍为 Unverified。
 
 ## 两个启动入口
 
 | 入口 | 注册工具 | 执行来源 |
 |---|---|---|
 | `src/hosts/PlcMcp.McpHost` | 两个状态/能力查询工具 | real；没有已验证 IDE 时不能执行工程操作 |
-| `tests/PlcMcp.TestHost` | 两个查询工具加七个工程/任务工具 | fixture；测试替身，每个执行结果包含 simulated 标识 |
+| `tests/PlcMcp.TestHost` | 当前为 22 个工具（第一批 9 个，第二批增加 13 个） | fixture；测试替身，每个执行结果包含 simulated 标识 |
 
 测试宿主引用生产的应用用例、SQLite Store、调度器、MCP Tools 和进程通信实现，仅执行器依赖替换为测试进程。生产宿主不引用测试程序集，没有配置项可以自动回退到 fixture。两者不能同时占用本机 5088 端口。
 
@@ -64,7 +64,7 @@ dotnet run --project tests/PlcMcp.TestHost --no-launch-profile
 - 默认最多 256 个排队/执行中任务，超过时返回 `queue_full`；重试已经接受的请求仍返回原任务。
 - 排队取消直接终止；运行中取消先进入 CancelRequested。只有确认执行停止才能成为 Cancelled，正常完成也可能赢得取消竞争。
 - 异常退出、损坏/超限/串号结果、执行超时或无法确认取消，进入 OutcomeUnknown，并持久化阻塞执行槽。重启不会解除阻塞，也不会重放执行中的任务。
-- 第一批尚未提供自动对账或解锁工具。必须后续依据 IDE/进程与工程证据实现对账流程；不能以删除数据库或盲目清除阻塞标记作为恢复方案。
+- 第二批提供基于已保存写入证据的有限对账，见 docs/13。没有写入证据的旧读/编译未知任务不能强制解锁；不能以删除数据库或清除阻塞标记作为恢复方案。
 
 数据目录是本机单实例边界，不代表对机器上所有独立 IDE 实例提供了全局互斥。实际 IDE 进程归属、会话委托和多实例行为仍需厂商验证。
 
@@ -95,7 +95,7 @@ dotnet run --project tests/PlcMcp.TestHost --no-launch-profile
 
 诊断保留厂商位置文本与偏移，不把不透明位置值猜成行号。语言未可靠识别时返回 null，不能把所有文本对象默认标为 ST。诊断超过 500 条或结果超限时明确失败，不能截断错误后宣称编译通过。
 
-本批修订是主工程文件的 SHA-256，结果标注 `revisionScope=project_file_sha256`；它不能代表所有依赖文件、未保存的 IDE 状态或完整工程事务。脚本检查打开前后主文件变化，拒绝打开后已脏的会话，编译引起的脏标记单独记录。写入功能必须在下一批补齐更完整的修订、备份与会话约束。
+本批修订是主工程文件的 SHA-256，结果标注 `revisionScope=project_file_sha256`；它不能代表所有依赖文件、未保存的 IDE 状态或完整工程事务。脚本检查打开前后主文件变化，拒绝打开后已脏的会话，编译引起的脏标记单独记录。第二批写入已采用独立 m2 文件清单修订、备份和候选会话，不改变本页读取工具的主文件 SHA 语义。
 
 ## 验证入口
 
@@ -105,7 +105,8 @@ dotnet build PlcMcpPlatform.sln -c Release --no-restore
 dotnet test PlcMcpPlatform.sln -c Release --no-build --no-restore
 python eng/verify-mcp.py
 python eng/verify-execution.py
+python eng/verify-editing.py
 python -m unittest discover -s tests/script_engine -v
 ```
 
-CI 在 Windows、Ubuntu、macOS 执行上述检查，均无需安装供应商软件。两组 HTTP 检查各自启动并清理测试进程和临时目录，不操作已有服务。CI 与真实 IDE、OpenCode 客户端验收不是同一种证据，运行记录见 PR 与 [Actions](https://github.com/ShuJinHao/PlcMcpPlatform/actions)。
+CI 在 Windows、Ubuntu、macOS 执行上述检查，均无需安装供应商软件。三组 HTTP 检查各自启动并清理测试进程和临时目录，不操作已有服务。CI 与真实 IDE、OpenCode 客户端验收不是同一种证据，运行记录见 PR 与 [Actions](https://github.com/ShuJinHao/PlcMcpPlatform/actions)。

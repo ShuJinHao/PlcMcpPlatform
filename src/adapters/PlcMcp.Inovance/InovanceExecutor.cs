@@ -20,6 +20,8 @@ public sealed class InovanceExecutor(InovanceOptions options, IInovanceLaunchPro
         if (!OperatingSystem.IsWindows() || !File.Exists(options.ExecutablePath) || !File.Exists(options.ScriptPath)
             || string.IsNullOrWhiteSpace(options.Profile) || request.ExecutionMode != ExecutionMode)
             return Task.FromResult(WorkerJson.Failed(request, "ide_unavailable"));
+        if (request.Payload.TryGetProperty("ideProfile", out var requiredProfile) && requiredProfile.ValueKind == System.Text.Json.JsonValueKind.String
+            && requiredProfile.GetString() != options.Profile) return Task.FromResult(WorkerJson.Failed(request, "ide_profile_mismatch"));
         var profile = launchProfile ?? new ScriptEngine35LaunchProfile(options);
         var worker = new ProcessWorker(options.WorkDirectory, profile.CreateInvocation);
         return worker.RunAsync(request, cancellationToken);

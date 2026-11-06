@@ -20,7 +20,7 @@ public sealed class PlatformTools(IQueryHandler<ListCapabilitiesQuery, Capabilit
     public async Task<RuntimeStatus> GetRuntimeStatus(CancellationToken cancellationToken)
     {
         var slot = await store.GetSlotAsync(cancellationToken);
-        return new("1.0", "P1-offline-execution", false, false, executor.ExecutionMode,
+        return new("1.0", "P2-managed-editing", false, false, executor.ExecutionMode,
             executor.ExecutionMode == "fixture" ? "simulated" : "unverified", slot.Blocked,
             slot.Reason ?? executor.Unavailability?.Message ?? "Test-only execution; no IDE is connected.");
     }

@@ -159,6 +159,42 @@ public sealed class SqliteJobStore(DbContextOptions<PlcMcpDbContext> options, st
         finally { gate.Release(); }
     }
 
+    public async Task<WorkerRequest?> GetRequestAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using var db = new PlcMcpDbContext(options);
+        var record = await db.JobRecords.AsNoTracking().SingleOrDefaultAsync(x => x.JobId == id, cancellationToken);
+        return record?.RequestJson is null ? null : JsonSerializer.Deserialize<WorkerRequest>(record.RequestJson, WorkerJson.Options);
+    }
+
+    public async Task<Result<JobView>> ReconcileAsync(WorkerResponse evidence, CancellationToken cancellationToken)
+    {
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            await using var db = new PlcMcpDbContext(options);
+            await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
+            var job = await db.Jobs.SingleOrDefaultAsync(x => x.Id == evidence.JobId, cancellationToken);
+            if (job is null) return Result<JobView>.Failure("job_not_found", "No such job.");
+            var record = await db.JobRecords.SingleAsync(x => x.JobId == job.Id, cancellationToken);
+            if (job.Status != JobStatus.OutcomeUnknown) return Result<JobView>.Success(View(job, record));
+            var request = JsonSerializer.Deserialize<WorkerRequest>(record.RequestJson!, WorkerJson.Options)!;
+            if (evidence.Outcome is not ("succeeded" or "failed" or "cancelled") || !WorkerJson.Matches(request, evidence) || !WorkerResultValidation.IsValid(request, evidence))
+                return Result<JobView>.Failure("reconciliation_unproven", "Evidence does not establish a terminal outcome.");
+            job.ReconcileVerified(evidence.Outcome == "succeeded" ? JobStatus.Succeeded : evidence.Outcome == "cancelled" ? JobStatus.Cancelled : JobStatus.Failed, evidence.ErrorCode, Now(job));
+            record.ResponseJson = JsonSerializer.Serialize(evidence, WorkerJson.Options);
+            await db.SaveChangesAsync(cancellationToken);
+            if (!await db.Jobs.AnyAsync(x => x.Status == JobStatus.OutcomeUnknown || x.Status == JobStatus.Running || x.Status == JobStatus.CancelRequested, cancellationToken))
+            {
+                var state = await db.ExecutionStates.SingleAsync(cancellationToken);
+                state.Blocked = false; state.Reason = null;
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            await tx.CommitAsync(cancellationToken);
+            return Result<JobView>.Success(View(job, record));
+        }
+        finally { gate.Release(); }
+    }
+
     public async Task<ExecutionSlot> GetSlotAsync(CancellationToken cancellationToken)
     {
         await using var db = new PlcMcpDbContext(options);

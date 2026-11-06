@@ -94,7 +94,9 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-fixture-check-') as tmp, tempfil
         tools = client.rpc('tools/list')['tools']
         names = {tool['name'] for tool in tools}
         expected = {'plc_capabilities_list', 'plc_runtime_get_status', 'plc_project_open', 'plc_project_get_structure',
-                    'plc_pou_read', 'plc_project_compile', 'plc_job_get', 'plc_job_cancel', 'plc_job_get_result'}
+                    'plc_pou_read', 'plc_project_compile', 'plc_job_get', 'plc_job_cancel', 'plc_job_get_result', 'plc_templates_list', 'plc_workspace_get',
+                    'plc_project_create', 'plc_project_save', 'plc_pou_create', 'plc_pou_update',
+                    'plc_gvl_create', 'plc_gvl_update', 'plc_dut_create', 'plc_dut_update', 'plc_job_reconcile', 'plc_gvl_read', 'plc_dut_read'}
         assert names == expected, names
         for tool in tools:
             assert tool['inputSchema']['type'] == 'object'
@@ -138,7 +140,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-fixture-check-') as tmp, tempfil
         assert client.call('plc_project_open', dict(common, idempotencyKey='blocked'), error=True)['error']['code'] == 'execution_outcome_unknown'
         stop(process); process = start(); client = Client(env['PlcMcp__ApiKey'])
         assert client.call('plc_runtime_get_status', {})['schedulerBlocked'] is True
-        print('PASS: nine tool schemas, fixture evidence, persistent jobs, source, diagnostics, idempotency, cancellation, timeout and restart quarantine')
+        print('PASS: twenty-two tool schemas, fixture evidence, persistent jobs, source, diagnostics, idempotency, cancellation, timeout and restart quarantine')
     except Exception:
         log.seek(0); print(log.read())
         raise
