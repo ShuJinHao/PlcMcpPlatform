@@ -30,6 +30,13 @@ class RuntimeIdentityTests(unittest.TestCase):
         for assemblies in [[],self.assemblies*2]:
             with self.assertRaises(ValueError): identity.verify(self.expected, str(self.exe), assemblies)
 
+    def test_unicode_installation_paths_preserve_file_identity(self):
+        folder=self.root/'汇川安装目录'; folder.mkdir()
+        exe=folder/self.exe.name; exe.write_bytes(self.exe.read_bytes())
+        engine=folder/self.engine.name; engine.write_bytes(self.engine.read_bytes())
+        result=identity.verify(self.expected,str(exe),[('ScriptEngine',str(engine),'3.5.11.0')])
+        self.assertEqual('matched',result['status'])
+
     def test_worker_checks_identity_before_touching_project(self):
         folder=Path(__file__).resolve().parents[2]/'src/adapters/PlcMcp.Inovance/Scripts'
         sys.path.insert(0,str(folder))

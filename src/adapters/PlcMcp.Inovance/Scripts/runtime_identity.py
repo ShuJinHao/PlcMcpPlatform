@@ -3,6 +3,11 @@
 import hashlib
 import os
 
+try:
+    text_type = unicode
+except NameError:
+    text_type = str
+
 
 def sha256(path):
     digest = hashlib.sha256()
@@ -34,9 +39,9 @@ def observe(expected):
     for assembly in AppDomain.CurrentDomain.GetAssemblies():
         if not assembly.IsDynamic:
             name = assembly.GetName()
-            assemblies.append((str(name.Name), str(assembly.Location), str(name.Version)))
+            assemblies.append((text_type(name.Name), text_type(assembly.Location), text_type(name.Version)))
     process = Process.GetCurrentProcess()
     try:
-        return verify(expected, str(process.MainModule.FileName), assemblies)
+        return verify(expected, text_type(process.MainModule.FileName), assemblies)
     finally:
         process.Dispose()
