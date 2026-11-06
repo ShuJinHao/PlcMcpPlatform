@@ -1,0 +1,48 @@
+{
+  "name": "PassValue",
+  "pouType": "function",
+  "language": "FBD",
+  "profile": "graph-v2",
+  "returnType": {
+    "type": "INT"
+  },
+  "variables": [
+    {
+      "name": "Value",
+      "type": "INT",
+      "scope": "input"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "inVariable",
+      "x": 100,
+      "y": 40,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Value"
+    },
+    {
+      "id": 2,
+      "kind": "outVariable",
+      "x": 200,
+      "y": 80,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "expression": "PassValue",
+      "executionOrder": 1
+    }
+  ]
+}

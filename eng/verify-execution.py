@@ -106,18 +106,32 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-fixture-check-') as tmp, tempfil
         for tool in tools:
             assert tool['inputSchema']['type'] == 'object'
             assert tool['outputSchema']['type'] == 'object', tool
+        def first_contract_difference(actual, expected, path=''):
+            if type(actual) is not type(expected): return (path, actual, expected)
+            if isinstance(actual, dict):
+                if actual.keys() != expected.keys(): return (path+'/keys', list(actual), list(expected))
+                for key in actual:
+                    found = first_contract_difference(actual[key], expected[key], path+'/'+str(key))
+                    if found: return found
+            elif isinstance(actual, list):
+                if len(actual) != len(expected): return (path+'/length', len(actual), len(expected))
+                for i, (a,b) in enumerate(zip(actual,expected)):
+                    found = first_contract_difference(a,b,path+'/'+str(i))
+                    if found: return found
+            elif actual != expected: return (path, actual, expected)
+            return None
         if args.write_contracts:
             target = root / 'contracts/mcp-tools.v1.json'; target.parent.mkdir(exist_ok=True)
             target.write_text(json.dumps(sorted(tools, key=lambda t:t['name']), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
         else:
             expected_tools = json.loads((root / 'contracts/mcp-tools.v1.json').read_text(encoding='utf-8'))
-            assert sorted(tools, key=lambda t:t['name']) == expected_tools, 'MCP contract snapshot changed; review and update explicitly'
+            assert sorted(tools, key=lambda t:t['name']) == expected_tools, 'MCP contract snapshot changed: '+str(first_contract_difference(sorted(tools, key=lambda t:t['name']), expected_tools))
         program_schema = json.loads(json.dumps(next(t for t in tools if t['name'] == 'plc_graph_generate')['inputSchema']['properties']['program'])
                                     .replace('"#/properties/program/', '"#/'))
-        graph_schema = {'$schema': 'https://json-schema.org/draft/2020-12/schema', '$id': 'urn:plcmcp:graph-v1',
-                        'title': 'Graph-v1 transport shape',
+        graph_schema = {'$schema': 'https://json-schema.org/draft/2020-12/schema', '$id': 'urn:plcmcp:graph-v2',
+                        'title': 'Graph-v2 transport shape (graph-v1 compatible)',
                         'description': 'Transport shape only. Runtime GraphRules and PLCopen codec additionally enforce profile, topology, limits and loss checks.', **program_schema}
-        graph_target = root / 'contracts/graph-v1.schema.json'
+        graph_target = root / 'contracts/graph-v2.schema.json'
         if args.write_contracts:
             graph_target.write_text(json.dumps(graph_schema, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
         else:

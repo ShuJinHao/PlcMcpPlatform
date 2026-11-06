@@ -4,15 +4,19 @@ namespace PlcMcp.Core.Workspaces;
 
 // Vendor-neutral, deliberately bounded graph editing profile. Arbitrary vendor XML is a separate exchange operation.
 public sealed record GraphicalProgram(string Name, string PouType, string Language, GraphVariable[] Variables,
-    GraphNode[] Nodes, GraphAction[]? Actions = null);
-public sealed record GraphVariable(string Name, string Type, string Scope = "local", string? InitialValue = null);
+    GraphNode[] Nodes, GraphAction[]? Actions = null, GraphDataType? ReturnType = null, string Profile = "graph-v1");
+public sealed record GraphDimension(int Lower, int Upper);
+public sealed record GraphDataType(string Type, int? StringLength = null, GraphDimension[]? Dimensions = null);
+public sealed record GraphVariable(string Name, string Type, string Scope = "local", string? InitialValue = null,
+    int? StringLength = null, GraphDimension[]? Dimensions = null);
 public sealed record GraphAction(string Name, string Implementation);
 public sealed record GraphConnection(int SourceId, string? SourcePin = null);
 public sealed record GraphPin(string Name, GraphConnection[]? Connections = null, bool Negated = false);
 public sealed record GraphNode(int Id, string Kind, decimal X = 0, decimal Y = 0, string? Expression = null,
     string? TypeName = null, string? InstanceName = null, GraphPin[]? Inputs = null, GraphPin[]? Outputs = null,
     bool Negated = false, string Edge = "none", string Storage = "none", int? ExecutionOrder = null,
-    string? Name = null, bool Initial = false, string? Action = null, string Qualifier = "N");
+    string? Name = null, bool Initial = false, string? Action = null, string Qualifier = "N",
+    GraphPin[]? InOuts = null, int? Priority = null);
 
 public static class GraphRules
 {
@@ -21,6 +25,8 @@ public static class GraphRules
     public static bool Text(string? value, int max = 4096) => value is { Length: > 0 } && value.Length <= max && !value.Contains('\0');
     public static string? Validate(GraphicalProgram? program)
     {
+        if (program?.Profile == "graph-v2") return GraphV2Rules.Validate(program);
+        if (program is not null && (program.Profile != "graph-v1" || GraphV2Rules.RequiresV2(program))) return "graph_profile_mismatch";
         if (program is null || !Identifier(program.Name) || program.PouType is not ("program" or "functionBlock")) return "invalid_graph_definition";
         if (program.Language is not ("LD" or "FBD" or "SFC")) return "graph_language_outside_profile";
         if (program.Nodes is not { Length: > 0 and <= 256 } || program.Variables is not { Length: <= 512 }

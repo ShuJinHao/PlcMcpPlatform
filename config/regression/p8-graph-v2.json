@@ -1,0 +1,3125 @@
+{
+  "schemaVersion": 1,
+  "description": "Original graph-v2 mixed ST/LD/FBD/SFC engineering: types, label/inout wiring, structured branches, task binding, guarded replacements, return-type diff and exact-revision delivery. Fixture compilation is simulated. Real template needs TON/CTU and an empty Task Configuration location; graphical child-object protection remains enabled.",
+  "cases": [
+    {
+      "id": "create",
+      "tool": "plc_project_create",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "templateId": "${templateId}"
+      },
+      "bind": {
+        "baseRevision": "/result/revision"
+      }
+    },
+    {
+      "id": "ld-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "MotorLD",
+          "pouType": "program",
+          "language": "LD",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            },
+            {
+              "name": "Fault",
+              "type": "BOOL"
+            },
+            {
+              "name": "Reset",
+              "type": "BOOL"
+            },
+            {
+              "name": "Alarm",
+              "type": "BOOL"
+            },
+            {
+              "name": "Flags",
+              "type": "BOOL",
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 7
+                }
+              ]
+            },
+            {
+              "name": "Label",
+              "type": "STRING",
+              "stringLength": 80
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "leftPowerRail",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "contact",
+              "expression": "Start",
+              "x": 40,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "contact",
+              "expression": "Running",
+              "x": 40,
+              "y": 60,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "contact",
+              "expression": "Stop",
+              "negated": true,
+              "x": 120,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    },
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "coil",
+              "expression": "Running",
+              "x": 200,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 9
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "executionOrder": 1
+            },
+            {
+              "id": 6,
+              "kind": "rightPowerRail",
+              "x": 280,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    },
+                    {
+                      "sourceId": 11
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "kind": "connector",
+              "x": 200,
+              "y": 280,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                }
+              ],
+              "name": "Interlocked"
+            },
+            {
+              "id": 8,
+              "kind": "continuation",
+              "x": 300,
+              "y": 320,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Interlocked"
+            },
+            {
+              "id": 9,
+              "kind": "contact",
+              "x": 400,
+              "y": 360,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 8
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Fault",
+              "negated": true
+            },
+            {
+              "id": 10,
+              "kind": "contact",
+              "x": 0,
+              "y": 400,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Reset"
+            },
+            {
+              "id": 11,
+              "kind": "coil",
+              "x": 100,
+              "y": 440,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 10
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Alarm",
+              "storage": "reset",
+              "executionOrder": 2
+            }
+          ],
+          "profile": "graph-v2"
+        }
+      },
+      "bind": {
+        "ldArtifact": "/value/artifact/artifactId",
+        "ldHash": "/value/graph/semanticSha256"
+      },
+      "expect": [
+        {
+          "path": "/value/graph/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "ld-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${ldArtifact}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${ldHash}"
+        }
+      ]
+    },
+    {
+      "id": "fbd-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "DataFBD",
+          "pouType": "program",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "Values",
+              "type": "INT",
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 7
+                }
+              ]
+            },
+            {
+              "name": "Label",
+              "type": "STRING",
+              "stringLength": 64
+            },
+            {
+              "name": "Enable",
+              "type": "BOOL"
+            },
+            {
+              "name": "Done",
+              "type": "BOOL"
+            },
+            {
+              "name": "Timer",
+              "type": "TON"
+            },
+            {
+              "name": "Counter",
+              "type": "CTU"
+            },
+            {
+              "name": "Adjust",
+              "type": "FB_Adjust"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "x": 100,
+              "y": 40,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Values[0]"
+            },
+            {
+              "id": 2,
+              "kind": "connector",
+              "x": 200,
+              "y": 80,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "name": "CurrentValue"
+            },
+            {
+              "id": 3,
+              "kind": "continuation",
+              "x": 300,
+              "y": 120,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "CurrentValue"
+            },
+            {
+              "id": 4,
+              "kind": "inVariable",
+              "x": 400,
+              "y": 160,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Enable"
+            },
+            {
+              "id": 5,
+              "kind": "block",
+              "x": 0,
+              "y": 200,
+              "outputs": [
+                {
+                  "name": "Q"
+                },
+                {
+                  "name": "ET"
+                }
+              ],
+              "typeName": "TON",
+              "instanceName": "Timer",
+              "executionOrder": 1,
+              "inputs": [
+                {
+                  "name": "IN",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "PT",
+                  "connections": [
+                    {
+                      "sourceId": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 6,
+              "kind": "inVariable",
+              "x": 100,
+              "y": 240,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "T#100ms"
+            },
+            {
+              "id": 7,
+              "kind": "block",
+              "x": 200,
+              "y": 280,
+              "outputs": [
+                {
+                  "name": "Q"
+                },
+                {
+                  "name": "CV"
+                }
+              ],
+              "typeName": "CTU",
+              "instanceName": "Counter",
+              "executionOrder": 2,
+              "inputs": [
+                {
+                  "name": "CU",
+                  "connections": [
+                    {
+                      "sourceId": 5,
+                      "sourcePin": "Q"
+                    }
+                  ]
+                },
+                {
+                  "name": "R",
+                  "connections": [
+                    {
+                      "sourceId": 8
+                    }
+                  ]
+                },
+                {
+                  "name": "PV",
+                  "connections": [
+                    {
+                      "sourceId": 9
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 8,
+              "kind": "inVariable",
+              "x": 300,
+              "y": 320,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "FALSE"
+            },
+            {
+              "id": 9,
+              "kind": "inVariable",
+              "x": 400,
+              "y": 360,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "10"
+            },
+            {
+              "id": 10,
+              "kind": "block",
+              "x": 0,
+              "y": 400,
+              "outputs": [
+                {
+                  "name": "Done"
+                }
+              ],
+              "typeName": "FB_Adjust",
+              "instanceName": "Adjust",
+              "executionOrder": 3,
+              "inputs": [
+                {
+                  "name": "Enable",
+                  "connections": [
+                    {
+                      "sourceId": 7,
+                      "sourcePin": "Q"
+                    }
+                  ]
+                }
+              ],
+              "inOuts": [
+                {
+                  "name": "Value",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 11,
+              "kind": "outVariable",
+              "x": 100,
+              "y": 440,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 10,
+                      "sourcePin": "Done"
+                    }
+                  ]
+                }
+              ],
+              "expression": "Done",
+              "executionOrder": 4
+            },
+            {
+              "id": 12,
+              "kind": "outVariable",
+              "x": 200,
+              "y": 480,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 10,
+                      "sourcePin": "Value"
+                    }
+                  ]
+                }
+              ],
+              "expression": "Values[1]",
+              "executionOrder": 5
+            }
+          ]
+        }
+      },
+      "bind": {
+        "fbdArtifact": "/value/artifact/artifactId",
+        "fbdHash": "/value/graph/semanticSha256"
+      },
+      "expect": [
+        {
+          "path": "/value/graph/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "fbd-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${fbdArtifact}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${fbdHash}"
+        }
+      ]
+    },
+    {
+      "id": "function-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "PassValue",
+          "pouType": "function",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "returnType": {
+            "type": "INT"
+          },
+          "variables": [
+            {
+              "name": "Value",
+              "type": "INT",
+              "scope": "input"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "x": 100,
+              "y": 40,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Value"
+            },
+            {
+              "id": 2,
+              "kind": "outVariable",
+              "x": 200,
+              "y": 80,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "expression": "PassValue",
+              "executionOrder": 1
+            }
+          ]
+        }
+      },
+      "bind": {
+        "functionArtifact": "/value/artifact/artifactId",
+        "functionHash": "/value/graph/semanticSha256"
+      },
+      "expect": [
+        {
+          "path": "/value/graph/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "function-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${functionArtifact}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${functionHash}"
+        }
+      ]
+    },
+    {
+      "id": "sfc-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "SequenceSFC",
+          "pouType": "program",
+          "language": "SFC",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Bypass",
+              "type": "BOOL"
+            },
+            {
+              "name": "Ready",
+              "type": "BOOL"
+            },
+            {
+              "name": "LeftDone",
+              "type": "BOOL"
+            },
+            {
+              "name": "RightDone",
+              "type": "BOOL"
+            },
+            {
+              "name": "Reset",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            }
+          ],
+          "actions": [
+            {
+              "name": "MarkRunning",
+              "implementation": "Running := TRUE;"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "step",
+              "x": 100,
+              "y": 40,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Idle",
+              "initial": true
+            },
+            {
+              "id": 2,
+              "kind": "selectionDivergence",
+              "x": 200,
+              "y": 80,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "Normal"
+                },
+                {
+                  "name": "Skip"
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "transition",
+              "x": 0,
+              "y": 120,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2,
+                      "sourcePin": "Normal"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Start",
+              "priority": 1
+            },
+            {
+              "id": 4,
+              "kind": "transition",
+              "x": 200,
+              "y": 160,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2,
+                      "sourcePin": "Skip"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Bypass",
+              "priority": 2
+            },
+            {
+              "id": 5,
+              "kind": "step",
+              "x": 0,
+              "y": 200,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Prepare"
+            },
+            {
+              "id": 6,
+              "kind": "step",
+              "x": 100,
+              "y": 240,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Skipped"
+            },
+            {
+              "id": 7,
+              "kind": "transition",
+              "x": 200,
+              "y": 280,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Ready"
+            },
+            {
+              "id": 8,
+              "kind": "transition",
+              "x": 300,
+              "y": 320,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 6
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "TRUE"
+            },
+            {
+              "id": 9,
+              "kind": "selectionConvergence",
+              "x": 400,
+              "y": 360,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 7
+                    }
+                  ]
+                },
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 10,
+              "kind": "step",
+              "x": 0,
+              "y": 400,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 9
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Accepted"
+            },
+            {
+              "id": 11,
+              "kind": "transition",
+              "x": 100,
+              "y": 440,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 10
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "TRUE"
+            },
+            {
+              "id": 12,
+              "kind": "simultaneousDivergence",
+              "x": 200,
+              "y": 480,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 11
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "Left"
+                },
+                {
+                  "name": "Right"
+                }
+              ]
+            },
+            {
+              "id": 13,
+              "kind": "step",
+              "x": 300,
+              "y": 520,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 12,
+                      "sourcePin": "Left"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "WorkLeft"
+            },
+            {
+              "id": 14,
+              "kind": "step",
+              "x": 400,
+              "y": 560,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 12,
+                      "sourcePin": "Right"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "WorkRight"
+            },
+            {
+              "id": 15,
+              "kind": "transition",
+              "x": 0,
+              "y": 600,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 13
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "LeftDone"
+            },
+            {
+              "id": 16,
+              "kind": "transition",
+              "x": 100,
+              "y": 640,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 14
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "RightDone"
+            },
+            {
+              "id": 17,
+              "kind": "step",
+              "x": 200,
+              "y": 680,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 15
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "WaitLeft"
+            },
+            {
+              "id": 18,
+              "kind": "step",
+              "x": 300,
+              "y": 720,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 16
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "WaitRight"
+            },
+            {
+              "id": 19,
+              "kind": "simultaneousConvergence",
+              "x": 400,
+              "y": 760,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 17
+                    }
+                  ]
+                },
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 18
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 20,
+              "kind": "transition",
+              "x": 0,
+              "y": 800,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 19
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Reset"
+            },
+            {
+              "id": 21,
+              "kind": "jumpStep",
+              "x": 100,
+              "y": 840,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 20
+                    }
+                  ]
+                }
+              ],
+              "name": "Idle"
+            },
+            {
+              "id": 22,
+              "kind": "actionBlock",
+              "x": 200,
+              "y": 880,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 13
+                    }
+                  ]
+                }
+              ],
+              "action": "MarkRunning"
+            }
+          ]
+        }
+      },
+      "bind": {
+        "sfcArtifact": "/value/artifact/artifactId",
+        "sfcHash": "/value/graph/semanticSha256"
+      },
+      "expect": [
+        {
+          "path": "/value/graph/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "sfc-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${sfcArtifact}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${sfcHash}"
+        }
+      ]
+    },
+    {
+      "id": "preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "type",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineState",
+                "dutType": "Structure",
+                "declaration": "TYPE MachineState :\nSTRUCT\n Count : INT;\nEND_STRUCT\nEND_TYPE"
+              }
+            },
+            {
+              "id": "gvl",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "GVL_State",
+                "declaration": "VAR_GLOBAL\n State : MachineState;\nEND_VAR"
+              }
+            },
+            {
+              "id": "adjust",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "FB_Adjust",
+                "pouType": "FunctionBlock",
+                "language": "ST",
+                "declaration": "FUNCTION_BLOCK FB_Adjust\nVAR_INPUT\n Enable : BOOL;\nEND_VAR\nVAR_IN_OUT\n Value : INT;\nEND_VAR\nVAR_OUTPUT\n Done : BOOL;\nEND_VAR",
+                "implementation": "IF Enable THEN Value := Value + 1; END_IF;\nDone := Enable;"
+              }
+            },
+            {
+              "id": "ld",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorLD",
+                "artifactId": "${ldArtifact}"
+              }
+            },
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "DataFBD",
+                "artifactId": "${fbdArtifact}"
+              }
+            },
+            {
+              "id": "function",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "PassValue",
+                "artifactId": "${functionArtifact}"
+              }
+            },
+            {
+              "id": "sfc",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "SequenceSFC",
+                "artifactId": "${sfcArtifact}"
+              }
+            },
+            {
+              "id": "main",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MAIN_Mixed",
+                "pouType": "Program",
+                "language": "ST",
+                "declaration": "PROGRAM MAIN_Mixed",
+                "implementation": "MotorLD();\nDataFBD();\nSequenceSFC();\nGVL_State.State.Count := TO_INT(PassValue(Value := 1));"
+              }
+            },
+            {
+              "id": "configuration",
+              "operation": "task.configuration.create",
+              "change": {
+                "parentId": "${applicationId}"
+              }
+            },
+            {
+              "id": "task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "Cycle",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "1",
+                    "interval": "20",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calls",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "@task",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "@main",
+                      "pouName": "MAIN_Mixed"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "planHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "type",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineState",
+                "dutType": "Structure",
+                "declaration": "TYPE MachineState :\nSTRUCT\n Count : INT;\nEND_STRUCT\nEND_TYPE"
+              }
+            },
+            {
+              "id": "gvl",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "GVL_State",
+                "declaration": "VAR_GLOBAL\n State : MachineState;\nEND_VAR"
+              }
+            },
+            {
+              "id": "adjust",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "FB_Adjust",
+                "pouType": "FunctionBlock",
+                "language": "ST",
+                "declaration": "FUNCTION_BLOCK FB_Adjust\nVAR_INPUT\n Enable : BOOL;\nEND_VAR\nVAR_IN_OUT\n Value : INT;\nEND_VAR\nVAR_OUTPUT\n Done : BOOL;\nEND_VAR",
+                "implementation": "IF Enable THEN Value := Value + 1; END_IF;\nDone := Enable;"
+              }
+            },
+            {
+              "id": "ld",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorLD",
+                "artifactId": "${ldArtifact}"
+              }
+            },
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "DataFBD",
+                "artifactId": "${fbdArtifact}"
+              }
+            },
+            {
+              "id": "function",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "PassValue",
+                "artifactId": "${functionArtifact}"
+              }
+            },
+            {
+              "id": "sfc",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "SequenceSFC",
+                "artifactId": "${sfcArtifact}"
+              }
+            },
+            {
+              "id": "main",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MAIN_Mixed",
+                "pouType": "Program",
+                "language": "ST",
+                "declaration": "PROGRAM MAIN_Mixed",
+                "implementation": "MotorLD();\nDataFBD();\nSequenceSFC();\nGVL_State.State.Count := TO_INT(PassValue(Value := 1));"
+              }
+            },
+            {
+              "id": "configuration",
+              "operation": "task.configuration.create",
+              "change": {
+                "parentId": "${applicationId}"
+              }
+            },
+            {
+              "id": "task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "Cycle",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "1",
+                    "interval": "20",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calls",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "@task",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "@main",
+                      "pouName": "MAIN_Mixed"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${planHash}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "ldId": "/result/engineeringResult/batch/aliases/ld",
+        "fbdId": "/result/engineeringResult/batch/aliases/fbd",
+        "functionId": "/result/engineeringResult/batch/aliases/function",
+        "sfcId": "/result/engineeringResult/batch/aliases/sfc"
+      },
+      "expect": [
+        {
+          "path": "/result/published",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "ld-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${ldId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${ldHash}"
+        },
+        {
+          "path": "/result/exchange/graph/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "fbd-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${fbdId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${fbdHash}"
+        },
+        {
+          "path": "/result/exchange/graph/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "function-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${functionId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${functionHash}"
+        },
+        {
+          "path": "/result/exchange/graph/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "sfc-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${sfcId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${sfcHash}"
+        },
+        {
+          "path": "/result/exchange/graph/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "task-binding",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "collection": "tasks"
+      },
+      "expect": [
+        {
+          "path": "/result/totalItems",
+          "equals": 1
+        },
+        {
+          "path": "/result/items/0/calls/0/pouName",
+          "equals": "MAIN_Mixed"
+        },
+        {
+          "path": "/result/items/0/calls/0/resolved",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "ld-change",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "MotorLD",
+          "pouType": "program",
+          "language": "LD",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            },
+            {
+              "name": "Fault",
+              "type": "BOOL"
+            },
+            {
+              "name": "Reset",
+              "type": "BOOL"
+            },
+            {
+              "name": "Alarm",
+              "type": "BOOL"
+            },
+            {
+              "name": "Flags",
+              "type": "BOOL",
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 7
+                }
+              ]
+            },
+            {
+              "name": "Label",
+              "type": "STRING",
+              "stringLength": 80
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "leftPowerRail",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "contact",
+              "expression": "Start",
+              "x": 40,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "edge": "rising"
+            },
+            {
+              "id": 3,
+              "kind": "contact",
+              "expression": "Running",
+              "x": 40,
+              "y": 60,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "contact",
+              "expression": "Stop",
+              "negated": true,
+              "x": 120,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    },
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "coil",
+              "expression": "Running",
+              "x": 200,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 9
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "executionOrder": 1
+            },
+            {
+              "id": 6,
+              "kind": "rightPowerRail",
+              "x": 280,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    },
+                    {
+                      "sourceId": 11
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "kind": "connector",
+              "x": 200,
+              "y": 280,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                }
+              ],
+              "name": "Interlocked"
+            },
+            {
+              "id": 8,
+              "kind": "continuation",
+              "x": 300,
+              "y": 320,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Interlocked"
+            },
+            {
+              "id": 9,
+              "kind": "contact",
+              "x": 400,
+              "y": 360,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 8
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Fault",
+              "negated": true
+            },
+            {
+              "id": 10,
+              "kind": "contact",
+              "x": 0,
+              "y": 400,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Reset"
+            },
+            {
+              "id": 11,
+              "kind": "coil",
+              "x": 100,
+              "y": 440,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 10
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Alarm",
+              "storage": "reset",
+              "executionOrder": 2
+            }
+          ],
+          "profile": "graph-v2"
+        }
+      },
+      "bind": {
+        "ldNewArtifact": "/value/artifact/artifactId",
+        "ldNewHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "fbd-change",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "DataFBD",
+          "pouType": "program",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "Values",
+              "type": "INT",
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 15
+                }
+              ]
+            },
+            {
+              "name": "Label",
+              "type": "STRING",
+              "stringLength": 64
+            },
+            {
+              "name": "Enable",
+              "type": "BOOL"
+            },
+            {
+              "name": "Done",
+              "type": "BOOL"
+            },
+            {
+              "name": "Timer",
+              "type": "TON"
+            },
+            {
+              "name": "Counter",
+              "type": "CTU"
+            },
+            {
+              "name": "Adjust",
+              "type": "FB_Adjust"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "x": 100,
+              "y": 40,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Values[0]"
+            },
+            {
+              "id": 2,
+              "kind": "connector",
+              "x": 200,
+              "y": 80,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "name": "CurrentValue"
+            },
+            {
+              "id": 3,
+              "kind": "continuation",
+              "x": 300,
+              "y": 120,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "CurrentValue"
+            },
+            {
+              "id": 4,
+              "kind": "inVariable",
+              "x": 400,
+              "y": 160,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Enable"
+            },
+            {
+              "id": 5,
+              "kind": "block",
+              "x": 0,
+              "y": 200,
+              "outputs": [
+                {
+                  "name": "Q"
+                },
+                {
+                  "name": "ET"
+                }
+              ],
+              "typeName": "TON",
+              "instanceName": "Timer",
+              "executionOrder": 1,
+              "inputs": [
+                {
+                  "name": "IN",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "PT",
+                  "connections": [
+                    {
+                      "sourceId": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 6,
+              "kind": "inVariable",
+              "x": 100,
+              "y": 240,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "T#200ms"
+            },
+            {
+              "id": 7,
+              "kind": "block",
+              "x": 200,
+              "y": 280,
+              "outputs": [
+                {
+                  "name": "Q"
+                },
+                {
+                  "name": "CV"
+                }
+              ],
+              "typeName": "CTU",
+              "instanceName": "Counter",
+              "executionOrder": 2,
+              "inputs": [
+                {
+                  "name": "CU",
+                  "connections": [
+                    {
+                      "sourceId": 5,
+                      "sourcePin": "Q"
+                    }
+                  ]
+                },
+                {
+                  "name": "R",
+                  "connections": [
+                    {
+                      "sourceId": 8
+                    }
+                  ]
+                },
+                {
+                  "name": "PV",
+                  "connections": [
+                    {
+                      "sourceId": 9
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 8,
+              "kind": "inVariable",
+              "x": 300,
+              "y": 320,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "FALSE"
+            },
+            {
+              "id": 9,
+              "kind": "inVariable",
+              "x": 400,
+              "y": 360,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "10"
+            },
+            {
+              "id": 10,
+              "kind": "block",
+              "x": 0,
+              "y": 400,
+              "outputs": [
+                {
+                  "name": "Done"
+                }
+              ],
+              "typeName": "FB_Adjust",
+              "instanceName": "Adjust",
+              "executionOrder": 3,
+              "inputs": [
+                {
+                  "name": "Enable",
+                  "connections": [
+                    {
+                      "sourceId": 7,
+                      "sourcePin": "Q"
+                    }
+                  ]
+                }
+              ],
+              "inOuts": [
+                {
+                  "name": "Value",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 11,
+              "kind": "outVariable",
+              "x": 100,
+              "y": 440,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 10,
+                      "sourcePin": "Done"
+                    }
+                  ]
+                }
+              ],
+              "expression": "Done",
+              "executionOrder": 4
+            },
+            {
+              "id": 12,
+              "kind": "outVariable",
+              "x": 200,
+              "y": 480,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 10,
+                      "sourcePin": "Value"
+                    }
+                  ]
+                }
+              ],
+              "expression": "Values[1]",
+              "executionOrder": 5
+            }
+          ]
+        }
+      },
+      "bind": {
+        "fbdNewArtifact": "/value/artifact/artifactId",
+        "fbdNewHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "function-change",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "PassValue",
+          "pouType": "function",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "returnType": {
+            "type": "DINT"
+          },
+          "variables": [
+            {
+              "name": "Value",
+              "type": "INT",
+              "scope": "input"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "x": 100,
+              "y": 40,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Value"
+            },
+            {
+              "id": 2,
+              "kind": "outVariable",
+              "x": 200,
+              "y": 80,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "expression": "PassValue",
+              "executionOrder": 1
+            }
+          ]
+        }
+      },
+      "bind": {
+        "functionNewArtifact": "/value/artifact/artifactId",
+        "functionNewHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "sfc-change",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "SequenceSFC",
+          "pouType": "program",
+          "language": "SFC",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Bypass",
+              "type": "BOOL"
+            },
+            {
+              "name": "Ready",
+              "type": "BOOL"
+            },
+            {
+              "name": "LeftDone",
+              "type": "BOOL"
+            },
+            {
+              "name": "RightDone",
+              "type": "BOOL"
+            },
+            {
+              "name": "Reset",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            }
+          ],
+          "actions": [
+            {
+              "name": "MarkRunning",
+              "implementation": "Running := TRUE;"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "step",
+              "x": 100,
+              "y": 40,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Idle",
+              "initial": true
+            },
+            {
+              "id": 2,
+              "kind": "selectionDivergence",
+              "x": 200,
+              "y": 80,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "Normal"
+                },
+                {
+                  "name": "Skip"
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "transition",
+              "x": 0,
+              "y": 120,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2,
+                      "sourcePin": "Normal"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Start AND NOT Bypass",
+              "priority": 1
+            },
+            {
+              "id": 4,
+              "kind": "transition",
+              "x": 200,
+              "y": 160,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2,
+                      "sourcePin": "Skip"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Bypass",
+              "priority": 2
+            },
+            {
+              "id": 5,
+              "kind": "step",
+              "x": 0,
+              "y": 200,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Prepare"
+            },
+            {
+              "id": 6,
+              "kind": "step",
+              "x": 100,
+              "y": 240,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Skipped"
+            },
+            {
+              "id": 7,
+              "kind": "transition",
+              "x": 200,
+              "y": 280,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Ready"
+            },
+            {
+              "id": 8,
+              "kind": "transition",
+              "x": 300,
+              "y": 320,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 6
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "TRUE"
+            },
+            {
+              "id": 9,
+              "kind": "selectionConvergence",
+              "x": 400,
+              "y": 360,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 7
+                    }
+                  ]
+                },
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 10,
+              "kind": "step",
+              "x": 0,
+              "y": 400,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 9
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Accepted"
+            },
+            {
+              "id": 11,
+              "kind": "transition",
+              "x": 100,
+              "y": 440,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 10
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "TRUE"
+            },
+            {
+              "id": 12,
+              "kind": "simultaneousDivergence",
+              "x": 200,
+              "y": 480,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 11
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "Left"
+                },
+                {
+                  "name": "Right"
+                }
+              ]
+            },
+            {
+              "id": 13,
+              "kind": "step",
+              "x": 300,
+              "y": 520,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 12,
+                      "sourcePin": "Left"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "WorkLeft"
+            },
+            {
+              "id": 14,
+              "kind": "step",
+              "x": 400,
+              "y": 560,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 12,
+                      "sourcePin": "Right"
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "WorkRight"
+            },
+            {
+              "id": 15,
+              "kind": "transition",
+              "x": 0,
+              "y": 600,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 13
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "LeftDone"
+            },
+            {
+              "id": 16,
+              "kind": "transition",
+              "x": 100,
+              "y": 640,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 14
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "RightDone"
+            },
+            {
+              "id": 17,
+              "kind": "step",
+              "x": 200,
+              "y": 680,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 15
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "WaitLeft"
+            },
+            {
+              "id": 18,
+              "kind": "step",
+              "x": 300,
+              "y": 720,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 16
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "WaitRight"
+            },
+            {
+              "id": 19,
+              "kind": "simultaneousConvergence",
+              "x": 400,
+              "y": 760,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 17
+                    }
+                  ]
+                },
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 18
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 20,
+              "kind": "transition",
+              "x": 0,
+              "y": 800,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 19
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Reset"
+            },
+            {
+              "id": 21,
+              "kind": "jumpStep",
+              "x": 100,
+              "y": 840,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 20
+                    }
+                  ]
+                }
+              ],
+              "name": "Idle"
+            },
+            {
+              "id": 22,
+              "kind": "actionBlock",
+              "x": 200,
+              "y": 880,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 13
+                    }
+                  ]
+                }
+              ],
+              "action": "MarkRunning"
+            }
+          ]
+        }
+      },
+      "bind": {
+        "sfcNewArtifact": "/value/artifact/artifactId",
+        "sfcNewHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "patch-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "ld",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorLD",
+                "objectId": "${ldId}",
+                "artifactId": "${ldNewArtifact}",
+                "expectedGraphSha256": "${ldHash}"
+              }
+            },
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "DataFBD",
+                "objectId": "${fbdId}",
+                "artifactId": "${fbdNewArtifact}",
+                "expectedGraphSha256": "${fbdHash}"
+              }
+            },
+            {
+              "id": "function",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "PassValue",
+                "objectId": "${functionId}",
+                "artifactId": "${functionNewArtifact}",
+                "expectedGraphSha256": "${functionHash}"
+              }
+            },
+            {
+              "id": "sfc",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "SequenceSFC",
+                "objectId": "${sfcId}",
+                "artifactId": "${sfcNewArtifact}",
+                "expectedGraphSha256": "${sfcHash}"
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "patchPlanHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "patch-apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "ld",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorLD",
+                "objectId": "${ldId}",
+                "artifactId": "${ldNewArtifact}",
+                "expectedGraphSha256": "${ldHash}"
+              }
+            },
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "DataFBD",
+                "objectId": "${fbdId}",
+                "artifactId": "${fbdNewArtifact}",
+                "expectedGraphSha256": "${fbdHash}"
+              }
+            },
+            {
+              "id": "function",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "PassValue",
+                "objectId": "${functionId}",
+                "artifactId": "${functionNewArtifact}",
+                "expectedGraphSha256": "${functionHash}"
+              }
+            },
+            {
+              "id": "sfc",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "SequenceSFC",
+                "objectId": "${sfcId}",
+                "artifactId": "${sfcNewArtifact}",
+                "expectedGraphSha256": "${sfcHash}"
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${patchPlanHash}"
+      },
+      "bind": {
+        "patchedRevision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "ldNewId": "/result/engineeringResult/batch/aliases/ld",
+        "fbdNewId": "/result/engineeringResult/batch/aliases/fbd",
+        "functionNewId": "/result/engineeringResult/batch/aliases/function",
+        "sfcNewId": "/result/engineeringResult/batch/aliases/sfc"
+      },
+      "expect": [
+        {
+          "path": "/result/published",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "ld-readback",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${ldNewId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${ldNewHash}"
+        }
+      ]
+    },
+    {
+      "id": "fbd-readback",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${fbdNewId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${fbdNewHash}"
+        }
+      ]
+    },
+    {
+      "id": "function-readback",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${functionNewId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${functionNewHash}"
+        }
+      ]
+    },
+    {
+      "id": "sfc-readback",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${sfcNewId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${sfcNewHash}"
+        }
+      ]
+    },
+    {
+      "id": "return-type-diff",
+      "tool": "plc_project_diff",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "expectedHeadRevision": "${patchedRevision}",
+        "fromRevision": "${revision}",
+        "toRevision": "${patchedRevision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${functionId}",
+        "toObjectId": "${functionNewId}",
+        "graph": true
+      },
+      "expect": [
+        {
+          "path": "/result/objectDifference/totalChanges",
+          "equals": 1
+        },
+        {
+          "path": "/result/objectDifference/changes/0/component",
+          "equals": "returnType"
+        }
+      ]
+    },
+    {
+      "id": "stale-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "ld",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorLD",
+                "objectId": "${ldNewId}",
+                "artifactId": "${ldNewArtifact}",
+                "expectedGraphSha256": "${ldHash}"
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "stalePlanHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "stale-graph",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "ld",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorLD",
+                "objectId": "${ldNewId}",
+                "artifactId": "${ldNewArtifact}",
+                "expectedGraphSha256": "${ldHash}"
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${stalePlanHash}"
+      },
+      "expect": [
+        {
+          "path": "/status",
+          "equals": "Failed"
+        },
+        {
+          "path": "/errorCode",
+          "equals": "graph_revision_conflict"
+        }
+      ]
+    },
+    {
+      "id": "head-preserved",
+      "tool": "plc_workspace_get",
+      "arguments": {
+        "workspaceName": "p8-${runId}"
+      },
+      "expect": [
+        {
+          "path": "/value/revision",
+          "equals": "${patchedRevision}"
+        }
+      ]
+    },
+    {
+      "id": "package",
+      "tool": "plc_delivery_create",
+      "arguments": {
+        "workspaceName": "p8-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "applicationId": "${applicationId}"
+      },
+      "bind": {
+        "packageId": "/result/artifact/artifactId",
+        "packageSha": "/result/artifact/sha256"
+      },
+      "expect": [
+        {
+          "path": "/result/packaged",
+          "equals": true
+        }
+      ]
+    }
+  ]
+}

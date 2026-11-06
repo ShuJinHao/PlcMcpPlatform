@@ -1,0 +1,286 @@
+{
+  "name": "DataFBD",
+  "pouType": "program",
+  "language": "FBD",
+  "profile": "graph-v2",
+  "variables": [
+    {
+      "name": "Values",
+      "type": "INT",
+      "dimensions": [
+        {
+          "lower": 0,
+          "upper": 7
+        }
+      ]
+    },
+    {
+      "name": "Label",
+      "type": "STRING",
+      "stringLength": 64
+    },
+    {
+      "name": "Enable",
+      "type": "BOOL"
+    },
+    {
+      "name": "Done",
+      "type": "BOOL"
+    },
+    {
+      "name": "Timer",
+      "type": "TON"
+    },
+    {
+      "name": "Counter",
+      "type": "CTU"
+    },
+    {
+      "name": "Adjust",
+      "type": "FB_Adjust"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "inVariable",
+      "x": 100,
+      "y": 40,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Values[0]"
+    },
+    {
+      "id": 2,
+      "kind": "connector",
+      "x": 200,
+      "y": 80,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "name": "CurrentValue"
+    },
+    {
+      "id": 3,
+      "kind": "continuation",
+      "x": 300,
+      "y": 120,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "CurrentValue"
+    },
+    {
+      "id": 4,
+      "kind": "inVariable",
+      "x": 400,
+      "y": 160,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Enable"
+    },
+    {
+      "id": 5,
+      "kind": "block",
+      "x": 0,
+      "y": 200,
+      "outputs": [
+        {
+          "name": "Q"
+        },
+        {
+          "name": "ET"
+        }
+      ],
+      "typeName": "TON",
+      "instanceName": "Timer",
+      "executionOrder": 1,
+      "inputs": [
+        {
+          "name": "IN",
+          "connections": [
+            {
+              "sourceId": 4
+            }
+          ]
+        },
+        {
+          "name": "PT",
+          "connections": [
+            {
+              "sourceId": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "kind": "inVariable",
+      "x": 100,
+      "y": 240,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "T#100ms"
+    },
+    {
+      "id": 7,
+      "kind": "block",
+      "x": 200,
+      "y": 280,
+      "outputs": [
+        {
+          "name": "Q"
+        },
+        {
+          "name": "CV"
+        }
+      ],
+      "typeName": "CTU",
+      "instanceName": "Counter",
+      "executionOrder": 2,
+      "inputs": [
+        {
+          "name": "CU",
+          "connections": [
+            {
+              "sourceId": 5,
+              "sourcePin": "Q"
+            }
+          ]
+        },
+        {
+          "name": "R",
+          "connections": [
+            {
+              "sourceId": 8
+            }
+          ]
+        },
+        {
+          "name": "PV",
+          "connections": [
+            {
+              "sourceId": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "kind": "inVariable",
+      "x": 300,
+      "y": 320,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "FALSE"
+    },
+    {
+      "id": 9,
+      "kind": "inVariable",
+      "x": 400,
+      "y": 360,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "10"
+    },
+    {
+      "id": 10,
+      "kind": "block",
+      "x": 0,
+      "y": 400,
+      "outputs": [
+        {
+          "name": "Done"
+        }
+      ],
+      "typeName": "FB_Adjust",
+      "instanceName": "Adjust",
+      "executionOrder": 3,
+      "inputs": [
+        {
+          "name": "Enable",
+          "connections": [
+            {
+              "sourceId": 7,
+              "sourcePin": "Q"
+            }
+          ]
+        }
+      ],
+      "inOuts": [
+        {
+          "name": "Value",
+          "connections": [
+            {
+              "sourceId": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "kind": "outVariable",
+      "x": 100,
+      "y": 440,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 10,
+              "sourcePin": "Done"
+            }
+          ]
+        }
+      ],
+      "expression": "Done",
+      "executionOrder": 4
+    },
+    {
+      "id": 12,
+      "kind": "outVariable",
+      "x": 200,
+      "y": 480,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 10,
+              "sourcePin": "Value"
+            }
+          ]
+        }
+      ],
+      "expression": "Values[1]",
+      "executionOrder": 5
+    }
+  ]
+}

@@ -103,3 +103,7 @@ python eng/run-regression.py --scenario config/regression/p4-exchange.json --var
 - [ScriptObject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptObject.html)：对象级导入与冲突策略；Project 的 import_xml 没有对象接口同样的 conflictResolve 参数，本实现使用 reporter。
 - [PLCopen 官方下载](https://www.plcopen.org/downloads/)：TC6 XML 2.01 schema 与技术说明。未把供应商文档或官方 schema 复制到公有仓库。
 - [CODESYS PLCopen 导入限制](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_cmd_import_plcopenxml.html)：对象与声明表达限制不能由“导入成功”消除。供应商 CHM 基线与官网版本差异仍见 [docs/10](10-official-api-baseline.md)。
+
+## P8 后续扩展
+
+本文件描述 P4 的 graph-v1。P8 新增 graph-v2 的函数返回类型、数组/字符串长度、连接标签、FBD 双向引脚和结构化 SFC 分支；v1 保留兼容，未知数据与子对象保护不变。最新范围、版本差异和回归入口见 [P8](19-graph-v2-engineering.md)。

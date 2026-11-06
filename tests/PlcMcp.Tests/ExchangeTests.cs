@@ -92,9 +92,16 @@ public sealed class ExchangeTests
         finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
     [Theory]
-    [InlineData(null, "Succeeded", null)]
-    [InlineData("graph_loss", "Failed", "graph_semantic_readback_mismatch")]
-    public async Task Semantic_proof_runs_before_candidate_publication(string? fault, string status, string? error)
+    [InlineData(null, "Succeeded", null, "ld-start-stop")]
+    [InlineData(null, "Succeeded", null, "ld-v2-motor")]
+    [InlineData(null, "Succeeded", null, "fbd-v2-data")]
+    [InlineData(null, "Succeeded", null, "fbd-v2-function")]
+    [InlineData(null, "Succeeded", null, "sfc-v2-branches")]
+    [InlineData("graph_loss", "Failed", "graph_semantic_readback_mismatch", "ld-start-stop")]
+    [InlineData("graph_loss", "Failed", "graph_semantic_readback_mismatch", "ld-v2-motor")]
+    [InlineData("graph_loss", "Failed", "graph_semantic_readback_mismatch", "fbd-v2-data")]
+    [InlineData("graph_loss", "Failed", "graph_semantic_readback_mismatch", "sfc-v2-branches")]
+    public async Task Semantic_proof_runs_before_candidate_publication(string? fault, string status, string? error, string sample)
     {
         await using var h = await ManagedEditingTests.Harness.Create(fault);
         var initial = await h.Complete(EditOperations.CreateProject, new("demo", TemplateId: "sample"));
@@ -103,7 +110,7 @@ public sealed class ExchangeTests
         var worker = new ManagedProjectExecutor(new ExchangeExecutor(new FixtureExecutor(Path.Combine(h.Root, "exchange-calls")), artifacts), h.Files, h.Changes);
         var jobs = new ManagedEditingJobs(h.Store, h.Changes, h.Files, worker);
         var service = new ExchangeService(artifacts, jobs);
-        var graph = await service.GenerateAsync(Sample("ld-start-stop"), default);
+        var graph = await service.GenerateAsync(Sample(sample), default);
         var submitted = await service.ImportAsync("demo", revision, h.Fixture.ApplicationId, graph.Artifact.ArtifactId,
             "reject", false, "create-graph", 120, default, graph: true);
         Assert.True(submitted.IsSuccess, submitted.Error?.Code);

@@ -3142,7 +3142,7 @@
   },
   {
     "name": "plc_graph_decode",
-    "description": "Decode exactly one graph-v1 POU from an artifact. Refuse unrepresented extensions or program data; the original artifact remains available.",
+    "description": "Decode exactly one graph-v1/v2 POU from an artifact. Refuse unrepresented extensions or program data; the original artifact remains available.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3207,6 +3207,35 @@
                           "string",
                           "null"
                         ],
+                        "default": null
+                      },
+                      "stringLength": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "dimensions": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "lower": {
+                              "type": "integer"
+                            },
+                            "upper": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "lower",
+                            "upper"
+                          ]
+                        },
                         "default": null
                       }
                     },
@@ -3353,6 +3382,23 @@
                       "qualifier": {
                         "type": "string",
                         "default": "N"
+                      },
+                      "inOuts": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "$ref": "#/properties/value/properties/program/properties/nodes/items/properties/inputs/items"
+                        },
+                        "default": null
+                      },
+                      "priority": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "default": null
                       }
                     },
                     "required": [
@@ -3382,6 +3428,42 @@
                     ]
                   },
                   "default": null
+                },
+                "returnType": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "stringLength": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "default": null
+                    },
+                    "dimensions": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/properties/value/properties/program/properties/variables/items/properties/dimensions/items"
+                      },
+                      "default": null
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "default": null
+                },
+                "profile": {
+                  "type": "string",
+                  "default": "graph-v1"
                 }
               },
               "required": [
@@ -3446,7 +3528,7 @@
   },
   {
     "name": "plc_graph_generate",
-    "description": "Generate original PLCopen TC6 XML from graph-v1 LD/FBD/basic-SFC nodes, variables, named block pins and connections. Return an artifact and semantic hash. Does not run an IDE or PLC compiler.",
+    "description": "Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; profile=graph-v2 adds Function returnType, bounded arrays/stringLength, connector/continuation labels, block inOuts and structured SFC forks/joins. Selection output order, transition priorities 1..N and left-to-right X positions must agree. Return an artifact and semantic hash. Does not run an IDE or PLC compiler.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3482,6 +3564,35 @@
                       "string",
                       "null"
                     ],
+                    "default": null
+                  },
+                  "stringLength": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "dimensions": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "lower": {
+                          "type": "integer"
+                        },
+                        "upper": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "lower",
+                        "upper"
+                      ]
+                    },
                     "default": null
                   }
                 },
@@ -3628,6 +3739,23 @@
                   "qualifier": {
                     "type": "string",
                     "default": "N"
+                  },
+                  "inOuts": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "$ref": "#/properties/program/properties/nodes/items/properties/inputs/items"
+                    },
+                    "default": null
+                  },
+                  "priority": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "default": null
                   }
                 },
                 "required": [
@@ -3657,6 +3785,42 @@
                 ]
               },
               "default": null
+            },
+            "returnType": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "stringLength": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "dimensions": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "$ref": "#/properties/program/properties/variables/items/properties/dimensions/items"
+                  },
+                  "default": null
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "default": null
+            },
+            "profile": {
+              "type": "string",
+              "default": "graph-v1"
             }
           },
           "required": [
@@ -3751,6 +3915,35 @@
                               "string",
                               "null"
                             ],
+                            "default": null
+                          },
+                          "stringLength": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "dimensions": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "lower": {
+                                  "type": "integer"
+                                },
+                                "upper": {
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "lower",
+                                "upper"
+                              ]
+                            },
                             "default": null
                           }
                         },
@@ -3897,6 +4090,23 @@
                           "qualifier": {
                             "type": "string",
                             "default": "N"
+                          },
+                          "inOuts": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "$ref": "#/properties/value/properties/graph/properties/program/properties/nodes/items/properties/inputs/items"
+                            },
+                            "default": null
+                          },
+                          "priority": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "default": null
                           }
                         },
                         "required": [
@@ -3926,6 +4136,42 @@
                         ]
                       },
                       "default": null
+                    },
+                    "returnType": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "stringLength": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "default": null
+                        },
+                        "dimensions": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/dimensions/items"
+                          },
+                          "default": null
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "default": null
+                    },
+                    "profile": {
+                      "type": "string",
+                      "default": "graph-v1"
                     }
                   },
                   "required": [
@@ -6483,7 +6729,7 @@
   },
   {
     "name": "plc_pou_graph_read",
-    "description": "Read graph-v1 LD/FBD/basic-SFC content from an actual POU via PLCopen export. Return nodes, variables and semantic hash. Unsupported extensions are explicit errors; use project export for opaque exchange.",
+    "description": "Read graph-v1/v2 LD/FBD/SFC content from an actual POU via PLCopen export. Return nodes, variables and semantic hash. Unsupported extensions are explicit errors; use project export for opaque exchange.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -6629,7 +6875,7 @@
   },
   {
     "name": "plc_pou_graph_write",
-    "description": "Create or replace a complete graph-v1 POU from an artifact in a managed candidate. Updating requires objectId and expectedGraphSha256 from graph read. Name/type/language cannot change; unknown properties cannot be discarded. Readback verifies logic before publication.",
+    "description": "Create or replace a complete graph-v1/v2 POU from an artifact in a managed candidate. Updating requires objectId and expectedGraphSha256 from graph read. Name/type/language cannot change; unknown properties cannot be discarded. Readback verifies logic before publication.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -8882,7 +9128,7 @@
   },
   {
     "name": "plc_project_batch_preview",
-    "description": "Preview up to 32 explicit engineering steps: POU/GVL/DUT, graph-v1, text.patch, member.create/update, folder.create, object.rename/move/delete, task configuration/create/update/delete/calls, library.add/remove/placeholder.set, device.add/remove/parameter.write/io.map. Program operations stay in applicationId; devices require deviceScopeIds, external library managers require libraryManagerIds. Parent/object IDs and task-call pouId may use @stepId; source text is never interpolated. Member patches specify memberKind, Action also pins expectedTypeId, property accessors use Get/Set. Hashes cover full normalized source; oldText must match uniquely. Preview is static and does not open or validate the IDE.",
+    "description": "Preview up to 32 explicit engineering steps: POU/GVL/DUT, graph-v1/v2, text.patch, member.create/update, folder.create, object.rename/move/delete, task configuration/create/update/delete/calls, library.add/remove/placeholder.set, device.add/remove/parameter.write/io.map. Program operations stay in applicationId; devices require deviceScopeIds, external library managers require libraryManagerIds. Parent/object IDs and task-call pouId may use @stepId; source text is never interpolated. Member patches specify memberKind, Action also pins expectedTypeId, property accessors use Get/Set. Hashes cover full normalized source; oldText must match uniquely. Preview is static and does not open or validate the IDE.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -10600,7 +10846,7 @@
   },
   {
     "name": "plc_project_diff",
-    "description": "Queue a comparison of two published revisions. File changes are exact hashes only. Optional objectId plus applicationId reads source before/after with hashes and bounded windows; graph=true compares supported graph-v1 variables, nodes, pins/connections, actions and ordering. Use toObjectId when XML replacement changed the vendor object GUID. Graphs outside graph-v1 return an explicit error. Offset/pageSize page file and graph changes; read completion through plc_job_get.",
+    "description": "Queue a comparison of two published revisions. File changes are exact hashes only. Optional objectId plus applicationId reads source before/after with hashes and bounded windows; graph=true compares supported graph-v1/v2 types, return values, variables, nodes, in/out pins, label connections, SFC branches, actions and ordering. Use toObjectId when XML replacement changed the vendor object GUID. Graphs outside the graph profiles return an explicit error. Offset/pageSize page file and graph changes; read completion through plc_job_get.",
     "inputSchema": {
       "type": "object",
       "properties": {

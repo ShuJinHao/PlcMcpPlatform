@@ -32,6 +32,7 @@ public static class FixtureExchange
         var ids = selection.ObjectIds; var nodes = Objects(fixture);
         if (ids.Contains("project") || ids.Contains(fixture.ApplicationId)) ids = nodes.Select(n => n.Id).ToArray();
         var selected = ids.Select(id => nodes.SingleOrDefault(n => n.Id == id) ?? throw new ProjectEditException("fixture_exchange_selection_unsupported")).ToArray();
+        if (graph && new FixtureConfiguration(fixture).HasChildren(input.ObjectId!)) throw new ProjectEditException("graph_object_has_children");
         if (selected.Length == 0) throw new ProjectEditException("exchange_selection_empty");
         var project = Single(Pou(selected[0])); var pous = project.Root!.Element(P + "types")!.Element(P + "pous")!;
         foreach (var obj in selected.Skip(1)) pous.Add(Pou(obj));
@@ -62,6 +63,7 @@ public static class FixtureExchange
         foreach (var pou in incoming)
         {
             var name = (string)pou.Attribute("name")!; var previous = list.SingleOrDefault(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (graph && previous is not null && config.HasChildren(previous.Id)) throw new ProjectEditException("graph_object_has_children");
             if (graph && previous?.Id != edit.ObjectId) throw new ProjectEditException("graph_identity_conflict");
             if (previous is not null)
             {
@@ -74,7 +76,7 @@ public static class FixtureExchange
             }
             var id = Guid.NewGuid().ToString(); var body = pou.Element(P + "body")!.Elements().Single();
             var xml = Single(pou).ToString(SaveOptions.DisableFormatting);
-            list.Add(new(id, name, "pou", ((string?)pou.Attribute("pouType") == "functionBlock" ? "FUNCTION_BLOCK " : "PROGRAM ") + name,
+            list.Add(new(id, name, "pou", ((string?)pou.Attribute("pouType") switch { "functionBlock" => "FUNCTION_BLOCK ", "function" => "FUNCTION ", _ => "PROGRAM " }) + name,
                 body.Name.LocalName == "ST" ? body.Value : null, body.Name.LocalName, xml));
             ids.Add(id); report.Add(new JsonObject { ["severity"] = "information", ["message"] = previous is null ? "Imported object" : "Replaced object",
                 ["objectId"] = id, ["oldObjectId"] = previous?.Id, ["name"] = name });

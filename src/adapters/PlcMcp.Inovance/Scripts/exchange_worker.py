@@ -259,7 +259,7 @@ class ExchangeEngine(object):
             matching = [n for n in parent.get_children(False) if text_type(n.get_name()) == edit['name']]
             if len(matching) != 1: self.fail('graph_identity_conflict')
             ids = [self.identity(matching[0])]
-            # Single POU content includes an SFC body; child methods/properties remain outside graph-v1.
+            # Single POU content includes an SFC body; child methods/properties remain outside both graph profiles.
             before_save = self.export(format_name, ids, False, strict_warnings=True)
         else: before_save = self.export(format_name, ids, True, strict_warnings=not change.get('allowWarnings', False))
         before_save.update(sourceArtifactId=change['artifactId'], reexportVerified=False,

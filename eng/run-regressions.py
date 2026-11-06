@@ -11,7 +11,7 @@ from mcp_client import McpClient
 root = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('regression', root/'eng/run-regression.py')
 regression = importlib.util.module_from_spec(spec); spec.loader.exec_module(regression)
-SUITES = {'p3': 'p3-engineering.json', 'p4': 'p4-exchange.json', 'p5': 'p5-engineering.json', 'p6': 'p6-incremental.json', 'p7': 'p7-members-batch.json'}
+SUITES = {'p3': 'p3-engineering.json', 'p4': 'p4-exchange.json', 'p5': 'p5-engineering.json', 'p6': 'p6-incremental.json', 'p7': 'p7-members-batch.json', 'p8': 'p8-graph-v2.json'}
 
 
 def main():
