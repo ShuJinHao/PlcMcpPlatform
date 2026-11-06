@@ -36,7 +36,6 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 | [下一阶段开发与交付计划](docs/11-offline-development-plan.md) | 无汇川环境时先开发什么，各批如何交付与验收 |
 | [第一批执行实现与使用说明](docs/12-execution.md) | 读取/编译、调度与进程边界 |
 | [第二批受控工程编辑](docs/13-managed-editing.md) | Mac 编辑启动、模板、备份、修订、保存与对账 |
-
 | [第三批工程组态与真实回归](docs/14-engineering-configuration.md) | 任务、成员、对象、库、设备/IO、Windows 验证入口和自动报告 |
 
 ## 核心工程
