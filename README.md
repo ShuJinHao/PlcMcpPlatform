@@ -38,6 +38,7 @@ P1 开始依据供应商 API 参考与 CODESYS 官网自主实现汇川脚本，
 | [开发与 OpenCode 接入](docs/08-development.md) | 如何构建、启动和连接 |
 | [架构决策记录](docs/09-decisions.md) | 关键取舍与调整条件 |
 | [官方接口对照与原创探针](docs/10-official-api-baseline.md) | CHM 与官网如何对应，如何验证目标 IDE 接口 |
+| [下一阶段开发与交付计划](docs/11-offline-development-plan.md) | 无汇川环境时先开发什么，各批如何交付与验收 |
 
 ## 核心工程
 
@@ -67,4 +68,4 @@ dotnet run --project src/hosts/PlcMcp.McpHost --no-launch-profile
 
 Host 固定监听 `http://127.0.0.1:5088`，MCP 路径为 `/mcp`。OpenCode 配置参考 [示例](config/opencode.example.json)，从另一个继承相同 `PlcMcp__ApiKey` 的终端启动 OpenCode。密钥不写入仓库。完整步骤见开发文档。
 
-下一项工程交付是：在目标 Windows/InoProShop 版本上验证脚本宿主、工程读取和编译诊断，再实现工程写入闭环。所有编程语言均在能力范围内，具体实现路径按证据决定。
+下一项工程交付是：先实现持久化任务、进程执行器、工程读取与编译工具，并通过离线自动测试，再开发程序写入及其他工程能力。Windows/InoProShop 验证不阻塞这些开发工作，实际支持声明仍须真实 IDE 证据。所有编程语言均在能力范围内，具体实现路径按证据决定。详见[下一阶段计划](docs/11-offline-development-plan.md)。

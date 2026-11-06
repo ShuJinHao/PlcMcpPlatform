@@ -85,11 +85,12 @@ python -m unittest discover -s tests/script_engine -v
 
 ## 后续实现顺序
 
-1. 在目标 IDE 运行探针并补齐版本、Profile、样例与接口证据。
-2. 按官方 API 编写工程打开、结构读取、程序读取和编译诊断脚本，固定请求/结果契约；解析本次诊断，不从进程退出码推断编译成功。
-3. 接入现有 .NET 应用端口与独立 Worker；随后落地持久化任务、互斥、超时和结果未知恢复。
-4. 在工作区修订、备份和读回规则就绪后开放程序创建/修改/保存，实现 OpenCode 编程闭环。
-5. 按同一标准扩展 Task、IO、库和各图形语言，分别保留证据。
+1. 固定请求/结果契约，先实现持久化任务、互斥、进程执行器、超时和结果未知恢复；无需目标 IDE 即可进行服务开发和自动测试。
+2. 按官方 API 编写工程打开、结构读取、程序读取和编译诊断脚本，接入 .NET 应用端口与 MCP 工具；解析本次诊断，不从进程退出码推断编译成功。
+3. 在工作区修订、备份和读回规则就绪后实现程序创建/修改/保存，再扩展 Task、IO、库和各图形语言。独立测试宿主用于离线契约与流程验证，不改变真实能力状态。
+4. 以后取得 Windows/InoProShop 环境，再运行探针并完成各项真实操作验收，补齐版本、Profile、样例与证据，逐项开放生产能力。
+
+完整顺序和每批验收标准见[下一阶段开发与交付计划](11-offline-development-plan.md)。
 
 [projects]: https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProjects.html
 [project]: https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProject.html
