@@ -34,5 +34,6 @@ jobs:
           PLCMCP_OPENCODE: ${{ runner.os == 'Linux' && format('{0}/plc-opencode/node_modules/.bin/opencode', runner.temp) || '' }}
       - run: python eng/verify-incremental.py
       - run: python eng/verify-members.py
+      - run: python eng/verify-graphs.py
       - run: python eng/verify-publish.py
       - run: python -m unittest discover -s tests/script_engine -v

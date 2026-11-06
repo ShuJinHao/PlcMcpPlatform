@@ -159,7 +159,7 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
     {
         JsonNode? Graph(JsonElement? value) => value is { } v ? JsonNode.Parse(v.GetProperty("exchange").GetProperty("graph").GetRawText()) : null;
         var a = Graph(before); var b = Graph(after); var deltas = new List<object>();
-        foreach (var field in new[] { "name", "pouType", "language", "variables", "nodes", "actions" })
+        foreach (var field in new[] { "name", "pouType", "language", "variables", "nodes", "actions", "returnType", "profile" })
         {
             var oldValue = a?["program"]?[field]; var newValue = b?["program"]?[field];
             if (field is "variables" or "nodes" or "actions")
@@ -176,7 +176,8 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
             }
             else if (!JsonNode.DeepEquals(oldValue, newValue)) deltas.Add(new { component = field, before = oldValue, after = newValue });
         }
-        return JsonSerializer.SerializeToElement(new { objectId = query.ObjectId, compareObjectId = query.CompareObjectId ?? query.ObjectId, comparison = "graph-v1_including_node_pins_connections_and_order",
+        return JsonSerializer.SerializeToElement(new { objectId = query.ObjectId, compareObjectId = query.CompareObjectId ?? query.ObjectId, comparison = "graph-v1_v2_including_types_pins_connections_branches_and_order",
+            beforeProfile = a?["profile"], afterProfile = b?["profile"],
             beforeSemanticSha256 = a?["semanticSha256"], afterSemanticSha256 = b?["semanticSha256"], changes = deltas.Skip(query.Offset).Take(query.PageSize),
             totalChanges = deltas.Count, nextOffset = query.Offset + query.PageSize < deltas.Count ? (int?)(query.Offset + query.PageSize) : null }, WorkerJson.Options);
     }

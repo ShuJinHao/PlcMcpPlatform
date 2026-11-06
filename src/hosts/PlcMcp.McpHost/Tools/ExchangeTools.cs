@@ -33,12 +33,12 @@ public sealed class ExchangeTools(ExchangeService exchange, EngineeringJobs jobs
         => Query(() => exchange.InspectAsync(artifactId, cancellationToken));
 
     [McpServerTool(Name = "plc_graph_generate", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<GeneratedGraph>))]
-    [Description("Generate original PLCopen TC6 XML from graph-v1 LD/FBD/basic-SFC nodes, variables, named block pins and connections. Return an artifact and semantic hash. Does not run an IDE or PLC compiler.")]
+    [Description("Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; profile=graph-v2 adds Function returnType, bounded arrays/stringLength, connector/continuation labels, block inOuts and structured SFC forks/joins. Selection output order, transition priorities 1..N and left-to-right X positions must agree. Return an artifact and semantic hash. Does not run an IDE or PLC compiler.")]
     public Task<CallToolResult> Generate(GraphicalProgram program, CancellationToken cancellationToken)
         => Query(() => exchange.GenerateAsync(program, cancellationToken));
 
     [McpServerTool(Name = "plc_graph_decode", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<GraphDocument>))]
-    [Description("Decode exactly one graph-v1 POU from an artifact. Refuse unrepresented extensions or program data; the original artifact remains available.")]
+    [Description("Decode exactly one graph-v1/v2 POU from an artifact. Refuse unrepresented extensions or program data; the original artifact remains available.")]
     public Task<CallToolResult> Decode(string artifactId, CancellationToken cancellationToken)
         => Query(() => exchange.DecodeAsync(artifactId, cancellationToken));
 
@@ -55,12 +55,12 @@ public sealed class ExchangeTools(ExchangeService exchange, EngineeringJobs jobs
         => Submit(exchange.ImportAsync(workspaceName, expectedRevision, parentId, artifactId, conflictPolicy, allowWarnings, idempotencyKey, timeoutSeconds, cancellationToken));
 
     [McpServerTool(Name = "plc_pou_graph_read", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
-    [Description("Read graph-v1 LD/FBD/basic-SFC content from an actual POU via PLCopen export. Return nodes, variables and semantic hash. Unsupported extensions are explicit errors; use project export for opaque exchange.")]
+    [Description("Read graph-v1/v2 LD/FBD/SFC content from an actual POU via PLCopen export. Return nodes, variables and semantic hash. Unsupported extensions are explicit errors; use project export for opaque exchange.")]
     public Task<CallToolResult> ReadGraph(string projectPath, string objectId, string idempotencyKey, CancellationToken cancellationToken, string? expectedRevision = null, int timeoutSeconds = 120)
         => Submit(jobs.SubmitAsync(new(ExchangeOperations.ReadGraph, new(projectPath, ObjectId: objectId), idempotencyKey, expectedRevision, timeoutSeconds), cancellationToken));
 
     [McpServerTool(Name = "plc_pou_graph_write", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
-    [Description("Create or replace a complete graph-v1 POU from an artifact in a managed candidate. Updating requires objectId and expectedGraphSha256 from graph read. Name/type/language cannot change; unknown properties cannot be discarded. Readback verifies logic before publication.")]
+    [Description("Create or replace a complete graph-v1/v2 POU from an artifact in a managed candidate. Updating requires objectId and expectedGraphSha256 from graph read. Name/type/language cannot change; unknown properties cannot be discarded. Readback verifies logic before publication.")]
     public Task<CallToolResult> WriteGraph(string workspaceName, string expectedRevision, string parentId, string artifactId, string idempotencyKey, CancellationToken cancellationToken,
         string? objectId = null, string? expectedGraphSha256 = null, int timeoutSeconds = 120)
         => Submit(exchange.ImportAsync(workspaceName, expectedRevision, parentId, artifactId, objectId is null ? "reject" : "replace", false, idempotencyKey,

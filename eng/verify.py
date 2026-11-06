@@ -11,7 +11,7 @@ def main():
     commands = [[args.dotnet, 'restore', 'PlcMcpPlatform.sln', '--locked-mode'],
                 [args.dotnet, 'build', 'PlcMcpPlatform.sln', '-c', 'Release', '--no-restore'],
                 [args.dotnet, 'test', 'PlcMcpPlatform.sln', '-c', 'Release', '--no-build', '--no-restore']]
-    for check in ('mcp','execution','editing','configuration','exchange','delivery','incremental','members','publish'):
+    for check in ('mcp','execution','editing','configuration','exchange','delivery','incremental','members','graphs','publish'):
         commands.append([sys.executable, 'eng/verify-'+check+'.py', '--dotnet', args.dotnet])
     commands.append([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests/script_engine', '-v'])
     for command in commands:

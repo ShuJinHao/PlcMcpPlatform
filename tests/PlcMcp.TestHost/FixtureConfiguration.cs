@@ -68,6 +68,7 @@ public sealed class FixtureConfiguration
         if (nodes.Any(k => k.Key != except && k.Value!["parentId"]?.GetValue<string>() == parent && string.Equals(k.Value["name"]!.GetValue<string>(), name, StringComparison.OrdinalIgnoreCase)))
             throw new ProjectEditException("object_name_conflict");
     }
+    public bool HasChildren(string id) => Children(id).Any();
     private IEnumerable<string> Children(string parent) => nodes.Where(k => k.Value!["parentId"]?.GetValue<string>() == parent).OrderBy(k => k.Value!["index"]?.GetValue<int>() ?? 0).Select(k => k.Key);
     private string[] Descendants(string key) => new[] { key }.Concat(Children(key).SelectMany(Descendants)).ToArray();
     private void Kind(string id, params string[] kinds)
