@@ -22,9 +22,8 @@ public static class FixtureExchange
         new XElement(P + "instances", new XElement(P + "configurations"))));
     private static XElement Pou(FixtureObject obj)
     {
-        var pou = obj.ExchangeXml is { } xml ? ExchangeXml.Parse(xml).Root!.Element(P + "types")!.Element(P + "pous")!.Elements(P + "pou").Single()
-            : new XElement(P + "pou", new XAttribute("name", obj.Name), new XAttribute("pouType", "program"), new XElement(P + "interface"),
-                new XElement(P + "body", new XElement(P + "ST", new XElement(ExchangeXml.Xhtml + "xhtml", obj.Implementation ?? ""))));
+        if (obj.Kind != "pou" || obj.ExchangeXml is null) throw new ProjectEditException("fixture_exchange_object_not_modeled");
+        var pou = ExchangeXml.Parse(obj.ExchangeXml).Root!.Element(P + "types")!.Element(P + "pous")!.Elements(P + "pou").Single();
         pou.SetAttributeValue("name", obj.Name); return pou;
     }
     public static JsonObject Export(FixtureProject fixture, EngineeringInput input, bool graph)
@@ -53,6 +52,10 @@ public static class FixtureExchange
             root = root.Element(P + "project") ?? throw new ProjectEditException("invalid_exchange_xml");
         }
         var incoming = root.Element(P + "types")!.Element(P + "pous")!.Elements(P + "pou").ToArray();
+        if (root.Element(P + "types")!.Element(P + "dataTypes")?.HasElements == true
+            || root.Element(P + "instances")?.Descendants().Any(e => e.Name != P + "configurations") == true
+            || root.Elements().Any(e => e.Name != P + "fileHeader" && e.Name != P + "contentHeader" && e.Name != P + "types" && e.Name != P + "instances"))
+            throw new ProjectEditException("fixture_exchange_objects_unsupported");
         if (incoming.Length == 0) throw new ProjectEditException("fixture_exchange_objects_unsupported");
         var list = Objects(fixture).ToList(); var ids = new List<string>(); var report = new JsonArray();
         var config = new FixtureConfiguration(fixture, input.Requirements);

@@ -109,6 +109,16 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-fixture-check-') as tmp, tempfil
         else:
             expected_tools = json.loads((root / 'contracts/mcp-tools.v1.json').read_text(encoding='utf-8'))
             assert sorted(tools, key=lambda t:t['name']) == expected_tools, 'MCP contract snapshot changed; review and update explicitly'
+        program_schema = json.loads(json.dumps(next(t for t in tools if t['name'] == 'plc_graph_generate')['inputSchema']['properties']['program'])
+                                    .replace('"#/properties/program/', '"#/'))
+        graph_schema = {'$schema': 'https://json-schema.org/draft/2020-12/schema', '$id': 'urn:plcmcp:graph-v1',
+                        'title': 'Graph-v1 transport shape',
+                        'description': 'Transport shape only. Runtime GraphRules and PLCopen codec additionally enforce profile, topology, limits and loss checks.', **program_schema}
+        graph_target = root / 'contracts/graph-v1.schema.json'
+        if args.write_contracts:
+            graph_target.write_text(json.dumps(graph_schema, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+        else:
+            assert json.loads(graph_target.read_text(encoding='utf-8')) == graph_schema, 'Graph contract snapshot changed'
         assert not client.call('plc_runtime_get_status', {})['schedulerBlocked']
         assert all(c['status'] == 'Unverified' for c in client.call('plc_capabilities_list', {})['capabilities'])
         common = dict(projectPath=str(sample), idempotencyKey='open-1')

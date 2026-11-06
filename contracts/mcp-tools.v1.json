@@ -1676,6 +1676,345 @@
     }
   },
   {
+    "name": "plc_exchange_read",
+    "description": "Read an exchange artifact in bounded chunks; offsets are UTF-16 code units. Use returned nextOffset. Hash verification occurs on every read.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "type": "string"
+        },
+        "offset": {
+          "type": "integer",
+          "default": 0
+        },
+        "maxChars": {
+          "type": "integer",
+          "default": 4096
+        }
+      },
+      "required": [
+        "artifactId"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "artifact": {
+              "type": "object",
+              "properties": {
+                "artifactId": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "type": "string"
+                },
+                "format": {
+                  "type": "string"
+                },
+                "byteLength": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "artifactId",
+                "sha256",
+                "format",
+                "byteLength"
+              ]
+            },
+            "offset": {
+              "type": "integer"
+            },
+            "nextOffset": {
+              "type": "integer"
+            },
+            "complete": {
+              "type": "boolean"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "artifact",
+            "offset",
+            "nextOffset",
+            "complete",
+            "text"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "value",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "plc_exchange_stage",
+    "description": "Stage bounded UTF-8 XML as an immutable artifact. Format is plcopen or codesys-native. Reject DTD/entities. Structure checks are not IDE validation or compilation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "xml": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "format",
+        "xml"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "artifactId": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            },
+            "format": {
+              "type": "string"
+            },
+            "byteLength": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "artifactId",
+            "sha256",
+            "format",
+            "byteLength"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "value",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_exchange_validate",
+    "description": "Inspect format, POU names, languages, extensions and structural limits. This is not full XSD validation, dependency resolution or compilation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifactId"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "format": {
+              "type": "string"
+            },
+            "rootName": {
+              "type": "string"
+            },
+            "pouNames": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "hasExtensions": {
+              "type": "boolean"
+            },
+            "validationScope": {
+              "type": "string"
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "format",
+            "rootName",
+            "pouNames",
+            "languages",
+            "hasExtensions",
+            "validationScope",
+            "limitations"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "value",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true
+    }
+  },
+  {
     "name": "plc_folder_create",
     "description": "Create a folder under a known object or project root. Return its actual GUID after creation.",
     "inputSchema": {
@@ -1812,6 +2151,860 @@
         "evidenceKind",
         "engineeringReady",
         "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_graph_decode",
+    "description": "Decode exactly one graph-v1 POU from an artifact. Refuse unrepresented extensions or program data; the original artifact remains available.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifactId"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "program": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "pouType": {
+                  "type": "string"
+                },
+                "language": {
+                  "type": "string"
+                },
+                "variables": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "scope": {
+                        "type": "string",
+                        "default": "local"
+                      },
+                      "initialValue": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "type"
+                    ]
+                  }
+                },
+                "nodes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "kind": {
+                        "type": "string"
+                      },
+                      "x": {
+                        "type": "number",
+                        "default": 0
+                      },
+                      "y": {
+                        "type": "number",
+                        "default": 0
+                      },
+                      "expression": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "typeName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "instanceName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "inputs": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "connections": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "sourceId": {
+                                    "type": "integer"
+                                  },
+                                  "sourcePin": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "default": null
+                                  }
+                                },
+                                "required": [
+                                  "sourceId"
+                                ]
+                              },
+                              "default": null
+                            },
+                            "negated": {
+                              "type": "boolean",
+                              "default": false
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ]
+                        },
+                        "default": null
+                      },
+                      "outputs": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "$ref": "#/properties/value/properties/program/properties/nodes/items/properties/inputs/items"
+                        },
+                        "default": null
+                      },
+                      "negated": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "edge": {
+                        "type": "string",
+                        "default": "none"
+                      },
+                      "storage": {
+                        "type": "string",
+                        "default": "none"
+                      },
+                      "executionOrder": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "initial": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "action": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "qualifier": {
+                        "type": "string",
+                        "default": "N"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "kind"
+                    ]
+                  }
+                },
+                "actions": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "implementation": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "implementation"
+                    ]
+                  },
+                  "default": null
+                }
+              },
+              "required": [
+                "name",
+                "pouType",
+                "language",
+                "variables",
+                "nodes"
+              ]
+            },
+            "semanticSha256": {
+              "type": "string"
+            },
+            "profile": {
+              "type": "string",
+              "default": "graph-v1"
+            }
+          },
+          "required": [
+            "program",
+            "semanticSha256"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "value",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "plc_graph_generate",
+    "description": "Generate original PLCopen TC6 XML from graph-v1 LD/FBD/basic-SFC nodes, variables, named block pins and connections. Return an artifact and semantic hash. Does not run an IDE or PLC compiler.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "program": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "pouType": {
+              "type": "string"
+            },
+            "language": {
+              "type": "string"
+            },
+            "variables": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "default": "local"
+                  },
+                  "initialValue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "name",
+                  "type"
+                ]
+              }
+            },
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "x": {
+                    "type": "number",
+                    "default": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "default": 0
+                  },
+                  "expression": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "typeName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "instanceName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "inputs": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "connections": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "sourceId": {
+                                "type": "integer"
+                              },
+                              "sourcePin": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
+                              }
+                            },
+                            "required": [
+                              "sourceId"
+                            ]
+                          },
+                          "default": null
+                        },
+                        "negated": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ]
+                    },
+                    "default": null
+                  },
+                  "outputs": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "$ref": "#/properties/program/properties/nodes/items/properties/inputs/items"
+                    },
+                    "default": null
+                  },
+                  "negated": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "edge": {
+                    "type": "string",
+                    "default": "none"
+                  },
+                  "storage": {
+                    "type": "string",
+                    "default": "none"
+                  },
+                  "executionOrder": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "initial": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "qualifier": {
+                    "type": "string",
+                    "default": "N"
+                  }
+                },
+                "required": [
+                  "id",
+                  "kind"
+                ]
+              }
+            },
+            "actions": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "implementation": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "implementation"
+                ]
+              },
+              "default": null
+            }
+          },
+          "required": [
+            "name",
+            "pouType",
+            "language",
+            "variables",
+            "nodes"
+          ]
+        }
+      },
+      "required": [
+        "program"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "artifact": {
+              "type": "object",
+              "properties": {
+                "artifactId": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "type": "string"
+                },
+                "format": {
+                  "type": "string"
+                },
+                "byteLength": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "artifactId",
+                "sha256",
+                "format",
+                "byteLength"
+              ]
+            },
+            "graph": {
+              "type": "object",
+              "properties": {
+                "program": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "pouType": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "variables": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "type": "string",
+                            "default": "local"
+                          },
+                          "initialValue": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "type"
+                        ]
+                      }
+                    },
+                    "nodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "kind": {
+                            "type": "string"
+                          },
+                          "x": {
+                            "type": "number",
+                            "default": 0
+                          },
+                          "y": {
+                            "type": "number",
+                            "default": 0
+                          },
+                          "expression": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "typeName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "instanceName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "inputs": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "connections": {
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "sourceId": {
+                                        "type": "integer"
+                                      },
+                                      "sourcePin": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ],
+                                        "default": null
+                                      }
+                                    },
+                                    "required": [
+                                      "sourceId"
+                                    ]
+                                  },
+                                  "default": null
+                                },
+                                "negated": {
+                                  "type": "boolean",
+                                  "default": false
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ]
+                            },
+                            "default": null
+                          },
+                          "outputs": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "$ref": "#/properties/value/properties/graph/properties/program/properties/nodes/items/properties/inputs/items"
+                            },
+                            "default": null
+                          },
+                          "negated": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "edge": {
+                            "type": "string",
+                            "default": "none"
+                          },
+                          "storage": {
+                            "type": "string",
+                            "default": "none"
+                          },
+                          "executionOrder": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "name": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "initial": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "action": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "qualifier": {
+                            "type": "string",
+                            "default": "N"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind"
+                        ]
+                      }
+                    },
+                    "actions": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "implementation": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "implementation"
+                        ]
+                      },
+                      "default": null
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "pouType",
+                    "language",
+                    "variables",
+                    "nodes"
+                  ]
+                },
+                "semanticSha256": {
+                  "type": "string"
+                },
+                "profile": {
+                  "type": "string",
+                  "default": "graph-v1"
+                }
+              },
+              "required": [
+                "program",
+                "semanticSha256"
+              ]
+            }
+          },
+          "required": [
+            "artifact",
+            "graph"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "value",
         "error"
       ]
     },
@@ -4310,6 +5503,313 @@
     }
   },
   {
+    "name": "plc_pou_graph_read",
+    "description": "Read graph-v1 LD/FBD/basic-SFC content from an actual POU via PLCopen export. Return nodes, variables and semantic hash. Unsupported extensions are explicit errors; use project export for opaque exchange.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "objectId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_pou_graph_write",
+    "description": "Create or replace a complete graph-v1 POU from an artifact in a managed candidate. Updating requires objectId and expectedGraphSha256 from graph read. Name/type/language cannot change; unknown properties cannot be discarded. Readback verifies logic before publication.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "expectedGraphSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "parentId",
+        "artifactId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
     "name": "plc_pou_member_create",
     "description": "Create Method/Property/Action under an eligible parent. Property bodies are getter/setter sources. Null source leaves generated content unchanged; graph languages create empty content.",
     "inputSchema": {
@@ -5542,6 +7042,163 @@
     }
   },
   {
+    "name": "plc_project_export",
+    "description": "Export selected GUIDs, subtrees or [project] through the official IDE API. Format plcopen or codesys-native. Results include an artifact, exact selection and reporter messages; no arbitrary output paths.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "objectIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "format": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "recursive": {
+          "type": "boolean",
+          "default": true
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "objectIds",
+        "format",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
     "name": "plc_project_get_structure",
     "description": "Queue a bounded project-tree read; poll its result. No project content is changed; a task record is created.",
     "inputSchema": {
@@ -5682,6 +7339,161 @@
     },
     "annotations": {
       "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_project_import",
+    "description": "Import a staged artifact into a managed candidate at a parent GUID or project. Conflict policy reject/replace/skip is explicit. Save/reopen/re-export proof precedes publication. Unknown/partial failures never publish; warnings require allowWarnings.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "conflictPolicy": {
+          "type": "string",
+          "default": "reject"
+        },
+        "allowWarnings": {
+          "type": "boolean",
+          "default": false
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "parentId",
+        "artifactId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": false

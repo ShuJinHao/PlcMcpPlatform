@@ -137,6 +137,7 @@ public static class FixtureWorker
                         if (index < 0) { error = "object_not_found"; break; }
                         var existing = list[index];
                         if (existing.Kind != request.Operation.Split('.')[0]) { error = "object_kind_mismatch"; break; }
+                        if (existing.ExchangeXml is not null) { error = "fixture_exchange_text_edit_not_modeled"; break; }
                         if (existing.Implementation is null && edit.Implementation is not null) { error = "textual_implementation_unavailable"; break; }
                         edited = existing with { Declaration = edit.Declaration is null ? existing.Declaration : Normalize(edit.Declaration),
                             Implementation = edit.Implementation is null ? existing.Implementation : Normalize(edit.Implementation) };

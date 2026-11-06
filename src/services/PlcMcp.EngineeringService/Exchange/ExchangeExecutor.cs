@@ -18,6 +18,7 @@ public sealed class ExchangeExecutor(IEngineeringExecutor worker, IExchangeArtif
     public async Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
     {
         if (!ExchangeOperations.IsRead(request.Operation) && !ExchangeOperations.IsWrite(request.Operation)) return await worker.ExecuteAsync(request, token);
+        JsonElement? evidence = null;
         try
         {
             var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!;
@@ -30,6 +31,7 @@ public sealed class ExchangeExecutor(IEngineeringExecutor worker, IExchangeArtif
                 var before = await worker.ExecuteAsync(probe, token);
                 if (!WorkerJson.Matches(probe, before) || !WorkerResultValidation.IsValid(probe, before)) return WorkerJson.Unknown(request, "worker_protocol_error");
                 if (before.Outcome != "succeeded") return before with { RequestId = request.RequestId };
+                evidence = before.Payload;
                 var observed = PlcOpenGraphCodec.Decode(before.Payload!.Value.GetProperty("exchange").GetProperty("xml").GetString()!);
                 if (observed.SemanticSha256 != input.Edit.Exchange!.ExpectedGraphSha256) return WorkerJson.Failed(request, "graph_revision_conflict");
                 if (observed.Program.Name != expected!.Program.Name || observed.Program.PouType != expected.Program.PouType || observed.Program.Language != expected.Program.Language)
@@ -38,20 +40,22 @@ public sealed class ExchangeExecutor(IEngineeringExecutor worker, IExchangeArtif
             var response = await worker.ExecuteAsync(request, token);
             if (!WorkerJson.Matches(request, response) || !WorkerResultValidation.IsValid(request, response)) return WorkerJson.Unknown(request, "worker_protocol_error");
             if (response.Outcome != "succeeded") return response;
+            evidence = response.Payload;
             var payload = JsonNode.Parse(response.Payload!.Value.GetRawText())!.AsObject();
             var exchange = payload["exchange"]!.AsObject(); var xml = exchange["xml"]!.GetValue<string>(); var format = exchange["format"]!.GetValue<string>();
             _ = ExchangeXml.Inspect(format, xml);
             if (graphWrite || request.Operation == ExchangeOperations.ReadGraph)
             {
                 var graph = PlcOpenGraphCodec.Decode(xml);
-                if (expected is not null && graph.SemanticSha256 != expected.SemanticSha256) return WorkerJson.Failed(request, "graph_semantic_readback_mismatch");
+                if (expected is not null && graph.SemanticSha256 != expected.SemanticSha256)
+                    return WorkerJson.Failed(request, "graph_semantic_readback_mismatch") with { Payload = evidence };
                 exchange["graph"] = JsonSerializer.SerializeToNode(graph, WorkerJson.Options);
             }
             exchange["artifact"] = JsonSerializer.SerializeToNode(await artifacts.PutAsync(format, xml, token), WorkerJson.Options);
             exchange.Remove("xml");
             return response with { Payload = JsonSerializer.SerializeToElement(payload, WorkerJson.Options) };
         }
-        catch (ProjectEditException error) { return WorkerJson.Failed(request, error.Code); }
-        catch (IOException) { return WorkerJson.Failed(request, "exchange_artifact_failed"); }
+        catch (ProjectEditException error) { return WorkerJson.Failed(request, error.Code) with { Payload = evidence }; }
+        catch (IOException) { return WorkerJson.Failed(request, "exchange_artifact_failed") with { Payload = evidence }; }
     }
 }

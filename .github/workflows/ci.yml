@@ -16,14 +16,6 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore PlcMcpPlatform.sln --locked-mode
       - run: dotnet build PlcMcpPlatform.sln -c Release --no-restore
-      - name: Capture contracts for P4 review
-        if: runner.os == 'Linux'
-        run: python eng/verify-execution.py --write-contracts
-      - uses: actions/upload-artifact@v4
-        if: runner.os == 'Linux' && always()
-        with:
-          name: p4-contracts
-          path: contracts/mcp-tools.v1.json
       - run: dotnet test PlcMcpPlatform.sln -c Release --no-build --no-restore
       - run: python eng/verify-mcp.py
       - run: python eng/verify-execution.py

@@ -58,6 +58,12 @@ public sealed class ExchangeTests
         Assert.Equal("graph_contains_unrepresented_data", Assert.Throws<ProjectEditException>(() => PlcOpenGraphCodec.Decode(xml.ToString())).Code);
         Assert.True(ExchangeXml.Inspect("plcopen", xml.ToString()).HasExtensions);
     }
+    [Fact] public void Initial_step_flag_cannot_be_silently_dropped_from_a_jump()
+    {
+        var p = Sample("sfc-sequence");
+        var changed = p with { Nodes = p.Nodes.Select(n => n.Kind == "jumpStep" ? n with { Initial = true } : n).ToArray() };
+        Assert.Equal("graph_field_not_applicable", Assert.Throws<ProjectEditException>(() => PlcOpenGraphCodec.Encode(changed)).Code);
+    }
     [Theory]
     [InlineData("<!DOCTYPE project [<!ENTITY secret SYSTEM 'file:///etc/passwd'>]><project>&secret;</project>")]
     [InlineData("<project><broken></project>")]

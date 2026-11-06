@@ -71,6 +71,7 @@ public static class GraphRules
             if (n.Edge is not ("none" or "rising" or "falling") || n.Edge != "none" && n.Kind is not ("contact" or "coil")
                 || n.Storage is not ("none" or "set" or "reset") || n.Storage != "none" && n.Kind != "coil"
                 || n.Negated && n.Kind is not ("contact" or "coil" or "inVariable" or "outVariable")) return "invalid_graph_modifier";
+            if (n.Initial && n.Kind != "step") return "graph_field_not_applicable";
             if (n.Kind is "step" or "jumpStep") { if (!Identifier(n.Name)) return "invalid_step_name"; }
             else if (n.Name is not null || n.Initial) return "graph_field_not_applicable";
             if (n.Kind == "actionBlock")
@@ -94,7 +95,7 @@ public static class GraphRules
         var ordered = nodes.Where(n => n.ExecutionOrder is not null).Select(n => n.ExecutionOrder).ToArray();
         if (ordered.Any(x => x <= 0) || ordered.Distinct().Count() != ordered.Length) return "graph_execution_order_conflict";
         var actions = program.Actions ?? [];
-        if (actions.Any(a => a is null || !Identifier(a.Name) || !Text(a.Implementation, 8192))
+        if (actions.Length > 256 || actions.Any(a => a is null || !Identifier(a.Name) || !Text(a.Implementation, 8192))
             || actions.Select(a => a.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != actions.Length) return "invalid_sfc_action";
         if (program.Language == "SFC")
         {

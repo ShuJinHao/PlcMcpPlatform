@@ -8,15 +8,15 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
 
-## 当前阶段 P3 工程组态与回归入口
+## 当前阶段 P4 工程交换与图形内容编辑
 
-在受控工程编辑基础上，已补齐 Task 和 POU 调用绑定、Method/Property/Action、文件夹和对象管理、库引用与占位符、设备与离线参数、基础 IO 变量映射。新增操作复用备份、修订检查、保存重开和新版本发布；工程操作与厂商脚本均自主实现。
+已在受控工程编辑、任务/成员/设备/库组态基础上，实现 PLCopen / CODESYS 原生 XML 交换，以及 graph-v1 的 LD、FBD、基础 SFC 内容生成、读取和完整替换。图形语义核对位于候选版本发布之前，导入报告与失败证据保留。CFC 仅有原生交换调用路径，没有结构化编辑器。
 
-独立 `tests/PlcMcp.TestHost` 提供 **49 个工具**，支持 Mac、Windows、Linux 自动开发检查。新增 42 步 HTTP 场景覆盖第三批组态操作。测试 JSON 不是真实工程，模拟诊断不编译 PLC 代码。
+独立 `tests/PlcMcp.TestHost` 提供 **58 个工具**，新增 38 步 HTTP 场景覆盖图形与交换流程。测试 JSON 不是真实工程，模拟诊断不编译 PLC 代码。Mac 可继续开发和统一回归准备，无需安装汇川 IDE。
 
-`src/hosts/PlcMcp.ValidationHost` 为后续 Windows 集中回归提供真实执行入口：显式版本、Profile 与操作白名单，输出脚本指纹和回归报告。默认生产宿主仍只开放两个查询工具；所有汇川能力仍为 `Unverified`，`engineeringReady=false`。**真实 InoProShop/IronPython 与实际 OpenCode 客户端尚未联调**。
+`src/hosts/PlcMcp.ValidationHost` 为后续 Windows 集中回归提供真实执行入口，要求版本、Profile 与操作白名单，记录脚本指纹和报告。默认生产宿主仍只有两个查询工具；所有汇川能力保持 `Unverified`、`engineeringReady=false`。**真实 InoProShop/IronPython 与实际 OpenCode 客户端尚未联调**。
 
-详情见 [第三批实现与回归说明](docs/14-engineering-configuration.md)。Mac 的初始模板和编辑启动继续使用 [第二批说明](docs/13-managed-editing.md)。CI 对 Windows、Ubuntu、macOS 运行锁定还原、Release 构建、标准 .NET/Python 测试及四组 HTTP 检查。第四批继续 XML 交换与图形内容编辑，不增加没有实现的工具。
+详情和限制见 [第四批实现与回归说明](docs/15-engineering-exchange.md)，包括 SFC 子成员、图形模型范围、64 KiB XML 上限和往返证明的含义。Mac 启动沿用 [第二批说明](docs/13-managed-editing.md)，Windows 验证入口见 [第三批说明](docs/14-engineering-configuration.md)。CI 对 Windows、Ubuntu、macOS 执行锁定还原、Release 构建、标准 .NET/Python 测试和五组 HTTP 检查。
 
 ## 文档入口
 
@@ -37,6 +37,7 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 | [第一批执行实现与使用说明](docs/12-execution.md) | 读取/编译、调度与进程边界 |
 | [第二批受控工程编辑](docs/13-managed-editing.md) | Mac 编辑启动、模板、备份、修订、保存与对账 |
 | [第三批工程组态与真实回归](docs/14-engineering-configuration.md) | 任务、成员、对象、库、设备/IO、Windows 验证入口和自动报告 |
+| [第四批交换与图形内容](docs/15-engineering-exchange.md) | XML 制品、LD/FBD/SFC 模型、导入报告、语义核对和 OpenCode 场景 |
 
 ## 核心工程
 

@@ -127,3 +127,9 @@ python -m unittest discover -s tests/script_engine -v
 | Parameter/IO | 叶子 value、offline_access_rights、范围/枚举、io_mapping.variable | SDK 接收字符串即代表值有效；变量映射替代类型编译检查 |
 
 实际完成范围、明确限制及回归入口见 [第三批实现说明](14-engineering-configuration.md)。
+
+## P4 官网补充对照
+
+本批实现进一步核对官方 [ScriptProject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProject.html) 与 [ScriptObject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptObject.html) 的 PLCopen/native 导入导出、冲突和报告接口。Project 与对象级 import_xml 的参数不同；当前使用 reporter 处理冲突，不给 Project 传入对象重载专有参数。原生接口按 filenames/handler 与 destination/reporter 调用，并检查 NativeImportResult。
+
+官方报告区分非导出对象、警告、取消与丢失序列化成员。递归导出可能静默忽略不可导出子对象，因此本实现先展开目标，再显式选择对象以取得报告。TC6 2.01 图形格式依据 [PLCopen 官方下载](https://www.plcopen.org/downloads/) 中的 schema；三个原创样例做过 schema 校验。此处是官网文档对照和离线代码证据，没有补作目标汇川 IDE 的运行确认；CHM 的既有版本基线也没有据此升级。细节见 [docs/15](15-engineering-exchange.md)。

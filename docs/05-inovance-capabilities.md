@@ -2,7 +2,7 @@
 
 ## 状态规则
 
-本表是完整覆盖目标，不是支持声明。当前 P3 尚未连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
+本表是完整覆盖目标，不是支持声明。当前 P4 尚未连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
 
 | 状态 | 含义 |
 |---|---|
@@ -101,3 +101,7 @@ API 名称、重载及版本依据供应商提供的 `ScriptEngine.chm` 与 CODE
 ## P3 实现范围
 
 Task、Member、Object、Library、Device/Parameter/IO 已有完整工具和原创脚本实现；新增 27 个工具的映射与限制见 [第三批说明](14-engineering-configuration.md)。能力目录同时保留领域范围 ID 与实际操作 ID。生产查询仍为 Unverified；专用验证宿主可按明确白名单执行并收集真实证据，不自动改变支持状态。
+
+## P4 实现范围
+
+新增 project.export / project.import / pou.graph.read / pou.graph.write 操作与 5 个本地制品/图形工具。LD、FBD、基础 SFC 的 graph-v1 内容已实现；CFC 仅走不透明原生交换调用路径，EtherCAT PDO 仍无独立编辑实现。SFC 子成员、复杂声明与未知扩展有明确拒绝规则，见 [第四批说明](15-engineering-exchange.md)。这些实现与自动检查均不改变厂商能力的 Unverified 状态。
