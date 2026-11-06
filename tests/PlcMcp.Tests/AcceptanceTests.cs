@@ -91,6 +91,30 @@ public sealed class AcceptanceTests
         Assert.Equal("dependency_scope_not_accepted", (await executor.ExecuteAsync(request with { Payload = Element(allowed) }, default)).ErrorCode);
         Assert.Equal(0, worker.Calls);
     }
+    [Fact] public void Batch_without_any_accepted_step_is_not_advertised()
+    {
+        var executor = new AcceptedExecution(new RecordingExecutor(), new MemoryPolicy(["project.verify", "project.tree.read", "task.list", "project.compile"]));
+        Assert.Equal("operation_not_accepted", executor.CheckAvailability("project.batch")!.Code);
+    }
+    [Fact] public async Task Graph_replacement_requires_accepted_readback_before_candidate_execution()
+    {
+        var worker = new RecordingExecutor(); var policy = new MemoryPolicy(["pou.graph.write"]);
+        var executor = new AcceptedExecution(worker, policy);
+        var input = new EngineeringInput("x", Edit: new("w", ObjectId: Guid.NewGuid().ToString()));
+        Assert.Equal("operation_not_accepted", (await executor.CheckRequestAsync("pou.graph.write", input, default))!.Code);
+        policy.Operations.Add("pou.graph.read");
+        Assert.Null(await executor.CheckRequestAsync("pou.graph.write", input, default)); Assert.Equal(0, worker.Calls);
+    }
+    [Fact] public void Missing_profile_or_invalid_hash_is_not_an_identity()
+    {
+        using var set = new EvidenceSet();
+        var record = JsonSerializer.Deserialize<InovanceAcceptanceRecord>(File.ReadAllText(set.Path), WorkerJson.Options)!;
+        foreach (var identity in new[] { record.Identity with { Profile = "" }, record.Identity with { ScriptSha256 = "unverified" } })
+        {
+            var error = Assert.Throws<InvalidOperationException>(() => InovanceAcceptance.Validate(record with { Identity = identity }, set.Path));
+            Assert.Equal("acceptance_invalid", error.Message);
+        }
+    }
     private static JsonElement Element<T>(T value) => JsonSerializer.SerializeToElement(value, WorkerJson.Options);
     private sealed class RecordingExecutor : IEngineeringExecutor
     {
@@ -117,7 +141,7 @@ public sealed class AcceptanceTests
             System.IO.Directory.CreateDirectory(Directory);
             var input = new EngineeringInput("x", Edit: new("w", Name: "Main", Language: "ST", PouType: "Program", Declaration: "PROGRAM Main"), Candidate: true);
             var request = new WorkerRequest(1, Guid.NewGuid(), Guid.NewGuid(), "pou.create", Guid.NewGuid(), new('a',64), DateTimeOffset.UtcNow.AddMinutes(1), "real", Element(input));
-            var runtime = Element(new { status = "matched", executableSha256 = Identity.Executable.Sha256, engineSha256 = Identity.Engine.Sha256 });
+            var runtime = Element(new { status = "matched", engineAssemblyVersion = "2.0.0.0", executableSha256 = Identity.Executable.Sha256, engineSha256 = Identity.Engine.Sha256 });
             var payload = Element(new { baseRevision = request.ExpectedRevision, revision = new string('b',64), saved = true, reopened = true, readBackVerified = true, sessionClosedAfterOperation = true,
                 dependencies = new { controllerMatched = true, libraryReferencesMatched = true, installedDependenciesVerified = false }, objectId = Guid.NewGuid().ToString(), name = "Main", declaration = "PROGRAM Main", implementation = (string?)null, runtimeIdentity = runtime });
             Run = new(1, "real", false, DateTimeOffset.UtcNow.AddMinutes(-1), Identity, runtime, request, new(1, request.RequestId, request.JobId, "succeeded", null, "real", payload));

@@ -31,6 +31,8 @@ public static class AcceptanceRules
             code = dependencies.Length > 0 ? dependencies.All(op => Unrestricted(state, op)) ? null : "dependency_scope_not_accepted"
                 : state.Grants.Any(g => g.Operation == operation) ? null : "operation_not_accepted";
         }
+        if (code is null && operation == PlcMcp.Services.Contracts.Batch.BatchOperations.Apply
+            && !state.Grants.Any(g => PlcMcp.Services.Contracts.Batch.BatchOperations.Steps.Contains(g.Operation))) code = "operation_not_accepted";
         return code is null ? null : new(code, $"Operation {operation} is outside the current reviewed acceptance; inspect runtime status and acceptedScopes.");
     }
     public static bool Matches(OperationAcceptance grant, JsonElement input) => grant.Conditions.All(condition =>

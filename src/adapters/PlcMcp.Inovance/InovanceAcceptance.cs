@@ -80,14 +80,14 @@ public sealed class InovanceAcceptance(string? path, Func<InovanceIdentity> obse
         if (record.SchemaVersion != 1 || string.IsNullOrWhiteSpace(record.AcceptanceId) || record.AcceptanceId.Length > 128
             || string.IsNullOrWhiteSpace(record.ReviewedBy) || record.ReviewedBy.Length > 256
             || record.ReviewedAt == default || record.ReviewedAt > DateTimeOffset.UtcNow.AddMinutes(5)
-            || record.ReviewStatement is not { Length: > 15 and <= 4096 } || record.Identity is null
+            || record.ReviewStatement is not { Length: > 15 and <= 4096 } || !ValidIdentity(record.Identity)
             || record.Grants is not { Length: > 0 and <= 128 } || record.Evidence is not { Length: > 0 and <= 256 }
             || record.Evidence.Select(x => x.Id).Distinct(StringComparer.Ordinal).Count() != record.Evidence.Length)
             throw new InvalidOperationException("acceptance_invalid");
         var evidence = new Dictionary<string, InovanceRunEvidence>(StringComparer.Ordinal);
         foreach (var reference in record.Evidence)
         {
-            if (string.IsNullOrWhiteSpace(reference.Id) || Path.IsPathFullyQualified(reference.Path) || reference.Path.Split('/', '\\').Any(x => x is ".." or ".")) throw new InvalidOperationException("acceptance_evidence_invalid");
+            if (string.IsNullOrWhiteSpace(reference.Id) || reference.Path is not { Length: > 0 and <= 512 } || Path.IsPathRooted(reference.Path) || reference.Path.Contains(':') || reference.Path.Split('/', '\\').Any(x => x is "" or ".." or ".")) throw new InvalidOperationException("acceptance_evidence_invalid");
             var bytes = ReadBounded(Path.Combine(Path.GetDirectoryName(manifestPath)!, reference.Path), 2 * 1024 * 1024);
             if (InovanceIdentity.Hash(bytes) != reference.Sha256) throw new InvalidOperationException("acceptance_evidence_changed");
             var run = JsonSerializer.Deserialize<InovanceRunEvidence>(bytes, Strict) ?? throw new InvalidOperationException("acceptance_evidence_invalid");
@@ -111,6 +111,16 @@ public sealed class InovanceAcceptance(string? path, Func<InovanceIdentity> obse
                 throw new InvalidOperationException("acceptance_grant_invalid");
         }
     }
+    private static bool ValidIdentity(InovanceIdentity? identity)
+    {
+        static bool Hash(string? value) => value is { Length: 64 } && value.All(Uri.IsHexDigit);
+        static bool File(IdentityFile? file) => file is not null && !string.IsNullOrWhiteSpace(file.Name)
+            && file.Name.Length <= 256 && file.Name.IndexOfAny(['/', '\\', ':']) < 0 && Hash(file.Sha256);
+        return identity is not null && !string.IsNullOrWhiteSpace(identity.Profile) && identity.Profile.Length <= 256
+            && !string.IsNullOrWhiteSpace(identity.StrategyId) && identity.StrategyId.Length <= 128
+            && File(identity.Executable) && File(identity.Engine) && identity.Dependencies is { Length: <= 64 }
+            && identity.Dependencies.All(File) && Hash(identity.ScriptSha256) && Hash(identity.ExecutorSha256);
+    }
     private static bool ContainsSimulationMarker(JsonElement value)
     {
         if (value.ValueKind == JsonValueKind.Array) return value.EnumerateArray().Any(ContainsSimulationMarker);
@@ -123,5 +133,6 @@ public sealed class InovanceAcceptance(string? path, Func<InovanceIdentity> obse
     public static bool RuntimeIdentityMatches(JsonElement actual, InovanceIdentity identity) => actual.ValueKind == JsonValueKind.Object
         && actual.TryGetProperty("executableSha256", out var exe) && exe.GetString() == identity.Executable.Sha256
         && actual.TryGetProperty("engineSha256", out var engine) && engine.GetString() == identity.Engine.Sha256
+        && actual.TryGetProperty("engineAssemblyVersion", out var version) && version.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(version.GetString())
         && actual.TryGetProperty("status", out var status) && status.GetString() == "matched";
 }

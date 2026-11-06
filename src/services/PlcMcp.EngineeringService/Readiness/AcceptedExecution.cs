@@ -62,12 +62,14 @@ public sealed class AcceptedExecution(IEngineeringExecutor inner, IExecutionAcce
     {
         var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options);
         if (input is null) return WorkerJson.Failed(request, "invalid_request");
-        if (await CheckRequestAsync(request.Operation, input, token) is { } denied) return WorkerJson.Failed(request, denied.Code);
+        token.ThrowIfCancellationRequested();
+        var accepted = policy.GetReadiness();
+        if (CheckPlan(request.Operation, input, accepted) is { } denied) return WorkerJson.Failed(request, denied.Code);
         var result = await inner.ExecuteAsync(request, token);
         if (result.Payload is { ValueKind: JsonValueKind.Object } payload)
         {
             var enriched = System.Text.Json.Nodes.JsonNode.Parse(payload.GetRawText())!.AsObject();
-            enriched["acceptance"] = JsonSerializer.SerializeToNode(Readiness, WorkerJson.Options);
+            enriched["acceptance"] = JsonSerializer.SerializeToNode(accepted, WorkerJson.Options);
             result = result with { Payload = JsonSerializer.SerializeToElement(enriched, WorkerJson.Options) };
         }
         return result;

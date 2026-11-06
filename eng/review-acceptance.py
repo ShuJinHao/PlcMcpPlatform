@@ -20,7 +20,7 @@ def draft(records, output):
         if value.get('schemaVersion') != 1 or value.get('executionMode') != 'real' or value.get('simulated') is not False or value.get('response',{}).get('outcome') != 'succeeded' or value.get('request',{}).get('executionMode') != 'real' or value.get('response',{}).get('executionMode') != 'real':
             raise ValueError('Only successful real invocation records can be reviewed.')
         runtime = value.get('runtimeIdentity', {}); identity = value['identity']
-        if runtime.get('status') != 'matched' or runtime.get('executableSha256') != identity['executable']['sha256'] or runtime.get('engineSha256') != identity['engine']['sha256']:
+        if not runtime.get('engineAssemblyVersion') or runtime.get('status') != 'matched' or runtime.get('executableSha256') != identity['executable']['sha256'] or runtime.get('engineSha256') != identity['engine']['sha256']:
             raise ValueError('Observed process/engine identity is missing or mismatched.')
         if parsed and identity != parsed[0][1]['identity']: raise ValueError('Do not combine different IDE/executor identities.')
         parsed.append((path,value))

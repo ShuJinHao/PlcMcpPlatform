@@ -11,7 +11,7 @@ class AcceptanceReviewTests(unittest.TestCase):
     def setUp(self):
         self.work=tempfile.TemporaryDirectory(); self.root=Path(self.work.name); self.record=self.root/'run.json'
         self.value=dict(schemaVersion=1,executionMode='real',simulated=False,identity=dict(executable=dict(sha256='a'),engine=dict(sha256='b')),
-            runtimeIdentity=dict(status='matched',executableSha256='a',engineSha256='b'),
+            runtimeIdentity=dict(status='matched',engineAssemblyVersion='3.5.11.0',executableSha256='a',engineSha256='b'),
             request=dict(operation='pou.create',executionMode='real',payload=dict(edit=dict(language='ST',pouType='Program'))),
             response=dict(outcome='succeeded',executionMode='real'))
     def tearDown(self): self.work.cleanup()
