@@ -1,3 +1,4 @@
+using PlcMcp.Services.Contracts.Incremental;
 using PlcMcp.Services.Contracts.Configuration;
 using System.Text.Json;
 using PlcMcp.Services.Contracts.Editing;
@@ -19,7 +20,7 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
         if (CheckAvailability(request.Operation) is { } unavailable) return WorkerJson.Failed(request, unavailable.Code);
         if (!EditOperations.Contains(request.Operation)) return await worker.ExecuteAsync(request, token);
         var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!;
-        var edit = input.Edit!; var creating = request.Operation == EditOperations.CreateProject;
+        var edit = input.Edit!; var creating = request.Operation is EditOperations.CreateProject or IncrementalOperations.Adopt;
         var steps = new List<string>();
         var evidence = new ChangeEvidence(request.JobId, input.ProjectPath, "preparing", request.ExpectedRevision, null, null, null, null, true, null, []);
         var launched = false; var stopped = true;
@@ -31,9 +32,18 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
             await changes.RecordAsync(evidence, token);
             var head = await changes.GetHeadAsync(input.ProjectPath, token);
             if (creating && head is not null) throw new ProjectEditException("workspace_exists");
-            var source = creating ? await files.ReadTemplateAsync(edit.TemplateId!, ExecutionMode, token)
+            var current = creating ? request.Operation == IncrementalOperations.Adopt
+                ? await files.ReadAdoptionAsync(edit.Adoption!, ExecutionMode, token) : await files.ReadTemplateAsync(edit.TemplateId!, ExecutionMode, token)
                 : head?.Snapshot ?? throw new ProjectEditException("workspace_not_found");
-            if (source.Revision != request.ExpectedRevision) throw new ProjectEditException("workspace_revision_conflict");
+            if (current.Revision != request.ExpectedRevision) throw new ProjectEditException("workspace_revision_conflict");
+            await files.VerifyAsync(current, token);
+            var source = current;
+            if (request.Operation == IncrementalOperations.Restore)
+            {
+                var record = await ((IProjectHistoryStore)changes).GetAsync(input.ProjectPath, edit.RestoreRevision!, token) ?? throw new ProjectEditException("version_not_found");
+                source = await files.ReadVersionAsync(record, current.Template, token);
+            }
+            if (source.Template.ExecutionMode != ExecutionMode) throw new ProjectEditException("execution_mode_mismatch");
             await files.VerifyAsync(source, token); steps.Add("source_verified");
             var prepared = await files.PrepareAsync(input.ProjectPath, request.JobId, source, token);
             var candidate = prepared.Candidate; steps.Add("backup_verified");
@@ -69,6 +79,7 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
             if (await files.ProjectFileRevisionAsync(candidate, token) != result.Payload!.Value.GetProperty("revision").GetString())
                 throw new ProjectEditException("candidate_revision_conflict");
             await files.VerifyAsync(source, token);
+            await files.VerifyAsync(current, token);
             token.ThrowIfCancellationRequested();
             if (DateTimeOffset.UtcNow >= request.DeadlineUtc) throw new ProjectEditException("deadline_expired");
             var dependencies = result.Payload!.Value.TryGetProperty("dependencySnapshot", out var observed)
@@ -82,7 +93,7 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
                 Path.Combine(sealedVersion.Directory, sealedVersion.ProjectFile), evidence.BackupPath, sealedVersion.Directory,
                 true, request.Operation == EditOperations.SaveProject, [.. steps, "published"], result.Payload, Simulated: ExecutionMode == "fixture", CurrentDependencies: dependencies);
             var response = new WorkerResponse(1, request.RequestId, request.JobId, "succeeded", null, ExecutionMode, JsonSerializer.SerializeToElement(payload, WorkerJson.Options));
-            var published = evidence with { Stage = "published", Steps = payload.Steps, Response = response };
+            var published = evidence with { Stage = "published", Steps = payload.Steps, Response = response, Snapshot = sealedVersion };
             // Once publication starts, cancellation cannot turn a committed version into a cancelled job.
             if (!await changes.PublishAsync(new(input.ProjectPath, edit.WorkspaceName, sealedVersion, request.JobId, payload.IsDelivery), published, creating, CancellationToken.None))
                 throw new ProjectEditException("workspace_revision_conflict");

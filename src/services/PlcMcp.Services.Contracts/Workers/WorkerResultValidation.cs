@@ -1,3 +1,5 @@
+using PlcMcp.Services.Contracts.Incremental;
+using PlcMcp.Core.Workspaces;
 using PlcMcp.Services.Contracts.Configuration;
 using PlcMcp.Services.Contracts.Exchange;
 using PlcMcp.Services.Contracts.Batch;
@@ -17,6 +19,16 @@ public static class WorkerResultValidation
         try
         {
             var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!;
+            if (request.Operation is IncrementalOperations.Context or IncrementalOperations.Diff)
+            {
+                var q = input.Incremental!;
+                if (payload.GetProperty("headRevision").GetString() != request.ExpectedRevision || payload.GetProperty("workspaceName").GetString() != q.WorkspaceName) return false;
+                return request.Operation == IncrementalOperations.Context
+                    ? payload.GetProperty("revision").GetString() == q.Revision && payload.GetProperty("applicationId").GetString() == q.ApplicationId
+                        && payload.GetProperty("objects").GetArrayLength() <= q.PageSize
+                    : payload.GetProperty("fromRevision").GetString() == q.Revision && payload.GetProperty("toRevision").GetString() == q.CompareRevision
+                        && payload.GetProperty("files").GetArrayLength() <= q.PageSize;
+            }
             if (request.Operation == DeliveryOperations.Create)
             {
                 var artifact = payload.GetProperty("artifact"); var compilation = payload.GetProperty("compile"); var sha = artifact.GetProperty("projectSha256").GetString();
@@ -49,6 +61,11 @@ public static class WorkerResultValidation
             if (!payload.TryGetProperty("revision", out var revision) || revision.GetString() != request.ExpectedRevision) return false;
             return request.Operation switch
             {
+                IncrementalOperations.Source => payload.GetProperty("objectId").GetString() == input.ObjectId
+                    && payload.GetProperty("name").ValueKind == JsonValueKind.String && payload.GetProperty("kind").ValueKind == JsonValueKind.String
+                    && payload.GetProperty("declaration").ValueKind is JsonValueKind.String or JsonValueKind.Null
+                    && payload.GetProperty("implementation").ValueKind is JsonValueKind.String or JsonValueKind.Null
+                    && payload.GetProperty("implementationKind").GetString() is "textual" or "graphical_or_unavailable" or "none",
                 EngineeringOperations.Open => payload.GetProperty("opened").GetBoolean(),
                 EngineeringOperations.Structure => payload.GetProperty("objects").ValueKind == JsonValueKind.Array
                     && payload.GetProperty("objects").GetArrayLength() <= request.Payload.GetProperty("maxObjects").GetInt32()
@@ -76,6 +93,24 @@ public static class WorkerResultValidation
             || !payload.GetProperty("dependencies").GetProperty("libraryReferencesMatched").GetBoolean()
             || payload.GetProperty("dependencies").GetProperty("installedDependenciesVerified").GetBoolean()) return false;
         if (payload.TryGetProperty("dependencySnapshot", out var snapshot) && !ConfigurationResultValidation.ValidDependencies(snapshot)) return false;
+        if (request.Operation == IncrementalOperations.Patch)
+        {
+            var section = edit.Patch!.Section;
+            return payload.GetProperty("objectId").GetString() == edit.ObjectId
+                && payload.GetProperty("patch").GetProperty("beforeSha256").GetString() == edit.Patch.ExpectedSha256
+                && payload.GetProperty("patch").GetProperty("afterSha256").GetString() == TextPatchRules.Hash(payload.GetProperty(section).GetString()!);
+        }
+        if (request.Operation == IncrementalOperations.Restore)
+        {
+            var restore = payload.GetProperty("restore");
+            var checks = restore.GetProperty("checks");
+            return restore.GetProperty("sourceRevision").GetString() == edit.RestoreRevision && checks.GetArrayLength() is > 0 and <= 16
+                && checks.EnumerateArray().All(x => x.GetProperty("compile").GetProperty("succeeded").GetBoolean()
+                    && x.GetProperty("compile").GetProperty("revision").GetString() == revision
+                    && x.GetProperty("compile").GetProperty("applicationId").GetString() == x.GetProperty("applicationId").GetString()
+                    && ValidDiagnostics(x.GetProperty("compile").GetProperty("diagnostics"), true)
+                    && x.GetProperty("tasks").GetProperty("revision").GetString() == revision);
+        }
         if (request.Operation == BatchOperations.Apply)
         {
             var batch = payload.GetProperty("batch");

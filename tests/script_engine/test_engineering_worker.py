@@ -79,6 +79,31 @@ class EngineeringWorkerTests(unittest.TestCase):
         request.update(changes)
         return request
     def run_operation(self, operation='project.open', **changes): return worker.execute(self.request(operation, **changes), self.bindings)
+    def test_source_view_uses_actual_markers_and_does_not_guess_language(self):
+        result = self.run_operation('object.source.read')
+        self.assertEqual('succeeded', result['outcome'])
+        self.assertEqual('pou', result['payload']['kind'])
+        self.assertEqual('textual', result['payload']['implementationKind'])
+        self.assertEqual(self.program.guid, result['payload']['objectId'])
+        self.assertNotIn('language', result['payload'])
+        self.assertTrue(self.project.closed)
+    def test_graphical_source_keeps_declaration_without_inventing_text(self):
+        self.program.has_textual_implementation = False
+        result = self.run_operation('object.source.read')['payload']
+        self.assertEqual('pou', result['kind'])
+        self.assertIsNone(result['implementation'])
+        self.assertEqual('graphical_or_unavailable', result['implementationKind'])
+    def test_source_kind_classification_preserves_unknown_objects(self):
+        for source, kind in [('VAR_GLOBAL\nA: BOOL;\nEND_VAR', 'gvl'), ('TYPE PLC_PRG : INT; END_TYPE', 'dut'), ('METHOD Run : BOOL', 'object')]:
+            self.program.textual_declaration = Text(source)
+            self.program.has_textual_implementation = False
+            self.assertEqual(kind, worker.source_view(self.program)['kind'])
+    def test_source_for_nontextual_configuration_retains_identity(self):
+        source = worker.source_view(self.app)
+        self.assertEqual('application', source['kind'])
+        self.assertEqual(self.app.guid, source['objectId'])
+        self.assertIsNone(source['declaration'])
+        self.assertEqual('none', source['implementationKind'])
     def test_open_uses_no_updates_readonly_and_closes_its_owned_session(self):
         result = self.run_operation()
         self.assertEqual('succeeded', result['outcome'])

@@ -1,3 +1,4 @@
+using PlcMcp.Services.Contracts.Incremental;
 using PlcMcp.Services.Contracts.Configuration;
 using PlcMcp.Services.Contracts.Exchange;
 using PlcMcp.Services.Contracts.Delivery;
@@ -14,12 +15,12 @@ public static class EngineeringOperations
     public const string ReadProgram = "pou.read";
     public const string ReadGvl = "gvl.read", ReadDut = "dut.read";
     public const string Compile = "project.compile";
-    public static bool Contains(string value) => value == DeliveryOperations.Create || ExchangeOperations.IsRead(value) || ConfigurationOperations.IsRead(value) || value is Open or Structure or ReadProgram or Compile or ReadGvl or ReadDut;
+    public static bool Contains(string value) => IncrementalOperations.IsRead(value) || value == DeliveryOperations.Create || ExchangeOperations.IsRead(value) || ConfigurationOperations.IsRead(value) || value is Open or Structure or ReadProgram or Compile or ReadGvl or ReadDut;
 }
 
 public sealed record EngineeringInput(string ProjectPath, string? ObjectId = null,
     string? ApplicationId = null, int MaxObjects = 256, PlcMcp.Services.Contracts.Editing.EditInput? Edit = null, bool Candidate = false, string? IdeProfile = null, PlcMcp.Services.Contracts.Editing.TemplateDefinition? Requirements = null, ConfigurationQuery? Query = null, DependencySnapshot? CurrentDependencies = null, ExchangeQuery? Exchange = null,
-    DeliveryRequest? Delivery = null);
+    DeliveryRequest? Delivery = null, IncrementalQuery? Incremental = null);
 public sealed record Submission(string Operation, EngineeringInput Input, string IdempotencyKey,
     string? ExpectedRevision = null, int TimeoutSeconds = 60);
 public sealed record ResolvedProject(string Path, string Revision);

@@ -1,3 +1,4 @@
+using PlcMcp.Services.Contracts.Incremental;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -99,6 +100,14 @@ public static class FixtureWorker
                             .Concat(nodes.Select(n => (object)new { id = n.Id, name = n.Name, parentId = fixture.ApplicationId, kind = n.Kind })).ToArray()
                         : new FixtureConfiguration(fixture).Structure().Cast<object>().ToArray();
                     payload["objects"] = objects.Take(input.MaxObjects).ToArray(); payload["truncated"] = input.MaxObjects < objects.Length; break;
+                case IncrementalOperations.Source:
+                    var sourceNode = nodes.SingleOrDefault(n => n.Id == input.ObjectId);
+                    var info = new FixtureConfiguration(fixture).Read(ConfigurationOperations.ObjectInspect, input.ObjectId, null, 1);
+                    payload["objectId"] = input.ObjectId; payload["name"] = info["name"]!.GetValue<string>();
+                    payload["kind"] = sourceNode?.Kind ?? info["kind"]!.GetValue<string>(); payload["typeId"] = FixtureConfiguration.TypeId;
+                    payload["declaration"] = sourceNode?.Declaration; payload["implementation"] = sourceNode?.Implementation;
+                    payload["implementationKind"] = sourceNode?.Implementation is not null ? "textual" : sourceNode?.Kind == "pou" ? "graphical_or_unavailable" : "none";
+                    break;
                 case EngineeringOperations.ReadProgram:
                     var node = nodes.SingleOrDefault(n => n.Id == input.ObjectId);
                     if (node is null) { error = "object_not_found"; break; }

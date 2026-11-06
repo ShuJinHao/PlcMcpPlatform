@@ -1,4 +1,6 @@
 using System.Net;
+using PlcMcp.Services.Contracts.Incremental;
+using PlcMcp.EngineeringService.Incremental;
 using PlcMcp.EngineeringService.Exchange;
 using PlcMcp.Services.Contracts.Exchange;
 using PlcMcp.Services.Contracts.Batch;
@@ -60,6 +62,8 @@ public static class HostApplication
         builder.Services.AddSingleton<IJobStore>(_ => new SqliteJobStore(options, fixture ? "fixture" : "real"));
         builder.Services.AddSingleton<IManagedProjectFiles>(new ManagedProjectFiles(paths.WorkspaceRoot));
         builder.Services.AddSingleton<IProjectChangeStore>(new SqliteProjectChangeStore(options));
+        builder.Services.AddSingleton<IProjectHistoryStore>(sp => (IProjectHistoryStore)sp.GetRequiredService<IProjectChangeStore>());
+        builder.Services.AddSingleton<IncrementalService>();
         builder.Services.AddSingleton<IExchangeArtifacts>(new ExchangeArtifacts(Path.Combine(data, "exchange"), maximum));
         builder.Services.AddSingleton<ExchangeService>();
         builder.Services.AddSingleton<IExchangeUploads>(sp => new ExchangeUploads(Path.Combine(data, "uploads"), async (format, xml, token) =>
@@ -71,9 +75,9 @@ public static class HostApplication
         builder.Services.AddSingleton<BatchService>();
         builder.Services.AddSingleton<IDeliveryArtifacts>(new DeliveryArtifacts(Path.Combine(data, "deliveries")));
         builder.Services.AddSingleton<DeliveryService>();
-        builder.Services.AddSingleton<IEngineeringExecutor>(sp => new DeliveryExecutor(
-            new ManagedProjectExecutor(new BatchExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>()), sp.GetRequiredService<IBatchJournal>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>()),
-            sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IDeliveryArtifacts>()));
+        builder.Services.AddSingleton<IEngineeringExecutor>(sp => new IncrementalReadExecutor(new DeliveryExecutor(
+            new ManagedProjectExecutor(new BatchExecutor(new IncrementalEditExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>())), sp.GetRequiredService<IBatchJournal>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>()),
+            sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IDeliveryArtifacts>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>()));
         builder.Services.AddSingleton<ManagedEditingJobs>();
         builder.Services.AddSingleton<EngineeringJobs>();
         builder.Services.AddSingleton<JobDispatcher>();
@@ -81,7 +85,7 @@ public static class HostApplication
         builder.Services.AddHostedService<ExecutionService>();
         var mcp = builder.Services.AddMcpServer()
             .WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless).WithTools<PlatformTools>();
-        if (fixture || validation) mcp.WithTools<EngineeringTools>().WithTools<EditingTools>().WithTools<ConfigurationTools>().WithTools<ExchangeTools>().WithTools<DeliveryTools>();
+        if (fixture || validation) mcp.WithTools<EngineeringTools>().WithTools<EditingTools>().WithTools<ConfigurationTools>().WithTools<ExchangeTools>().WithTools<DeliveryTools>().WithTools<IncrementalTools>();
         var app = builder.Build();
         try
         {
@@ -101,7 +105,7 @@ public static class HostApplication
             }
             await next(context);
         });
-        app.MapGet("/health/live", () => Results.Ok(new { status = "alive", stage = "P5-engineering-delivery", engineeringReady = false, executionMode = fixture ? "fixture" : "real", validationSession = validation }));
+        app.MapGet("/health/live", () => Results.Ok(new { status = "alive", stage = "P6-incremental-engineering", engineeringReady = false, executionMode = fixture ? "fixture" : "real", validationSession = validation }));
         app.MapMcp("/mcp");
         return app;
     }

@@ -1,3 +1,4 @@
+using PlcMcp.Services.Contracts.Incremental;
 using System.Security.Cryptography;
 using System.Text.Json;
 using PlcMcp.Core.Workspaces;
@@ -26,7 +27,7 @@ public static class BatchValidation
         return new(workspace, ParentId: Id(c.ParentId), ObjectId: Id(c.ObjectId), Name: c.Name, Declaration: c.Declaration,
             Implementation: c.Implementation, PouType: c.PouType, Language: c.Language, DutType: c.DutType, BaseType: c.BaseType,
             Configuration: config, Exchange: c.ArtifactId is null ? null : new(c.ArtifactId, "plcopen", null,
-                c.ObjectId is null ? "reject" : "replace", false, c.ExpectedGraphSha256));
+                c.ObjectId is null ? "reject" : "replace", false, c.ExpectedGraphSha256), Patch: c.Patch);
     }
     public static string? Validate(string workspace, BatchPlan? plan)
     {
@@ -56,7 +57,7 @@ public static class BatchValidation
     public static string Hash(string workspace, string revision, BatchPlan plan) => Convert.ToHexString(SHA256.HashData(
         JsonSerializer.SerializeToUtf8Bytes(new { workspace, revision, plan }, WorkerJson.Options))).ToLowerInvariant();
     public static string[] Required(BatchPlan plan) => new[] { BatchOperations.Apply, EditOperations.VerifyProject, EngineeringOperations.Structure, EngineeringOperations.Compile, ConfigurationOperations.TaskList }
-        .Concat(plan.Steps.Select(s => s.Operation)).Concat(plan.Steps.Any(s => s.Operation == ExchangeOperations.WriteGraph && s.Change.ObjectId is not null) ? [ExchangeOperations.ReadGraph] : [])
+        .Concat(plan.Steps.Select(s => s.Operation)).Concat(plan.Steps.Any(s => s.Operation == IncrementalOperations.Patch) ? [IncrementalOperations.Source, EditOperations.UpdatePou, EditOperations.UpdateGvl, EditOperations.UpdateDut] : []).Concat(plan.Steps.Any(s => s.Operation == ExchangeOperations.WriteGraph && s.Change.ObjectId is not null) ? [ExchangeOperations.ReadGraph] : [])
         .Distinct(StringComparer.Ordinal).ToArray();
 }
 
