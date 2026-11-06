@@ -4,11 +4,13 @@ namespace PlcMcp.Core.Workspaces;
 
 // Vendor-neutral, deliberately bounded graph editing profile. Arbitrary vendor XML is a separate exchange operation.
 public sealed record GraphicalProgram(string Name, string PouType, string Language, GraphVariable[] Variables,
-    GraphNode[] Nodes, GraphAction[]? Actions = null, GraphDataType? ReturnType = null, string Profile = "graph-v1");
+    GraphNode[] Nodes, GraphAction[]? Actions = null, GraphDataType? ReturnType = null, string Profile = "graph-v1",
+    GraphVariableGroup[]? VariableGroups = null);
 public sealed record GraphDimension(int Lower, int Upper);
 public sealed record GraphDataType(string Type, int? StringLength = null, GraphDimension[]? Dimensions = null);
 public sealed record GraphVariable(string Name, string Type, string Scope = "local", string? InitialValue = null,
-    int? StringLength = null, GraphDimension[]? Dimensions = null, GraphInitializer? Initializer = null);
+    int? StringLength = null, GraphDimension[]? Dimensions = null, GraphInitializer? Initializer = null,
+    string? Address = null, string? Documentation = null);
 public sealed record GraphAction(string Name, string Implementation);
 public sealed record GraphConnection(int SourceId, string? SourcePin = null);
 public sealed record GraphPin(string Name, GraphConnection[]? Connections = null, bool Negated = false);
@@ -16,7 +18,8 @@ public sealed record GraphNode(int Id, string Kind, decimal X = 0, decimal Y = 0
     string? TypeName = null, string? InstanceName = null, GraphPin[]? Inputs = null, GraphPin[]? Outputs = null,
     bool Negated = false, string Edge = "none", string Storage = "none", int? ExecutionOrder = null,
     string? Name = null, bool Initial = false, string? Action = null, string Qualifier = "N",
-    GraphPin[]? InOuts = null, int? Priority = null, string? Duration = null);
+    GraphPin[]? InOuts = null, int? Priority = null, string? Duration = null,
+    GraphActionAssociation[]? Associations = null);
 
 public static class GraphRules
 {

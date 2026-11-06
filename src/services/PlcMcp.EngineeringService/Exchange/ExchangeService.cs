@@ -7,7 +7,7 @@ using PlcMcp.SharedKernel.Results;
 
 namespace PlcMcp.EngineeringService.Exchange;
 
-public sealed class ExchangeService(IExchangeArtifacts artifacts, ManagedEditingJobs edits)
+public sealed class ExchangeService(IExchangeArtifacts artifacts, ManagedEditingJobs edits, IPlcGraphPolicy? targetPolicy = null)
 {
     public async Task<ExchangeArtifact> StageAsync(string format, string xml, CancellationToken token)
     { _ = ExchangeXml.Parse(xml, ExchangeOperations.MaxInlineXmlBytes); _ = ExchangeXml.Inspect(format, xml); return await artifacts.PutAsync(format, xml, token); }
@@ -42,6 +42,7 @@ public sealed class ExchangeService(IExchangeArtifacts artifacts, ManagedEditing
         {
             var document = await artifacts.GetAsync(id, token);
             var definition = graph ? PlcOpenGraphCodec.Decode(document.Xml) : null;
+            if (definition is not null && targetPolicy?.Validate(definition.Program) is { } invalid) throw new ProjectEditException(invalid);
             var change = new ExchangeChange(id, document.Artifact.Format, null, policy, warnings, expectedGraphSha256);
             return await edits.SubmitAsync(graph ? ExchangeOperations.WriteGraph : ExchangeOperations.Import,
                 new(workspace, ParentId: parentId, ObjectId: objectId, Name: definition?.Program.Name, Exchange: change), key, revision, timeout, token);

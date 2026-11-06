@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0-rc.2",
-  "stage": "P11-graph-initializers",
+  "version": "0.1.0-rc.3",
+  "stage": "P12-engineering-semantics",
   "prerelease": true,
   "realIdeValidated": false,
   "plcRuntimeValidated": false

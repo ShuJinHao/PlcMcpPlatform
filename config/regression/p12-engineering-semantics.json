@@ -1,0 +1,2290 @@
+{
+  "schemaVersion": 1,
+  "description": "P8 motor/SFC and P11 parameter examples upgraded together: declaration groups, addresses, constants, retention, temp/external scopes, Unicode comments, multi-action SFC, guarded two-graph edit, diffs and exact-revision delivery. Fixture compilation is simulated; no IDE/PLC/LLM certification.",
+  "cases": [
+    {
+      "id": "create",
+      "tool": "plc_project_create",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "templateId": "${templateId}"
+      },
+      "bind": {
+        "baseRevision": "/result/revision"
+      }
+    },
+    {
+      "id": "ld-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "MotorLD",
+          "pouType": "program",
+          "language": "LD",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL",
+              "scope": "input",
+              "address": "%IX0.0",
+              "documentation": "样例输入 Start；真实地址必须按目标设备重新确认。"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL",
+              "scope": "input",
+              "address": "%IX0.1",
+              "documentation": "样例输入 Stop；真实地址必须按目标设备重新确认。"
+            },
+            {
+              "name": "Fault",
+              "type": "BOOL",
+              "scope": "input",
+              "address": "%IX0.2",
+              "documentation": "样例输入 Fault；真实地址必须按目标设备重新确认。"
+            },
+            {
+              "name": "Reset",
+              "type": "BOOL",
+              "scope": "input",
+              "address": "%IX0.3",
+              "documentation": "样例输入 Reset；真实地址必须按目标设备重新确认。"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL",
+              "documentation": "运行自保持状态\nStop 或 Fault 断开运行条件。"
+            },
+            {
+              "name": "Alarm",
+              "type": "BOOL"
+            },
+            {
+              "name": "Flags",
+              "type": "BOOL",
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 7
+                }
+              ]
+            },
+            {
+              "name": "Label",
+              "type": "STRING",
+              "stringLength": 80
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "leftPowerRail",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "contact",
+              "expression": "Start",
+              "x": 40,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "contact",
+              "expression": "Running",
+              "x": 40,
+              "y": 60,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "contact",
+              "expression": "Stop",
+              "negated": true,
+              "x": 120,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    },
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "coil",
+              "expression": "Running",
+              "x": 200,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 9
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "executionOrder": 1
+            },
+            {
+              "id": 6,
+              "kind": "rightPowerRail",
+              "x": 280,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    },
+                    {
+                      "sourceId": 11
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "kind": "connector",
+              "x": 200,
+              "y": 280,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                }
+              ],
+              "name": "Interlocked"
+            },
+            {
+              "id": 8,
+              "kind": "continuation",
+              "x": 300,
+              "y": 320,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "name": "Interlocked"
+            },
+            {
+              "id": 9,
+              "kind": "contact",
+              "x": 400,
+              "y": 360,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 8
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Fault",
+              "negated": true
+            },
+            {
+              "id": 10,
+              "kind": "contact",
+              "x": 0,
+              "y": 400,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Reset"
+            },
+            {
+              "id": 11,
+              "kind": "coil",
+              "x": 100,
+              "y": 440,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 10
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "expression": "Alarm",
+              "storage": "reset",
+              "executionOrder": 2
+            }
+          ],
+          "profile": "graph-v2",
+          "variableGroups": [
+            {
+              "scope": "input",
+              "variables": [
+                "Start",
+                "Stop",
+                "Fault",
+                "Reset"
+              ],
+              "name": "Inputs"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Running",
+                "Alarm"
+              ],
+              "retention": "nonRetain",
+              "name": "VolatileState"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Flags",
+                "Label"
+              ],
+              "name": "Auxiliary"
+            }
+          ]
+        }
+      },
+      "bind": {
+        "ldArtifact": "/value/artifact/artifactId",
+        "ldHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "ld-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${ldArtifact}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${ldHash}"
+        },
+        {
+          "path": "/value/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "fbd-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "InitFBD",
+          "pouType": "program",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "Result",
+              "type": "INT",
+              "address": "%MW0",
+              "documentation": "参数输出\n示例内存地址；不代表设备 I/O 映射。"
+            },
+            {
+              "name": "Thresholds",
+              "type": "INT",
+              "dimensions": [
+                {
+                  "lower": -1,
+                  "upper": 1
+                },
+                {
+                  "lower": 2,
+                  "upper": 3
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "10"
+                    },
+                    "repeat": 2
+                  },
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "20"
+                    },
+                    "repeat": 3
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Settings",
+              "type": "MachineSettings",
+              "initializer": {
+                "kind": "struct",
+                "members": [
+                  {
+                    "name": "Label",
+                    "value": {
+                      "kind": "simple",
+                      "value": "'Line A'"
+                    }
+                  },
+                  {
+                    "name": "Limits",
+                    "value": {
+                      "kind": "array",
+                      "items": [
+                        {
+                          "value": {
+                            "kind": "simple",
+                            "value": "25"
+                          },
+                          "repeat": 3
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "Drive",
+                    "value": {
+                      "kind": "struct",
+                      "members": [
+                        {
+                          "name": "Enabled",
+                          "value": {
+                            "kind": "simple",
+                            "value": "TRUE"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Drives",
+              "type": "DriveSettings",
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 1
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "struct",
+                      "members": [
+                        {
+                          "name": "Enabled",
+                          "value": {
+                            "kind": "simple",
+                            "value": "TRUE"
+                          }
+                        },
+                        {
+                          "name": "Speed",
+                          "value": {
+                            "kind": "simple",
+                            "value": "100"
+                          }
+                        }
+                      ]
+                    },
+                    "repeat": 2
+                  }
+                ]
+              }
+            },
+            {
+              "name": "TotalCycles",
+              "type": "DINT",
+              "initialValue": "0",
+              "documentation": "累计上升沿次数；保持效果待真实控制器验证。"
+            },
+            {
+              "name": "Scratch",
+              "type": "INT",
+              "scope": "temp"
+            },
+            {
+              "name": "RemoteEnable",
+              "type": "BOOL",
+              "scope": "external"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "expression": "Thresholds[-1,2]",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "outVariable",
+              "expression": "Result",
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "executionOrder": 1
+            }
+          ],
+          "variableGroups": [
+            {
+              "scope": "local",
+              "variables": [
+                "Result"
+              ],
+              "retention": "nonRetain",
+              "name": "Output"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Thresholds",
+                "Settings"
+              ],
+              "constant": true,
+              "name": "Parameters",
+              "documentation": "配方参数；变更后需要重新编译。"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Drives"
+              ],
+              "name": "DriveData"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "TotalCycles"
+              ],
+              "retention": "retain",
+              "name": "Statistics"
+            },
+            {
+              "scope": "temp",
+              "variables": [
+                "Scratch"
+              ]
+            },
+            {
+              "scope": "external",
+              "variables": [
+                "RemoteEnable"
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "fbdArtifact": "/value/artifact/artifactId",
+        "fbdHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "fbd-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${fbdArtifact}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${fbdHash}"
+        },
+        {
+          "path": "/value/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "sfc-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "Sequence",
+          "pouType": "program",
+          "language": "SFC",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL",
+              "scope": "input"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL",
+              "scope": "input"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            },
+            {
+              "name": "CycleActive",
+              "type": "BOOL"
+            },
+            {
+              "name": "ParameterSnapshot",
+              "type": "INT"
+            },
+            {
+              "name": "RemoteEnable",
+              "type": "BOOL",
+              "scope": "external"
+            }
+          ],
+          "actions": [
+            {
+              "name": "ResetOutput",
+              "implementation": "Running := FALSE;"
+            },
+            {
+              "name": "DriveOutput",
+              "implementation": "Running := TRUE;"
+            },
+            {
+              "name": "MarkCycle",
+              "implementation": "CycleActive := TRUE;"
+            },
+            {
+              "name": "CaptureParameter",
+              "implementation": "ParameterSnapshot := InitFBD.Result;"
+            },
+            {
+              "name": "ResetCycle",
+              "implementation": "CycleActive := FALSE;"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "step",
+              "name": "Idle",
+              "initial": true,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "transition",
+              "expression": "Start AND RemoteEnable",
+              "y": 50,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "step",
+              "name": "Run",
+              "y": 100,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "actionBlock",
+              "x": 100,
+              "y": 100,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "associations": [
+                {
+                  "id": 40,
+                  "action": "DriveOutput",
+                  "qualifier": "N",
+                  "executionOrder": 1
+                },
+                {
+                  "id": 41,
+                  "action": "MarkCycle",
+                  "qualifier": "N",
+                  "executionOrder": 2
+                },
+                {
+                  "id": 42,
+                  "action": "CaptureParameter",
+                  "qualifier": "D",
+                  "duration": "T#100ms",
+                  "executionOrder": 3
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "transition",
+              "expression": "Stop",
+              "y": 150,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 6,
+              "kind": "jumpStep",
+              "name": "Idle",
+              "y": 200,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "kind": "actionBlock",
+              "x": 100,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "associations": [
+                {
+                  "id": 70,
+                  "action": "ResetOutput"
+                },
+                {
+                  "id": 71,
+                  "action": "ResetCycle"
+                }
+              ]
+            }
+          ],
+          "profile": "graph-v2",
+          "variableGroups": [
+            {
+              "scope": "input",
+              "variables": [
+                "Start",
+                "Stop"
+              ]
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Running",
+                "CycleActive",
+                "ParameterSnapshot"
+              ],
+              "retention": "nonRetain",
+              "name": "SequenceState"
+            },
+            {
+              "scope": "external",
+              "variables": [
+                "RemoteEnable"
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "sfcArtifact": "/value/artifact/artifactId",
+        "sfcHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "sfc-decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${sfcArtifact}"
+      },
+      "expect": [
+        {
+          "path": "/value/semanticSha256",
+          "equals": "${sfcHash}"
+        },
+        {
+          "path": "/value/profile",
+          "equals": "graph-v2"
+        }
+      ]
+    },
+    {
+      "id": "preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "drive",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "DriveSettings",
+                "dutType": "Structure",
+                "declaration": "TYPE DriveSettings :\nSTRUCT\n Enabled : BOOL;\n Speed : INT;\nEND_STRUCT\nEND_TYPE"
+              }
+            },
+            {
+              "id": "settings",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineSettings",
+                "dutType": "Structure",
+                "declaration": "TYPE MachineSettings :\nSTRUCT\n Label : STRING(80);\n Limits : ARRAY[0..2] OF INT;\n Drive : DriveSettings;\nEND_STRUCT\nEND_TYPE"
+              }
+            },
+            {
+              "id": "globals",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "CellSignals",
+                "declaration": "VAR_GLOBAL\n RemoteEnable : BOOL := TRUE;\nEND_VAR"
+              }
+            },
+            {
+              "id": "ld",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorLD",
+                "artifactId": "${ldArtifact}"
+              }
+            },
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InitFBD",
+                "artifactId": "${fbdArtifact}"
+              }
+            },
+            {
+              "id": "sfc",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Sequence",
+                "artifactId": "${sfcArtifact}"
+              }
+            },
+            {
+              "id": "main",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MAIN_Engineering",
+                "pouType": "Program",
+                "language": "ST",
+                "declaration": "PROGRAM MAIN_Engineering\nVAR\n PreviousActive : BOOL;\nEND_VAR",
+                "implementation": "MotorLD();\nInitFBD();\nSequence(Start := MotorLD.Running, Stop := NOT MotorLD.Running);\nIF Sequence.CycleActive AND NOT PreviousActive THEN\n InitFBD.TotalCycles := InitFBD.TotalCycles + 1;\nEND_IF;\nPreviousActive := Sequence.CycleActive;"
+              }
+            },
+            {
+              "id": "configuration",
+              "operation": "task.configuration.create",
+              "change": {
+                "parentId": "${applicationId}"
+              }
+            },
+            {
+              "id": "task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "Cycle",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "1",
+                    "interval": "20",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calls",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "@task",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "@main",
+                      "pouName": "MAIN_Engineering"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "planHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "drive",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "DriveSettings",
+                "dutType": "Structure",
+                "declaration": "TYPE DriveSettings :\nSTRUCT\n Enabled : BOOL;\n Speed : INT;\nEND_STRUCT\nEND_TYPE"
+              }
+            },
+            {
+              "id": "settings",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineSettings",
+                "dutType": "Structure",
+                "declaration": "TYPE MachineSettings :\nSTRUCT\n Label : STRING(80);\n Limits : ARRAY[0..2] OF INT;\n Drive : DriveSettings;\nEND_STRUCT\nEND_TYPE"
+              }
+            },
+            {
+              "id": "globals",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "CellSignals",
+                "declaration": "VAR_GLOBAL\n RemoteEnable : BOOL := TRUE;\nEND_VAR"
+              }
+            },
+            {
+              "id": "ld",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorLD",
+                "artifactId": "${ldArtifact}"
+              }
+            },
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InitFBD",
+                "artifactId": "${fbdArtifact}"
+              }
+            },
+            {
+              "id": "sfc",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Sequence",
+                "artifactId": "${sfcArtifact}"
+              }
+            },
+            {
+              "id": "main",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MAIN_Engineering",
+                "pouType": "Program",
+                "language": "ST",
+                "declaration": "PROGRAM MAIN_Engineering\nVAR\n PreviousActive : BOOL;\nEND_VAR",
+                "implementation": "MotorLD();\nInitFBD();\nSequence(Start := MotorLD.Running, Stop := NOT MotorLD.Running);\nIF Sequence.CycleActive AND NOT PreviousActive THEN\n InitFBD.TotalCycles := InitFBD.TotalCycles + 1;\nEND_IF;\nPreviousActive := Sequence.CycleActive;"
+              }
+            },
+            {
+              "id": "configuration",
+              "operation": "task.configuration.create",
+              "change": {
+                "parentId": "${applicationId}"
+              }
+            },
+            {
+              "id": "task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "Cycle",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "1",
+                    "interval": "20",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calls",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "@task",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "@main",
+                      "pouName": "MAIN_Engineering"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${planHash}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "ldId": "/result/engineeringResult/batch/aliases/ld",
+        "fbdId": "/result/engineeringResult/batch/aliases/fbd",
+        "sfcId": "/result/engineeringResult/batch/aliases/sfc"
+      },
+      "expect": [
+        {
+          "path": "/result/published",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "ld-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${ldId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${ldHash}"
+        },
+        {
+          "path": "/result/exchange/graph/program/variables/0/address",
+          "equals": "%IX0.0"
+        }
+      ]
+    },
+    {
+      "id": "fbd-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${fbdId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${fbdHash}"
+        },
+        {
+          "path": "/result/exchange/graph/program/variableGroups/1/constant",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "sfc-read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${sfcId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${sfcHash}"
+        },
+        {
+          "path": "/result/exchange/graph/program/nodes/3/associations/2/action",
+          "equals": "CaptureParameter"
+        }
+      ]
+    },
+    {
+      "id": "change-declarations",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "InitFBD",
+          "pouType": "program",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "Result",
+              "type": "INT",
+              "address": "%MW2",
+              "documentation": "参数输出已调整\n地址和注释都纳入差异。"
+            },
+            {
+              "name": "Thresholds",
+              "type": "INT",
+              "dimensions": [
+                {
+                  "lower": -1,
+                  "upper": 1
+                },
+                {
+                  "lower": 2,
+                  "upper": 3
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "10"
+                    },
+                    "repeat": 2
+                  },
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "20"
+                    },
+                    "repeat": 3
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Settings",
+              "type": "MachineSettings",
+              "initializer": {
+                "kind": "struct",
+                "members": [
+                  {
+                    "name": "Label",
+                    "value": {
+                      "kind": "simple",
+                      "value": "'Line A'"
+                    }
+                  },
+                  {
+                    "name": "Limits",
+                    "value": {
+                      "kind": "array",
+                      "items": [
+                        {
+                          "value": {
+                            "kind": "simple",
+                            "value": "25"
+                          },
+                          "repeat": 3
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "Drive",
+                    "value": {
+                      "kind": "struct",
+                      "members": [
+                        {
+                          "name": "Enabled",
+                          "value": {
+                            "kind": "simple",
+                            "value": "TRUE"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Drives",
+              "type": "DriveSettings",
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 1
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "struct",
+                      "members": [
+                        {
+                          "name": "Enabled",
+                          "value": {
+                            "kind": "simple",
+                            "value": "TRUE"
+                          }
+                        },
+                        {
+                          "name": "Speed",
+                          "value": {
+                            "kind": "simple",
+                            "value": "100"
+                          }
+                        }
+                      ]
+                    },
+                    "repeat": 2
+                  }
+                ]
+              }
+            },
+            {
+              "name": "TotalCycles",
+              "type": "DINT",
+              "initialValue": "0",
+              "documentation": "累计上升沿次数；保持效果待真实控制器验证。"
+            },
+            {
+              "name": "Scratch",
+              "type": "INT",
+              "scope": "temp"
+            },
+            {
+              "name": "RemoteEnable",
+              "type": "BOOL",
+              "scope": "external"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "expression": "Thresholds[-1,2]",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "outVariable",
+              "expression": "Result",
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "executionOrder": 1
+            }
+          ],
+          "variableGroups": [
+            {
+              "scope": "local",
+              "variables": [
+                "Result"
+              ],
+              "retention": "nonRetain",
+              "name": "Output"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Thresholds",
+                "Settings"
+              ],
+              "constant": true,
+              "name": "Parameters",
+              "documentation": "配方参数；变更后需要重新编译。"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Drives"
+              ],
+              "name": "DriveData"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "TotalCycles"
+              ],
+              "retention": "nonRetain",
+              "name": "Statistics"
+            },
+            {
+              "scope": "temp",
+              "variables": [
+                "Scratch"
+              ]
+            },
+            {
+              "scope": "external",
+              "variables": [
+                "RemoteEnable"
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "newArtifact": "/value/artifact/artifactId",
+        "newHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "change-associations",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "Sequence",
+          "pouType": "program",
+          "language": "SFC",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL",
+              "scope": "input"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL",
+              "scope": "input"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            },
+            {
+              "name": "CycleActive",
+              "type": "BOOL"
+            },
+            {
+              "name": "ParameterSnapshot",
+              "type": "INT"
+            },
+            {
+              "name": "RemoteEnable",
+              "type": "BOOL",
+              "scope": "external"
+            }
+          ],
+          "actions": [
+            {
+              "name": "ResetOutput",
+              "implementation": "Running := FALSE;"
+            },
+            {
+              "name": "DriveOutput",
+              "implementation": "Running := TRUE;"
+            },
+            {
+              "name": "MarkCycle",
+              "implementation": "CycleActive := TRUE;"
+            },
+            {
+              "name": "CaptureParameter",
+              "implementation": "ParameterSnapshot := InitFBD.Result;"
+            },
+            {
+              "name": "ResetCycle",
+              "implementation": "CycleActive := FALSE;"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "step",
+              "name": "Idle",
+              "initial": true,
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "transition",
+              "expression": "Start AND RemoteEnable",
+              "y": 50,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "step",
+              "name": "Run",
+              "y": 100,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "actionBlock",
+              "x": 100,
+              "y": 100,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "associations": [
+                {
+                  "id": 41,
+                  "action": "MarkCycle",
+                  "qualifier": "N",
+                  "executionOrder": 2
+                },
+                {
+                  "id": 40,
+                  "action": "DriveOutput",
+                  "qualifier": "N",
+                  "executionOrder": 1
+                },
+                {
+                  "id": 42,
+                  "action": "CaptureParameter",
+                  "qualifier": "D",
+                  "duration": "T#200ms",
+                  "executionOrder": 3
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "transition",
+              "expression": "Stop",
+              "y": 150,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 6,
+              "kind": "jumpStep",
+              "name": "Idle",
+              "y": 200,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "kind": "actionBlock",
+              "x": 100,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "associations": [
+                {
+                  "id": 70,
+                  "action": "ResetOutput"
+                },
+                {
+                  "id": 71,
+                  "action": "ResetCycle"
+                }
+              ]
+            }
+          ],
+          "profile": "graph-v2",
+          "variableGroups": [
+            {
+              "scope": "input",
+              "variables": [
+                "Start",
+                "Stop"
+              ]
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Running",
+                "CycleActive",
+                "ParameterSnapshot"
+              ],
+              "retention": "nonRetain",
+              "name": "SequenceState"
+            },
+            {
+              "scope": "external",
+              "variables": [
+                "RemoteEnable"
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "sfcNewArtifact": "/value/artifact/artifactId",
+        "sfcNewHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "patch-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InitFBD",
+                "objectId": "${fbdId}",
+                "artifactId": "${newArtifact}",
+                "expectedGraphSha256": "${fbdHash}"
+              }
+            },
+            {
+              "id": "sfc",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Sequence",
+                "objectId": "${sfcId}",
+                "artifactId": "${sfcNewArtifact}",
+                "expectedGraphSha256": "${sfcHash}"
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "patchPlanHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "patch-apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InitFBD",
+                "objectId": "${fbdId}",
+                "artifactId": "${newArtifact}",
+                "expectedGraphSha256": "${fbdHash}"
+              }
+            },
+            {
+              "id": "sfc",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Sequence",
+                "objectId": "${sfcId}",
+                "artifactId": "${sfcNewArtifact}",
+                "expectedGraphSha256": "${sfcHash}"
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${patchPlanHash}"
+      },
+      "bind": {
+        "patchedRevision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "fbdNewId": "/result/engineeringResult/batch/aliases/fbd",
+        "sfcNewId": "/result/engineeringResult/batch/aliases/sfc"
+      },
+      "expect": [
+        {
+          "path": "/result/published",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "readback",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${fbdNewId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${newHash}"
+        },
+        {
+          "path": "/result/exchange/graph/program/variables/0/address",
+          "equals": "%MW2"
+        },
+        {
+          "path": "/result/exchange/graph/program/variableGroups/3/retention",
+          "equals": "nonRetain"
+        }
+      ]
+    },
+    {
+      "id": "declaration-diff",
+      "tool": "plc_project_diff",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedHeadRevision": "${patchedRevision}",
+        "fromRevision": "${revision}",
+        "toRevision": "${patchedRevision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${fbdId}",
+        "toObjectId": "${fbdNewId}",
+        "graph": true
+      },
+      "expect": [
+        {
+          "path": "/result/objectDifference/totalChanges",
+          "equals": 2
+        },
+        {
+          "path": "/result/objectDifference/changes/0/component",
+          "equals": "variables"
+        },
+        {
+          "path": "/result/objectDifference/changes/0/after/address",
+          "equals": "%MW2"
+        },
+        {
+          "path": "/result/objectDifference/changes/1/component",
+          "equals": "variableGroups"
+        },
+        {
+          "path": "/result/objectDifference/changes/1/after/3/retention",
+          "equals": "nonRetain"
+        }
+      ]
+    },
+    {
+      "id": "association-diff",
+      "tool": "plc_project_diff",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedHeadRevision": "${patchedRevision}",
+        "fromRevision": "${revision}",
+        "toRevision": "${patchedRevision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${sfcId}",
+        "toObjectId": "${sfcNewId}",
+        "graph": true
+      },
+      "expect": [
+        {
+          "path": "/result/objectDifference/totalChanges",
+          "equals": 1
+        },
+        {
+          "path": "/result/objectDifference/changes/0/component",
+          "equals": "nodes"
+        },
+        {
+          "path": "/result/objectDifference/changes/0/after/associations/0/id",
+          "equals": 41
+        },
+        {
+          "path": "/result/objectDifference/changes/0/after/associations/2/duration",
+          "equals": "T#200ms"
+        }
+      ]
+    },
+    {
+      "id": "stale-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InitFBD",
+                "objectId": "${fbdNewId}",
+                "artifactId": "${newArtifact}",
+                "expectedGraphSha256": "${fbdHash}"
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "stalePlanHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "stale-graph",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "fbd",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InitFBD",
+                "objectId": "${fbdNewId}",
+                "artifactId": "${newArtifact}",
+                "expectedGraphSha256": "${fbdHash}"
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${stalePlanHash}"
+      },
+      "expect": [
+        {
+          "path": "/status",
+          "equals": "Failed"
+        },
+        {
+          "path": "/errorCode",
+          "equals": "graph_revision_conflict"
+        }
+      ]
+    },
+    {
+      "id": "head-preserved",
+      "tool": "plc_workspace_get",
+      "arguments": {
+        "workspaceName": "p12-${runId}"
+      },
+      "expect": [
+        {
+          "path": "/value/revision",
+          "equals": "${patchedRevision}"
+        }
+      ]
+    },
+    {
+      "id": "reject-overflow",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "InitLD",
+          "pouType": "program",
+          "language": "LD",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "Flags",
+              "type": "BOOL",
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 3
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "TRUE"
+                    },
+                    "repeat": 5
+                  },
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "FALSE"
+                    },
+                    "repeat": 3
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Running",
+              "type": "BOOL",
+              "initialValue": "FALSE"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "leftPowerRail",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "contact",
+              "expression": "Flags[0]",
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "coil",
+              "expression": "Running",
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "executionOrder": 1
+            },
+            {
+              "id": 4,
+              "kind": "rightPowerRail",
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expectToolError": true,
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "graph_initializer_exceeds_array"
+        }
+      ]
+    },
+    {
+      "id": "generate-portable-only",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "InitFBD",
+          "pouType": "program",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "Result",
+              "type": "INT",
+              "address": "%MW0",
+              "documentation": "参数输出\n示例内存地址；不代表设备 I/O 映射。"
+            },
+            {
+              "name": "Thresholds",
+              "type": "INT",
+              "dimensions": [
+                {
+                  "lower": -1,
+                  "upper": 1
+                },
+                {
+                  "lower": 2,
+                  "upper": 3
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "10"
+                    },
+                    "repeat": 2
+                  },
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "20"
+                    },
+                    "repeat": 3
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Settings",
+              "type": "MachineSettings",
+              "initializer": {
+                "kind": "struct",
+                "members": [
+                  {
+                    "name": "Label",
+                    "value": {
+                      "kind": "simple",
+                      "value": "'Line A'"
+                    }
+                  },
+                  {
+                    "name": "Limits",
+                    "value": {
+                      "kind": "array",
+                      "items": [
+                        {
+                          "value": {
+                            "kind": "simple",
+                            "value": "25"
+                          },
+                          "repeat": 3
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "Drive",
+                    "value": {
+                      "kind": "struct",
+                      "members": [
+                        {
+                          "name": "Enabled",
+                          "value": {
+                            "kind": "simple",
+                            "value": "TRUE"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Drives",
+              "type": "DriveSettings",
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 1
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "struct",
+                      "members": [
+                        {
+                          "name": "Enabled",
+                          "value": {
+                            "kind": "simple",
+                            "value": "TRUE"
+                          }
+                        },
+                        {
+                          "name": "Speed",
+                          "value": {
+                            "kind": "simple",
+                            "value": "100"
+                          }
+                        }
+                      ]
+                    },
+                    "repeat": 2
+                  }
+                ]
+              }
+            },
+            {
+              "name": "TotalCycles",
+              "type": "DINT",
+              "initialValue": "0",
+              "documentation": "累计上升沿次数；保持效果待真实控制器验证。",
+              "address": "%MD100"
+            },
+            {
+              "name": "Scratch",
+              "type": "INT",
+              "scope": "temp"
+            },
+            {
+              "name": "RemoteEnable",
+              "type": "BOOL",
+              "scope": "external"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "expression": "Thresholds[-1,2]",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "outVariable",
+              "expression": "Result",
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "executionOrder": 1
+            }
+          ],
+          "variableGroups": [
+            {
+              "scope": "local",
+              "variables": [
+                "Result"
+              ],
+              "retention": "nonRetain",
+              "name": "Output"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Thresholds",
+                "Settings"
+              ],
+              "constant": true,
+              "name": "Parameters",
+              "documentation": "配方参数；变更后需要重新编译。"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "Drives"
+              ],
+              "name": "DriveData"
+            },
+            {
+              "scope": "local",
+              "variables": [
+                "TotalCycles"
+              ],
+              "retention": "retain",
+              "name": "Statistics"
+            },
+            {
+              "scope": "temp",
+              "variables": [
+                "Scratch"
+              ]
+            },
+            {
+              "scope": "external",
+              "variables": [
+                "RemoteEnable"
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "invalidArtifact": "/value/artifact/artifactId"
+      }
+    },
+    {
+      "id": "reject-target-declaration",
+      "tool": "plc_pou_graph_write",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "parentId": "${applicationId}",
+        "artifactId": "${invalidArtifact}"
+      },
+      "expectToolError": true,
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "inovance_retain_address_conflict"
+        }
+      ]
+    },
+    {
+      "id": "package",
+      "tool": "plc_delivery_create",
+      "arguments": {
+        "workspaceName": "p12-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "applicationId": "${applicationId}"
+      },
+      "bind": {
+        "packageId": "/result/artifact/artifactId",
+        "packageSha": "/result/artifact/sha256"
+      },
+      "expect": [
+        {
+          "path": "/result/packaged",
+          "equals": true
+        }
+      ]
+    }
+  ]
+}

@@ -68,7 +68,7 @@ public static class BatchValidation
         .Distinct(StringComparer.Ordinal).ToArray();
 }
 
-public sealed class BatchService(ManagedEditingJobs edits, IExchangeArtifacts artifacts)
+public sealed class BatchService(ManagedEditingJobs edits, IExchangeArtifacts artifacts, IPlcGraphPolicy? targetPolicy = null)
 {
     private async Task<BatchPlan> Prepare(string workspace, BatchPlan plan, CancellationToken token)
     {
@@ -77,7 +77,10 @@ public sealed class BatchService(ManagedEditingJobs edits, IExchangeArtifacts ar
         foreach (var step in normalized.Steps.Where(s => s.Operation == ExchangeOperations.WriteGraph))
         {
             var artifact = await artifacts.GetAsync(step.Change.ArtifactId!, token);
-            if (artifact.Artifact.Format != "plcopen" || PlcOpenGraphCodec.Decode(artifact.Xml).Program.Name != step.Change.Name) throw new ProjectEditException("graph_name_mismatch");
+            if (artifact.Artifact.Format != "plcopen") throw new ProjectEditException("graph_name_mismatch");
+            var graph = PlcOpenGraphCodec.Decode(artifact.Xml).Program;
+            if (graph.Name != step.Change.Name) throw new ProjectEditException("graph_name_mismatch");
+            if (targetPolicy?.Validate(graph) is { } invalidGraph) throw new ProjectEditException(invalidGraph);
         }
         return normalized;
     }

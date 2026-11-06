@@ -1,0 +1,221 @@
+{
+  "name": "InitFBD",
+  "pouType": "program",
+  "language": "FBD",
+  "profile": "graph-v2",
+  "variables": [
+    {
+      "name": "Result",
+      "type": "INT",
+      "address": "%MW0",
+      "documentation": "参数输出\n示例内存地址；不代表设备 I/O 映射。"
+    },
+    {
+      "name": "Thresholds",
+      "type": "INT",
+      "dimensions": [
+        {
+          "lower": -1,
+          "upper": 1
+        },
+        {
+          "lower": 2,
+          "upper": 3
+        }
+      ],
+      "initializer": {
+        "kind": "array",
+        "items": [
+          {
+            "value": {
+              "kind": "simple",
+              "value": "10"
+            },
+            "repeat": 2
+          },
+          {
+            "value": {
+              "kind": "simple",
+              "value": "20"
+            },
+            "repeat": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Settings",
+      "type": "MachineSettings",
+      "initializer": {
+        "kind": "struct",
+        "members": [
+          {
+            "name": "Label",
+            "value": {
+              "kind": "simple",
+              "value": "'Line A'"
+            }
+          },
+          {
+            "name": "Limits",
+            "value": {
+              "kind": "array",
+              "items": [
+                {
+                  "value": {
+                    "kind": "simple",
+                    "value": "25"
+                  },
+                  "repeat": 3
+                }
+              ]
+            }
+          },
+          {
+            "name": "Drive",
+            "value": {
+              "kind": "struct",
+              "members": [
+                {
+                  "name": "Enabled",
+                  "value": {
+                    "kind": "simple",
+                    "value": "TRUE"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Drives",
+      "type": "DriveSettings",
+      "dimensions": [
+        {
+          "lower": 0,
+          "upper": 1
+        }
+      ],
+      "initializer": {
+        "kind": "array",
+        "items": [
+          {
+            "value": {
+              "kind": "struct",
+              "members": [
+                {
+                  "name": "Enabled",
+                  "value": {
+                    "kind": "simple",
+                    "value": "TRUE"
+                  }
+                },
+                {
+                  "name": "Speed",
+                  "value": {
+                    "kind": "simple",
+                    "value": "100"
+                  }
+                }
+              ]
+            },
+            "repeat": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "TotalCycles",
+      "type": "DINT",
+      "initialValue": "0",
+      "documentation": "累计上升沿次数；保持效果待真实控制器验证。"
+    },
+    {
+      "name": "Scratch",
+      "type": "INT",
+      "scope": "temp"
+    },
+    {
+      "name": "RemoteEnable",
+      "type": "BOOL",
+      "scope": "external"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "inVariable",
+      "expression": "Thresholds[-1,2]",
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "outVariable",
+      "expression": "Result",
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "executionOrder": 1
+    }
+  ],
+  "variableGroups": [
+    {
+      "scope": "local",
+      "variables": [
+        "Result"
+      ],
+      "retention": "nonRetain",
+      "name": "Output"
+    },
+    {
+      "scope": "local",
+      "variables": [
+        "Thresholds",
+        "Settings"
+      ],
+      "constant": true,
+      "name": "Parameters",
+      "documentation": "配方参数；变更后需要重新编译。"
+    },
+    {
+      "scope": "local",
+      "variables": [
+        "Drives"
+      ],
+      "name": "DriveData"
+    },
+    {
+      "scope": "local",
+      "variables": [
+        "TotalCycles"
+      ],
+      "retention": "retain",
+      "name": "Statistics"
+    },
+    {
+      "scope": "temp",
+      "variables": [
+        "Scratch"
+      ]
+    },
+    {
+      "scope": "external",
+      "variables": [
+        "RemoteEnable"
+      ]
+    }
+  ]
+}

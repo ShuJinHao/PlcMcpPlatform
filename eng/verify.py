@@ -12,7 +12,7 @@ def main():
                 [args.dotnet, 'build', 'PlcMcpPlatform.sln', '-c', 'Release', '--no-restore'],
                 [args.dotnet, 'test', 'PlcMcpPlatform.sln', '-c', 'Release', '--no-build', '--no-restore']]
     commands.append([sys.executable, 'eng/capability-inventory.py'])
-    for check in ('mcp','execution','editing','configuration','exchange','delivery','incremental','members','graphs','initializers','maintenance','publish'):
+    for check in ('mcp','execution','editing','configuration','exchange','delivery','incremental','members','graphs','initializers','semantics','maintenance','publish'):
         commands.append([sys.executable, 'eng/verify-'+check+'.py', '--dotnet', args.dotnet])
     commands.append([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests/script_engine', '-v'])
     for command in commands:

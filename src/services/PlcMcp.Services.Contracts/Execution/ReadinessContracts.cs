@@ -5,7 +5,7 @@ namespace PlcMcp.Services.Contracts.Execution;
 
 public static class PlatformRelease
 {
-    public const string Stage = "P11-graph-initializers", ContractVersion = "1.9";
+    public const string Stage = "P12-engineering-semantics", ContractVersion = "1.9";
 }
 // Conditions are exact, case-sensitive matches on documented request fields, not executable expressions.
 public sealed record OperationAcceptance(string Operation, string Coverage, Dictionary<string, string> Conditions, string[] EvidenceIds);

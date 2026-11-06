@@ -180,6 +180,20 @@
               "kind"
             ],
             "default": null
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "documentation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
           }
         },
         "required": [
@@ -349,6 +363,46 @@
               "null"
             ],
             "default": null
+          },
+          "associations": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "qualifier": {
+                  "type": "string",
+                  "default": "N"
+                },
+                "duration": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "executionOrder": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "action"
+              ]
+            },
+            "default": null
           }
         },
         "required": [
@@ -414,6 +468,53 @@
     "profile": {
       "type": "string",
       "default": "graph-v1"
+    },
+    "variableGroups": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "constant": {
+            "type": "boolean",
+            "default": false
+          },
+          "retention": {
+            "type": "string",
+            "default": "default"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "documentation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "scope",
+          "variables"
+        ]
+      },
+      "default": null
     }
   },
   "required": [

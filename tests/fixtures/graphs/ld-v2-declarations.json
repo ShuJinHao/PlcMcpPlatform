@@ -1,0 +1,310 @@
+{
+  "name": "MotorLD",
+  "pouType": "program",
+  "language": "LD",
+  "variables": [
+    {
+      "name": "Start",
+      "type": "BOOL",
+      "scope": "input",
+      "address": "%IX0.0",
+      "documentation": "样例输入 Start；真实地址必须按目标设备重新确认。"
+    },
+    {
+      "name": "Stop",
+      "type": "BOOL",
+      "scope": "input",
+      "address": "%IX0.1",
+      "documentation": "样例输入 Stop；真实地址必须按目标设备重新确认。"
+    },
+    {
+      "name": "Fault",
+      "type": "BOOL",
+      "scope": "input",
+      "address": "%IX0.2",
+      "documentation": "样例输入 Fault；真实地址必须按目标设备重新确认。"
+    },
+    {
+      "name": "Reset",
+      "type": "BOOL",
+      "scope": "input",
+      "address": "%IX0.3",
+      "documentation": "样例输入 Reset；真实地址必须按目标设备重新确认。"
+    },
+    {
+      "name": "Running",
+      "type": "BOOL",
+      "documentation": "运行自保持状态\nStop 或 Fault 断开运行条件。"
+    },
+    {
+      "name": "Alarm",
+      "type": "BOOL"
+    },
+    {
+      "name": "Flags",
+      "type": "BOOL",
+      "dimensions": [
+        {
+          "lower": 0,
+          "upper": 7
+        }
+      ]
+    },
+    {
+      "name": "Label",
+      "type": "STRING",
+      "stringLength": 80
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "leftPowerRail",
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "contact",
+      "expression": "Start",
+      "x": 40,
+      "y": 20,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "contact",
+      "expression": "Running",
+      "x": 40,
+      "y": 60,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "contact",
+      "expression": "Stop",
+      "negated": true,
+      "x": 120,
+      "y": 20,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 2
+            },
+            {
+              "sourceId": 3
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "kind": "coil",
+      "expression": "Running",
+      "x": 200,
+      "y": 20,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 9
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "executionOrder": 1
+    },
+    {
+      "id": 6,
+      "kind": "rightPowerRail",
+      "x": 280,
+      "y": 20,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 5
+            },
+            {
+              "sourceId": 11
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "kind": "connector",
+      "x": 200,
+      "y": 280,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 4
+            }
+          ]
+        }
+      ],
+      "name": "Interlocked"
+    },
+    {
+      "id": 8,
+      "kind": "continuation",
+      "x": 300,
+      "y": 320,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "Interlocked"
+    },
+    {
+      "id": 9,
+      "kind": "contact",
+      "x": 400,
+      "y": 360,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 8
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Fault",
+      "negated": true
+    },
+    {
+      "id": 10,
+      "kind": "contact",
+      "x": 0,
+      "y": 400,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Reset"
+    },
+    {
+      "id": 11,
+      "kind": "coil",
+      "x": 100,
+      "y": 440,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 10
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Alarm",
+      "storage": "reset",
+      "executionOrder": 2
+    }
+  ],
+  "profile": "graph-v2",
+  "variableGroups": [
+    {
+      "scope": "input",
+      "variables": [
+        "Start",
+        "Stop",
+        "Fault",
+        "Reset"
+      ],
+      "name": "Inputs"
+    },
+    {
+      "scope": "local",
+      "variables": [
+        "Running",
+        "Alarm"
+      ],
+      "retention": "nonRetain",
+      "name": "VolatileState"
+    },
+    {
+      "scope": "local",
+      "variables": [
+        "Flags",
+        "Label"
+      ],
+      "name": "Auxiliary"
+    }
+  ]
+}

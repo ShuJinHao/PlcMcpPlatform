@@ -74,6 +74,7 @@ public static class HostApplication
         builder.Services.AddSingleton<IncrementalService>();
         builder.Services.AddSingleton<IExchangeArtifacts>(new ExchangeArtifacts(Path.Combine(data, "exchange"), maximum));
         builder.Services.AddSingleton<ExchangeService>();
+        builder.Services.AddSingleton<IPlcGraphPolicy, InovanceGraphPolicy>();
         builder.Services.AddSingleton<IExchangeUploads>(sp => new ExchangeUploads(Path.Combine(data, "uploads"), async (format, xml, token) =>
         {
             _ = ExchangeXml.Inspect(format, xml);
@@ -88,6 +89,7 @@ public static class HostApplication
             IEngineeringExecutor composed = new IncrementalReadExecutor(new DeliveryExecutor(
             new ManagedProjectExecutor(new BatchExecutor(new IncrementalEditExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>())), sp.GetRequiredService<IBatchJournal>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>()),
             sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IDeliveryArtifacts>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>());
+            composed = new GraphPolicyExecutor(composed, sp.GetRequiredService<IExchangeArtifacts>(), sp.GetRequiredService<IPlcGraphPolicy>());
             return !fixture && !validation && rawWorker is InovanceExecutor inovance
                 ? new AcceptedExecution(composed, inovance.Acceptance) : composed;
         });

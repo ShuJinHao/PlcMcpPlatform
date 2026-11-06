@@ -3389,6 +3389,20 @@
                           "kind"
                         ],
                         "default": null
+                      },
+                      "address": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "documentation": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
                       }
                     },
                     "required": [
@@ -3558,6 +3572,46 @@
                           "null"
                         ],
                         "default": null
+                      },
+                      "associations": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "action": {
+                              "type": "string"
+                            },
+                            "qualifier": {
+                              "type": "string",
+                              "default": "N"
+                            },
+                            "duration": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            },
+                            "executionOrder": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "default": null
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "action"
+                          ]
+                        },
+                        "default": null
                       }
                     },
                     "required": [
@@ -3623,6 +3677,53 @@
                 "profile": {
                   "type": "string",
                   "default": "graph-v1"
+                },
+                "variableGroups": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "scope": {
+                        "type": "string"
+                      },
+                      "variables": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "constant": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "retention": {
+                        "type": "string",
+                        "default": "default"
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "documentation": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "scope",
+                      "variables"
+                    ]
+                  },
+                  "default": null
                 }
               },
               "required": [
@@ -3687,7 +3788,7 @@
   },
   {
     "name": "plc_graph_generate",
-    "description": "Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.",
+    "description": "Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. graph-v2 variableGroups reference every variable name exactly once with matching scope; group order/boundaries, constant, retention(default/retain/nonRetain), name and plain documentation are preserved. Variables accept address and plain documentation; scopes include temp/external. SFC actionBlock associations contain id, action, qualifier, duration and optional executionOrder; do not combine with legacy action/qualifier/duration. Association list order is preserved, not a runtime execution guarantee. Target write checks apply Inovance restrictions separately. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3869,6 +3970,20 @@
                       "kind"
                     ],
                     "default": null
+                  },
+                  "address": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "documentation": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
                   }
                 },
                 "required": [
@@ -4038,6 +4153,46 @@
                       "null"
                     ],
                     "default": null
+                  },
+                  "associations": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "action": {
+                          "type": "string"
+                        },
+                        "qualifier": {
+                          "type": "string",
+                          "default": "N"
+                        },
+                        "duration": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "default": null
+                        },
+                        "executionOrder": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "default": null
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "action"
+                      ]
+                    },
+                    "default": null
                   }
                 },
                 "required": [
@@ -4103,6 +4258,53 @@
             "profile": {
               "type": "string",
               "default": "graph-v1"
+            },
+            "variableGroups": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "object",
+                "properties": {
+                  "scope": {
+                    "type": "string"
+                  },
+                  "variables": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "constant": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "retention": {
+                    "type": "string",
+                    "default": "default"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "documentation": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "scope",
+                  "variables"
+                ]
+              },
+              "default": null
             }
           },
           "required": [
@@ -4343,6 +4545,20 @@
                               "kind"
                             ],
                             "default": null
+                          },
+                          "address": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "documentation": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
                           }
                         },
                         "required": [
@@ -4512,6 +4728,46 @@
                               "null"
                             ],
                             "default": null
+                          },
+                          "associations": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer"
+                                },
+                                "action": {
+                                  "type": "string"
+                                },
+                                "qualifier": {
+                                  "type": "string",
+                                  "default": "N"
+                                },
+                                "duration": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "default": null
+                                },
+                                "executionOrder": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "default": null
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "action"
+                              ]
+                            },
+                            "default": null
                           }
                         },
                         "required": [
@@ -4577,6 +4833,53 @@
                     "profile": {
                       "type": "string",
                       "default": "graph-v1"
+                    },
+                    "variableGroups": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "scope": {
+                            "type": "string"
+                          },
+                          "variables": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "constant": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "retention": {
+                            "type": "string",
+                            "default": "default"
+                          },
+                          "name": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "documentation": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          }
+                        },
+                        "required": [
+                          "scope",
+                          "variables"
+                        ]
+                      },
+                      "default": null
                     }
                   },
                   "required": [

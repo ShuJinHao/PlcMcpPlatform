@@ -30,33 +30,36 @@ public static class PlcOpenGraphCodec
     private static XElement EncodePou(GraphicalProgram p)
     {
         var iface = E("interface", p.ReturnType is null ? null : E("returnType", EncodeType(p.ReturnType)));
-        foreach (var scope in new[] { "local", "input", "output", "inOut" })
-        {
-            var variables = p.Variables.Where(v => v.Scope == scope).ToArray();
-            if (variables.Length == 0) continue;
-            iface.Add(E(scope + "Vars", variables.Select(v => E("variable", A("name", v.Name),
-                E("type", EncodeType(new(v.Type, v.StringLength, v.Dimensions))),
-                v.Initializer is not null ? E("initialValue", PlcOpenValueCodec.Encode(v.Initializer))
-                    : v.InitialValue is null ? null : E("initialValue", E("simpleValue", A("value", v.InitialValue)))))));
-        }
+        iface.Add(PlcOpenDeclarationCodec.Encode(p));
         return E("pou", A("name", p.Name), A("pouType", p.PouType), iface,
             p.Actions is { Length: > 0 } ? E("actions", p.Actions.Select(a => E("action", A("name", a.Name), E("body", St(a.Implementation))))) : null,
             E("body", E(p.Language, p.Nodes.Select(EncodeNode))));
     }
-    private static XElement EncodeType(GraphDataType type)
+    internal static XElement EncodeType(GraphDataType type)
     {
         var scalar = PrimitiveTypes.Contains(type.Type) ? E(type.Type) : type.Type is "STRING" or "WSTRING"
             ? E(type.Type.ToLowerInvariant(), A("length", type.StringLength)) : E("derived", A("name", type.Type));
         return type.Dimensions is null ? scalar : E("array", type.Dimensions.Select(d => E("dimension", A("lower", d.Lower), A("upper", d.Upper))), E("baseType", scalar));
     }
-    private static GraphDataType DecodeType(XElement container)
+    internal static GraphDataType DecodeType(XElement container)
     {
+        PlcOpenDeclarationCodec.Attributes(container);
         var type = container.Elements().Single(); GraphDimension[]? dimensions = null;
         if (type.Name == P + "array")
         {
+            PlcOpenDeclarationCodec.Attributes(type);
+            if (type.Elements().Any(e => e.Name != P + "dimension" && e.Name != P + "baseType")) throw new ProjectEditException("graph_contains_unrepresented_data");
+            foreach (var dimension in type.Elements(P + "dimension"))
+            {
+                PlcOpenDeclarationCodec.Attributes(dimension, "lower", "upper");
+                if (dimension.Nodes().Any()) throw new ProjectEditException("graph_contains_unrepresented_data");
+            }
             dimensions = type.Elements(P + "dimension").Select(d => new GraphDimension((int)d.Attribute("lower")!, (int)d.Attribute("upper")!)).ToArray();
-            type = type.Element(P + "baseType")!.Elements().Single();
+            var baseType = type.Elements(P + "baseType").Single(); PlcOpenDeclarationCodec.Attributes(baseType);
+            type = baseType.Elements().Single();
         }
+        PlcOpenDeclarationCodec.Attributes(type, type.Name == P + "derived" ? ["name"] : type.Name == P + "string" || type.Name == P + "wstring" ? ["length"] : []);
+        if (type.HasElements) throw new ProjectEditException("graph_contains_unrepresented_data");
         return new(type.Name.LocalName == "derived" ? S(type, "name")! : type.Name.LocalName is "string" or "wstring"
             ? type.Name.LocalName.ToUpperInvariant() : type.Name.LocalName, (int?)type.Attribute("length"), dimensions);
     }
@@ -90,7 +93,7 @@ public static class PlcOpenGraphCodec
             case "jumpStep": e.Add(A("targetName", n.Name)); break;
             case "connector": case "continuation": e.Add(A("name", n.Name)); break;
             case "transition": e.Add(E("condition", E("inline", A("name", "condition_" + n.Id), St(n.Expression!)))); break;
-            case "actionBlock": e.Add(E("action", A("localId", n.Id), A("qualifier", n.Qualifier), A("duration", n.Duration), Position("relPosition"), E("reference", A("name", n.Action)))); break;
+            case "actionBlock": e.Add(PlcOpenAssociationCodec.Encode(n)); break;
         }
         return e;
     }
@@ -105,17 +108,10 @@ public static class PlcOpenGraphCodec
             if (pous.Length != 1) throw new ProjectEditException("single_graph_pou_required");
             var pou = pous[0]; var body = pou.Element(P + "body")!.Elements().Single();
             if (body.Name.Namespace != P || body.Name.LocalName is not ("LD" or "FBD" or "SFC")) throw new ProjectEditException("graph_language_outside_profile");
-            var initializerBudget = GraphInitializerRules.MaxNodes;
-            var variables = pou.Element(P + "interface")!.Elements().SelectMany(group => group.Elements(P + "variable").Select(v => {
-                var type = DecodeType(v.Element(P + "type")!);
-                var initial = v.Element(P + "initialValue")?.Elements().Single();
-                return new GraphVariable(S(v, "name")!, type.Type,
-                    group.Name.LocalName.Replace("Vars", "", StringComparison.Ordinal), initial?.Name == P + "simpleValue" ? (string?)initial.Attribute("value") : null,
-                    type.StringLength, type.Dimensions, initial is null || initial.Name == P + "simpleValue" ? null : PlcOpenValueCodec.Decode(initial, ref initializerBudget));
-            })).ToArray();
+            var declarations = PlcOpenDeclarationCodec.Decode(pou.Element(P + "interface")!);
             var actions = pou.Element(P + "actions")?.Elements(P + "action").Select(a => new GraphAction(S(a, "name")!, a.Element(P + "body")!.Element(P + "ST")!.Element(H + "xhtml")!.Value)).ToArray() ?? [];
-            var program = new GraphicalProgram(S(pou, "name")!, S(pou, "pouType")!, body.Name.LocalName, variables, body.Elements().Select(DecodeNode).ToArray(), actions,
-                pou.Element(P + "interface")!.Element(P + "returnType") is { } returnType ? DecodeType(returnType) : null);
+            var program = new GraphicalProgram(S(pou, "name")!, S(pou, "pouType")!, body.Name.LocalName, declarations.Variables, body.Elements().Select(DecodeNode).ToArray(), actions,
+                pou.Element(P + "interface")!.Element(P + "returnType") is { } returnType ? DecodeType(returnType) : null, VariableGroups: declarations.Groups);
             if (GraphV2Rules.RequiresV2(program) || S(root.Element(P + "fileHeader")!, "productVersion") == "graph-v2") program = program with { Profile = "graph-v2" };
             if (GraphRules.Validate(program) is { } error) throw new ProjectEditException(error);
             // The entire program must be represented. Unknown attributes, addData, additional bodies,
@@ -142,6 +138,8 @@ public static class PlcOpenGraphCodec
     private static GraphNode DecodeNode(XElement e)
     {
         var kind = e.Name.LocalName; var pos = e.Element(P + "position");
+        var associations = kind == "actionBlock" ? PlcOpenAssociationCodec.Decode(e) : null;
+        var legacyAction = associations is { Length: 1 } && associations[0].Id == (int)e.Attribute("localId")! && associations[0].ExecutionOrder is null;
         var inputs = kind == "block" ? e.Element(P + "inputVariables")!.Elements(P + "variable").Select(v => Pin(v.Element(P + "connectionPointIn")!, true, S(v, "formalParameter")!, B(v, "negated"))).ToArray()
             : e.Elements(P + "connectionPointIn").Select(p => Pin(p, true)).ToArray();
         var outputs = kind == "block" ? e.Element(P + "outputVariables")!.Elements(P + "variable").Select(v => Pin(v.Element(P + "connectionPointOut")!, false, S(v, "formalParameter")!, B(v, "negated"))).ToArray()
@@ -150,10 +148,10 @@ public static class PlcOpenGraphCodec
             (string?)e.Element(P + "variable") ?? (string?)e.Element(P + "expression") ?? (string?)e.Element(P + "condition")?.Element(P + "inline")?.Element(P + "ST")?.Element(H + "xhtml"),
             S(e, "typeName"), S(e, "instanceName"), inputs, outputs, B(e, "negated"), S(e, "edge") ?? "none", S(e, "storage") ?? "none",
             (int?)e.Attribute("executionOrderId"), S(e, "name") ?? S(e, "targetName"), B(e, "initialStep"),
-            (string?)e.Element(P + "action")?.Element(P + "reference")?.Attribute("name"), (string?)e.Element(P + "action")?.Attribute("qualifier") ?? "N",
+            legacyAction ? associations![0].Action : null, legacyAction ? associations![0].Qualifier : "N",
             e.Element(P + "inOutVariables")?.Elements(P + "variable").Any() == true
                 ? e.Element(P + "inOutVariables")!.Elements(P + "variable").Select(v => Pin(v.Element(P + "connectionPointIn")!, true, S(v, "formalParameter")!, B(v, "negated"))).ToArray() : null,
-            (int?)e.Attribute("priority"), (string?)e.Element(P + "action")?.Attribute("duration"));
+            (int?)e.Attribute("priority"), legacyAction ? associations![0].Duration : null, legacyAction ? null : associations);
     }
     public static string SemanticHash(GraphicalProgram p)
     {
@@ -175,6 +173,12 @@ public static class PlcOpenGraphCodec
                 if (a.Name.LocalName is "negated" or "initialStep" && a.Value is "false" or "0"
                     || a.Name.LocalName is "edge" or "storage" && a.Value == "none" || a.Name == "qualifier" && a.Value == "N"
                     || e.Name == P + "value" && e.Parent?.Name == P + "arrayValue" && a.Name == "repetitionValue" && a.Value == "1") continue;
+                if (GraphDeclarationRules.Scopes.Any(s => e.Name == P + (s + "Vars")) && a.Name.LocalName is "constant" or "retain" or "nonretain"
+                    && a.Name.Namespace == XNamespace.None)
+                {
+                    if (a.Value is "false" or "0") continue;
+                    if (a.Value == "1") { Token(a.Name.ToString()); Token("true"); continue; }
+                }
                 Token(a.Name.ToString()); Token(a.Value);
             }
             Token("attributes-end");

@@ -2,7 +2,7 @@
 
 ## 产品目标
 
-OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先读 README，再按变更范围读取 docs/01～24；文档与实际实现不一致时必须明确指出并修正状态。
+OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先读 README，再按变更范围读取 docs/01～25；文档与实际实现不一致时必须明确指出并修正状态。
 
 ## 实现规则
 
@@ -23,7 +23,7 @@ OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先�
 
 - 运行受影响的领域、契约、持久化和架构测试；正常交付运行 restore/build/test。
 - IDE 相关变更还需真实 Windows/InoProShop 验收；环境不可用时明确写未验证。
-- 执行与 MCP 变更还需运行 `python eng/verify-mcp.py` 、`python eng/verify-execution.py` 、`python eng/verify-editing.py` 、`python eng/verify-configuration.py` 、`python eng/verify-exchange.py`、`python eng/verify-delivery.py`、`python eng/verify-incremental.py` 、`python eng/verify-members.py`、`python eng/verify-graphs.py`、`python eng/verify-initializers.py` 和发布检查 `python eng/verify-publish.py`；fixture 证据不能替代真实 IDE 验证。
+- 执行与 MCP 变更还需运行 `python eng/verify-mcp.py` 、`python eng/verify-execution.py` 、`python eng/verify-editing.py` 、`python eng/verify-configuration.py` 、`python eng/verify-exchange.py`、`python eng/verify-delivery.py`、`python eng/verify-incremental.py` 、`python eng/verify-members.py`、`python eng/verify-graphs.py`、`python eng/verify-initializers.py`、`python eng/verify-semantics.py` 和发布检查 `python eng/verify-publish.py`；fixture 证据不能替代真实 IDE 验证。
 - Python 探针变更运行 `python -m unittest discover -s tests/script_engine -v`；CPython 测试不替代目标 IronPython/IDE 验证。
 - 提交更新实现状态和相关文档；保持锁文件，不使用预览依赖或关闭检查掩盖错误。
 - 后续功能使用独立分支和 PR，保持变更聚焦；发布、在线 PLC 操作按用户明确范围执行。
@@ -57,3 +57,9 @@ OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先�
 - 保留成员与数组条目顺序、重复次数；总节点、嵌套深度和重复展开规模都必须有界。
 - 初值参与语义摘要、读回证明和修订差异；未知初始化属性不能被几何属性忽略规则丢弃。
 - DUT 成员类型和 ST 初值表达式由真实 IDE 编译核验，fixture 不证明类型或设备逻辑正确。
+
+## P12 工程语义
+- 声明分组以名称引用唯一变量清单；组顺序/边界、修饰、地址和注释必须进入摘要、读回证明和差异。旧 v1/v2 固定摘要不能变化。
+- portable 表达校验与厂商执行限制分层；整批目标声明在候选复制前检查，恢复任务在执行前重新核对制品。
+- SFC 多动作保留独立关联 ID、限定符、延时、执行元数据和列表次序；不将 XML 顺序宣称为运行时执行保证。
+- 未建模的声明/动作数据明确拒绝，不取消图形子对象保护；真实地址、保持内存和控制器行为必须单独验收。见 docs/25。
