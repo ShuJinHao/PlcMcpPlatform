@@ -23,7 +23,8 @@ except OSError:
 else:
     sys.exit("Port 5088 is occupied; stop the existing Host before running this test.")
 env = dict(os.environ, PlcMcp__ApiKey=secrets.token_hex(32))
-with tempfile.TemporaryFile(mode="w+") as log:
+with tempfile.TemporaryDirectory(prefix="plcmcp-real-check-") as work, tempfile.TemporaryFile(mode="w+") as log:
+    env["PlcMcp__DataDirectory"] = str(Path(work) / "data")
     process = subprocess.Popen([args.dotnet, str(host)], cwd=host.parent, env=env, stdout=log, stderr=log)
     try:
         for attempt in range(100):

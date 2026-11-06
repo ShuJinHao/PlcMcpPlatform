@@ -56,5 +56,5 @@ public sealed class InovanceCapabilityProvider : IPlcCapabilityProvider
     });
     private static CapabilityDescriptor Describe(string id, OperationRisk risk) =>
         new(id, "inovance", "unverified", CapabilityStatus.Unverified, risk,
-            "IDE adapter execution is not implemented. Validate against the installed InoProShop version.");
+            "Real InoProShop validation is pending. Offline implementation and fixture tests do not establish vendor support.");
 }

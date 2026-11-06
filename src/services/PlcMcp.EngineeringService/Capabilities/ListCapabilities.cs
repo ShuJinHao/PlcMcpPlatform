@@ -13,6 +13,6 @@ public sealed class ListCapabilitiesHandler(IEnumerable<IPlcCapabilityProvider> 
         var capabilities = providers.SelectMany(p => p.GetCapabilities()).OrderBy(c => c.Id, StringComparer.Ordinal).ToArray();
         if (capabilities.GroupBy(c => (c.VendorId, c.IdeVersion, c.Id)).Any(group => group.Count() > 1))
             throw new InvalidOperationException("duplicate_capability_registration");
-        return Task.FromResult(new CapabilityCatalog("1.0", "P0-foundation", capabilities));
+        return Task.FromResult(new CapabilityCatalog("1.0", "P1-offline-execution", capabilities));
     }
 }

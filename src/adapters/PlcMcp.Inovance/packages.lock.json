@@ -14,6 +14,12 @@
           "PlcMcp.SharedKernel": "[1.0.0, )"
         }
       },
+      "plcmcp.execution": {
+        "type": "Project",
+        "dependencies": {
+          "PlcMcp.Services.Contracts": "[1.0.0, )"
+        }
+      },
       "plcmcp.services.contracts": {
         "type": "Project",
         "dependencies": {

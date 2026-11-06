@@ -36,6 +36,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E3B607ED
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcMcp.Tests", "tests\PlcMcp.Tests\PlcMcp.Tests.csproj", "{39FF841C-65E7-45C7-9C6F-AD2E9FA3D864}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcMcp.Execution", "src\infrastructure\PlcMcp.Execution\PlcMcp.Execution.csproj", "{0435FF72-2C4B-578C-8B27-E52E9B96E8AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcMcp.TestHost", "tests\PlcMcp.TestHost\PlcMcp.TestHost.csproj", "{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0435FF72-2C4B-578C-8B27-E52E9B96E8AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0435FF72-2C4B-578C-8B27-E52E9B96E8AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0435FF72-2C4B-578C-8B27-E52E9B96E8AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0435FF72-2C4B-578C-8B27-E52E9B96E8AD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DF9F0503-7DE5-43AC-B950-37AF64C4A984}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DF9F0503-7DE5-43AC-B950-37AF64C4A984}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF9F0503-7DE5-43AC-B950-37AF64C4A984}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -83,6 +95,8 @@ Global
 		{39FF841C-65E7-45C7-9C6F-AD2E9FA3D864}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025} = {E3B607ED-07ED-4AC5-B13D-4E5F640AC69A}
+		{0435FF72-2C4B-578C-8B27-E52E9B96E8AD} = {50F88796-36C3-4BA5-AFED-0655F26AB97D}
 		{3A89D89B-A26D-4327-B5D0-37E7A8681948} = {879362CB-D2DD-462F-947D-BEF8458CFFF8}
 		{DF9F0503-7DE5-43AC-B950-37AF64C4A984} = {3A89D89B-A26D-4327-B5D0-37E7A8681948}
 		{611F4A55-2F3A-44E9-891C-3462B00E3E05} = {879362CB-D2DD-462F-947D-BEF8458CFFF8}

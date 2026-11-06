@@ -18,3 +18,4 @@ appsettings.Local.json
 .env
 __pycache__/
 *.py[cod]
+.plcmcp/
