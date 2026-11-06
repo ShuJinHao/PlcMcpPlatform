@@ -12,9 +12,9 @@
 | 架构 | Core/Contracts/Service 不引用 MCP、EF、厂商实现或 Host |
 | HTTP MCP | initialize、tools/list、两个 tools/call、错误工具名、无凭据拒绝、Origin 拒绝 |
 
-执行 `eng/verify.ps1` 或 README 中的 restore/build/test。Release 构建后执行 `python eng/verify-mcp.py`，它启动测试 Host、运行 `eng/mcp-smoke.py` 并清理自己的进程，使用 Python 标准库；它验证协议连接，不需要模型、OpenCode 或 PLC。CI 的 Windows/Linux 构建结果与本地结果分别记录。
+执行 `eng/verify.ps1` 或 README 中的 restore/build/test。Release 构建后执行 `python eng/verify-mcp.py`，它启动测试 Host、运行 `eng/mcp-smoke.py` 并清理自己的进程，使用 Python 标准库；它验证协议连接，不需要模型、OpenCode 或 PLC。CI 的 Windows/Linux/macOS 构建结果与本地结果分别记录。
 
-## 当前验证记录
+## P0 历史验证记录
 
 记录日期：2026-11-06。环境：Linux，.NET SDK 8.0.427，.NET / ASP.NET Core Runtime 8.0.33。
 
@@ -32,9 +32,15 @@
 
 临时调用器只用于定位当前本地环境下的测试运行器问题，没有改变测试代码或弱化断言，不作为产品交付。标准运行器验证已在 Windows/Linux CI 完成。InoProShop 和 OpenCode 客户端现场联调仍需在用户目标环境单独验收。
 
-## 后续必须覆盖的故障场景
+## P1 执行验证
 
-P1 新增的原创只读探针使用 `python -m unittest discover -s tests/script_engine -v` 验证。本地 CPython 的 10 项边界测试已通过，并加入 Windows/Linux CI。该结果仅覆盖只读调用约束、接口检查、遍历边界和错误反馈，不证明目标 IronPython、InoProShop 或写入编译能力通过；实机证据仍待采集。探针依据与使用方式见 [官方接口基线](10-official-api-baseline.md)。
+已加入任务恢复、通知丢失、重复/冲突请求、排队和运行中取消、响应损坏/串号/超限、超时隔离、路径限制、实例所有权和模式隔离测试。HTTP 检查覆盖独立测试宿主的九个工具、结果错误语义、重启持久化和阻塞状态；工具 Schema 与已提交快照比较。Python 共有 22 项探针/工程脚本测试。运行入口和当前边界见 [执行实现](12-execution.md)。
+
+首轮执行代码提交 `1cafbeacf34196b808c8b0d0205faa1aa00b1a7b` 已通过 Windows、Ubuntu、macOS 的锁定还原、Release 构建、26 项 .NET 测试、两组 HTTP 验证及 22 项 Python 测试，证据：[Actions](https://github.com/ShuJinHao/PlcMcpPlatform/actions/runs/42158837155)。后续补充的迁移快照、文件删除后的幂等重试、队列背压和生产依赖隔离，以最终 PR 的 CI 为准，不把首轮结果扩大为后续提交证据。
+
+## 故障场景与剩余验收
+
+上述 22 项 Python 测试包含 10 项只读探针测试与 12 项工程脚本测试。调度与协议故障已覆盖离线层；下列涉及工程保存、实际 IDE 并发、设备/库和图形语言的场景仍需后续实现与真实验收。探针依据与使用方式见 [官方接口基线](10-official-api-baseline.md)。
 
 1. 数据库入队后、Channel 通知前崩溃：恢复后任务仍可识别。
 2. 脚本已保存工程、服务未记录完成时断连：进入结果待确认，不自动重复写入。
@@ -49,4 +55,4 @@ P1 新增的原创只读探针使用 `python -m unittest discover -s tests/scrip
 
 在脱敏工程副本上记录版本、Profile、设备/库清单、模板指纹和脚本版本。至少验证读取、修改、读回、保存、关闭重开、故意编译失败、修复后成功。任务绑定必须读取真实任务配置验证。最终通过 OpenCode 完成需求到工程产物的全过程。
 
-在线功能仅在独立阶段与隔离环境验证；P0 不需要连接 PLC。编译成功、工程保存、任务绑定和运行验证分别记录结果。
+在线功能仅在独立阶段与隔离环境验证；当前离线开发不需要连接 PLC。编译成功、工程保存、任务绑定和运行验证分别记录结果。

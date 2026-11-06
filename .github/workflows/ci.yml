@@ -6,7 +6,7 @@ jobs:
   verify:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -17,4 +17,5 @@ jobs:
       - run: dotnet build PlcMcpPlatform.sln -c Release --no-restore
       - run: dotnet test PlcMcpPlatform.sln -c Release --no-build --no-restore
       - run: python eng/verify-mcp.py
+      - run: python eng/verify-execution.py
       - run: python -m unittest discover -s tests/script_engine -v

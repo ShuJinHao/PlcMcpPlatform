@@ -378,9 +378,16 @@
           "PlcMcp.Services.Contracts": "[1.0.0, )"
         }
       },
+      "plcmcp.execution": {
+        "type": "Project",
+        "dependencies": {
+          "PlcMcp.Services.Contracts": "[1.0.0, )"
+        }
+      },
       "plcmcp.inovance": {
         "type": "Project",
         "dependencies": {
+          "PlcMcp.Execution": "[1.0.0, )",
           "PlcMcp.Services.Contracts": "[1.0.0, )"
         }
       },
