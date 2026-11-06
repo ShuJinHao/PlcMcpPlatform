@@ -9,8 +9,18 @@ public static class GraphV2Rules
     public static bool Convergence(string kind) => kind is "selectionConvergence" or "simultaneousConvergence";
     public static bool RequiresV2(GraphicalProgram p) => p.ReturnType is not null || p.PouType == "function"
         || p.Variables?.Any(v => v is not null && (v.StringLength is not null || v.Dimensions is not null)) == true
-        || p.Nodes?.Any(n => n is not null && (n.InOuts is not null || n.Priority is not null
+        || p.Nodes?.Any(n => n is not null && (n.InOuts is not null || n.Priority is not null || n.Duration is not null || TimedQualifier(n.Qualifier)
             || Divergence(n.Kind) || Convergence(n.Kind) || n.Kind is "connector" or "continuation")) == true;
+    public static bool TimedQualifier(string qualifier) => qualifier is "L" or "D" or "SD" or "DS" or "SL";
+    // Bounded TIME literals only; expressions, variable durations and LTIME require separate evidence.
+    public static bool DurationValid(string? value)
+    {
+        if (value is null || value.Length > 32) return false;
+        var match = Regex.Match(value, @"\A(?:T|TIME)#([0-9]{1,10})(ms|s|m|h|d)\z", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+        if (!match.Success || !ulong.TryParse(match.Groups[1].Value, out var count)) return false;
+        ulong unit = match.Groups[2].Value.ToLowerInvariant() switch { "ms" => 1, "s" => 1000, "m" => 60000, "h" => 3600000, _ => 86400000 };
+        return count > 0 && count <= uint.MaxValue / unit;
+    }
     public static bool TypeValid(GraphDataType t)
     {
         if (!GraphRules.Identifier(t.Type) || t.StringLength is not null && (t.Type is not ("STRING" or "WSTRING") || t.StringLength is < 1 or > 65535)) return false;
@@ -94,8 +104,11 @@ public static class GraphV2Rules
             { if (!GraphRules.Identifier(n.Name)) return "invalid_graph_node_name"; }
             else if (n.Name is not null) return "graph_field_not_applicable";
             if (n.Kind == "actionBlock")
-            { if (!GraphRules.Identifier(n.Action) || n.Qualifier is not ("N" or "S" or "R" or "P")) return "invalid_sfc_action"; }
-            else if (n.Action is not null || n.Qualifier != "N") return "graph_field_not_applicable";
+            {
+                if (!GraphRules.Identifier(n.Action) || n.Qualifier is not ("N" or "S" or "R" or "P") && !TimedQualifier(n.Qualifier)) return "invalid_sfc_action";
+                if (TimedQualifier(n.Qualifier) ? !DurationValid(n.Duration) : n.Duration is not null) return "invalid_sfc_duration";
+            }
+            else if (n.Action is not null || n.Qualifier != "N" || n.Duration is not null) return "graph_field_not_applicable";
             if (n.Priority is not null && (n.Kind != "transition" || n.Priority <= 0)) return "invalid_sfc_priority";
             if (outputs.Any(x => x.Connections is { Length: > 0 })) return "connections_belong_to_inputs";
             foreach (var pin in InputPins(n))

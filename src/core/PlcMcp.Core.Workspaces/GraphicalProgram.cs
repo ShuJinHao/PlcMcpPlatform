@@ -16,7 +16,7 @@ public sealed record GraphNode(int Id, string Kind, decimal X = 0, decimal Y = 0
     string? TypeName = null, string? InstanceName = null, GraphPin[]? Inputs = null, GraphPin[]? Outputs = null,
     bool Negated = false, string Edge = "none", string Storage = "none", int? ExecutionOrder = null,
     string? Name = null, bool Initial = false, string? Action = null, string Qualifier = "N",
-    GraphPin[]? InOuts = null, int? Priority = null);
+    GraphPin[]? InOuts = null, int? Priority = null, string? Duration = null);
 
 public static class GraphRules
 {

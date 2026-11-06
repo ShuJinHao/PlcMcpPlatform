@@ -30,7 +30,7 @@
 | 项目 | 记录 |
 |---|---|
 | OpenCode / 模型 | 实际 CLI 版本、模型与提供商；不能以固定 HTTP 场景代替模型行为 |
-| Host 来源 | sourceCommit、fixture 或 ValidationHost、67 个工具、schedulerBlocked |
+| Host 来源 | sourceCommit、fixture 或 ValidationHost、实际发现工具数（fixture 为 74）、schedulerBlocked |
 | IDE 证据 | 真实模式的 IDE/ScriptEngine/Profile、模板、设备与库版本；fixture 填“不适用” |
 | 修改 | 原修订、计划摘要、jobId、逐步对象身份、最终 m2 修订 |
 | 程序 | 实际声明/实现、任务绑定、编译错误/警告，模型是否依据真实诊断修复 |

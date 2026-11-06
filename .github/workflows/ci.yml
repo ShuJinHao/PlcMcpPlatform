@@ -17,6 +17,7 @@ jobs:
       - run: dotnet restore PlcMcpPlatform.sln --locked-mode
       - run: dotnet build PlcMcpPlatform.sln -c Release --no-restore
       - run: dotnet test PlcMcpPlatform.sln -c Release --no-build --no-restore
+      - run: python eng/capability-inventory.py
       - run: python eng/verify-mcp.py
       - run: python eng/verify-execution.py
       - run: python eng/verify-editing.py
@@ -35,16 +36,36 @@ jobs:
       - run: python eng/verify-incremental.py
       - run: python eng/verify-members.py
       - run: python eng/verify-graphs.py
+      - run: python eng/verify-maintenance.py
       - run: python eng/verify-publish.py
       - run: python -m unittest discover -s tests/script_engine -v
-      - name: Package P9 prerelease modes
+      - name: Package P10 versioned prerelease modes
         if: runner.os == 'Windows'
         run: python eng/package-release.py --output artifacts/prerelease
       - name: Upload immutable prerelease bundles
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: PlcMcpPlatform-P9-windows-bundles
+          name: PlcMcpPlatform-P10-windows-bundles
           path: artifacts/prerelease/*
           if-no-files-found: error
           retention-days: 30
+  prerelease:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: versioned-prerelease
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: PlcMcpPlatform-P10-windows-bundles
+          path: artifacts/prerelease
+      - name: Verify and publish immutable candidate version
+        run: python eng/publish-github-release.py --directory artifacts/prerelease --target "$GITHUB_SHA" --repository "$GITHUB_REPOSITORY" --publish
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -1,5 +1,7 @@
 # P9：正式执行门禁与预发布交付
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 本批继续交付一个标准 MCP 服务。OpenCode 负责模型生成、对话和任务规划；本服务负责工程操作、结果和文件，不管理 Agent 上下文。真实 InoProShop/IronPython、模型生成闭环和 PLC 运行仍未验收，当前没有随软件发布的真实验收记录。
 
 ## 正式宿主现在能做什么

@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 from bundle import HOSTS, sha256, verify_bundle
+from release_metadata import metadata
 
 
 def publish(mode, destination, dotnet='dotnet'):
@@ -15,10 +16,10 @@ def publish(mode, destination, dotnet='dotnet'):
     subprocess.run([dotnet, 'restore', str(root/'PlcMcpPlatform.sln'), '--locked-mode'], cwd=root, check=True)
     output.mkdir(parents=True)
     subprocess.run([dotnet, 'publish', str(root/project), '-c', 'Release', '--no-restore', '-p:UseAppHost=false', '-o', str(output/'bin')], cwd=root, check=True)
-    for directory in ('config', 'contracts', 'docs'):
+    for directory in ('config', 'contracts', 'docs', 'release'):
         shutil.copytree(root/directory, output/directory, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     (output/'eng').mkdir()
-    helpers = ['bundle.py', 'start.py', 'doctor.py', 'transfer.py', 'mcp_client.py', 'run-regression.py', 'run-regressions.py', 'verify-opencode.py', 'review-acceptance.py']
+    helpers = ['bundle.py', 'start.py', 'doctor.py', 'transfer.py', 'mcp_client.py', 'run-regression.py', 'run-regressions.py', 'verify-opencode.py', 'review-acceptance.py', 'retention.py', 'model-regression.py']
     if mode == 'fixture': helpers.append('init-fixture.py')
     for helper in helpers: shutil.copy2(root/'eng'/helper, output/'eng'/helper)
     for filename in ('README.md', 'LICENSE'):
@@ -29,7 +30,9 @@ def publish(mode, destination, dotnet='dotnet'):
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=normal'], cwd=root, text=True).strip())
     rows = [dict(path=p.relative_to(output).as_posix(), byteLength=p.stat().st_size, sha256=sha256(p))
             for p in sorted(output.rglob('*')) if p.is_file()]
-    manifest = dict(schemaVersion=1, stage='P9-production-readiness', mode=mode, entryPoint='bin/'+entry, sourceCommit=revision,
+    release = metadata()
+    tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], cwd=root, text=True).strip()
+    manifest = dict(schemaVersion=1, stage=release['stage'], version=release['version'], mode=mode, entryPoint='bin/'+entry, sourceCommit=revision, sourceTree=tree,
                     sourceDirty=dirty, requiredRuntime='Microsoft.AspNetCore.App 8.0', engineeringReady=False,
                     evidenceKind='simulated' if mode == 'fixture' else 'unverified', files=rows)
     (output/'release.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')

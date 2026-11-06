@@ -1,0 +1,6 @@
+{
+  "uploadDays": 14,
+  "failedCandidateDays": 30,
+  "deliveryDays": 90,
+  "pinnedDeliveryIds": []
+}

@@ -1,0 +1,535 @@
+{
+  "name": "SfcTimed",
+  "pouType": "program",
+  "language": "SFC",
+  "profile": "graph-v2",
+  "variables": [
+    {
+      "name": "Start",
+      "type": "BOOL"
+    },
+    {
+      "name": "Bypass",
+      "type": "BOOL"
+    },
+    {
+      "name": "Ready",
+      "type": "BOOL"
+    },
+    {
+      "name": "LeftDone",
+      "type": "BOOL"
+    },
+    {
+      "name": "RightDone",
+      "type": "BOOL"
+    },
+    {
+      "name": "Reset",
+      "type": "BOOL"
+    },
+    {
+      "name": "Running",
+      "type": "BOOL"
+    }
+  ],
+  "actions": [
+    {
+      "name": "MarkRunning",
+      "implementation": "Running := TRUE;"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "step",
+      "x": 100,
+      "y": 40,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "Idle",
+      "initial": true
+    },
+    {
+      "id": 2,
+      "kind": "selectionDivergence",
+      "x": 200,
+      "y": 80,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Normal"
+        },
+        {
+          "name": "Skip"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "transition",
+      "x": 0,
+      "y": 120,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 2,
+              "sourcePin": "Normal"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Start",
+      "priority": 1
+    },
+    {
+      "id": 4,
+      "kind": "transition",
+      "x": 200,
+      "y": 160,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 2,
+              "sourcePin": "Skip"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Bypass",
+      "priority": 2
+    },
+    {
+      "id": 5,
+      "kind": "step",
+      "x": 0,
+      "y": 200,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 3
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "Prepare"
+    },
+    {
+      "id": 6,
+      "kind": "step",
+      "x": 100,
+      "y": 240,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 4
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "Skipped"
+    },
+    {
+      "id": 7,
+      "kind": "transition",
+      "x": 200,
+      "y": 280,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 5
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Ready"
+    },
+    {
+      "id": 8,
+      "kind": "transition",
+      "x": 300,
+      "y": 320,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 6
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "TRUE"
+    },
+    {
+      "id": 9,
+      "kind": "selectionConvergence",
+      "x": 400,
+      "y": 360,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 7
+            }
+          ]
+        },
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "kind": "step",
+      "x": 0,
+      "y": 400,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 9
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "Accepted"
+    },
+    {
+      "id": 11,
+      "kind": "transition",
+      "x": 100,
+      "y": 440,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 10
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "TRUE"
+    },
+    {
+      "id": 12,
+      "kind": "simultaneousDivergence",
+      "x": 200,
+      "y": 480,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 11
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Left"
+        },
+        {
+          "name": "Right"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "kind": "step",
+      "x": 300,
+      "y": 520,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 12,
+              "sourcePin": "Left"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "WorkLeft"
+    },
+    {
+      "id": 14,
+      "kind": "step",
+      "x": 400,
+      "y": 560,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 12,
+              "sourcePin": "Right"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "WorkRight"
+    },
+    {
+      "id": 15,
+      "kind": "transition",
+      "x": 0,
+      "y": 600,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 13
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "LeftDone"
+    },
+    {
+      "id": 16,
+      "kind": "transition",
+      "x": 100,
+      "y": 640,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 14
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "RightDone"
+    },
+    {
+      "id": 17,
+      "kind": "step",
+      "x": 200,
+      "y": 680,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 15
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "WaitLeft"
+    },
+    {
+      "id": 18,
+      "kind": "step",
+      "x": 300,
+      "y": 720,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 16
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "name": "WaitRight"
+    },
+    {
+      "id": 19,
+      "kind": "simultaneousConvergence",
+      "x": 400,
+      "y": 760,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 17
+            }
+          ]
+        },
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 18
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "kind": "transition",
+      "x": 0,
+      "y": 800,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 19
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "expression": "Reset"
+    },
+    {
+      "id": 21,
+      "kind": "jumpStep",
+      "x": 100,
+      "y": 840,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 20
+            }
+          ]
+        }
+      ],
+      "name": "Idle"
+    },
+    {
+      "id": 22,
+      "kind": "actionBlock",
+      "x": 200,
+      "y": 880,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 13
+            }
+          ]
+        }
+      ],
+      "action": "MarkRunning",
+      "qualifier": "D",
+      "duration": "T#250ms"
+    }
+  ]
+}

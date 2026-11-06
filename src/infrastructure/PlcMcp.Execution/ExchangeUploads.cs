@@ -26,6 +26,7 @@ public sealed class ExchangeUploads(string directory, Func<string, string, Cance
     }
     private async Task<UploadSession> Load(string id, CancellationToken token)
     {
+        if (File.Exists(PathFor(id, ".expired.json"))) throw new ProjectEditException("upload_expired");
         var path = PathFor(id, ".json");
         if (!File.Exists(path)) throw new ProjectEditException("upload_not_found");
         if (new FileInfo(path).Length > 4096) throw new ProjectEditException("upload_invalid");
@@ -51,6 +52,7 @@ public sealed class ExchangeUploads(string directory, Func<string, string, Cance
         await gate.WaitAsync(token);
         try
         {
+            if (File.Exists(PathFor(id, ".expired.json"))) throw new ProjectEditException("upload_expired");
             if (File.Exists(PathFor(id, ".json")))
             {
                 var prior = await Load(id, token);
@@ -119,7 +121,7 @@ public sealed class ExchangeUploads(string directory, Func<string, string, Cance
     public async Task AbortAsync(string id, CancellationToken token)
     {
         await gate.WaitAsync(token);
-        try { File.Delete(PathFor(id, ".part")); File.Delete(PathFor(id, ".json")); }
+        try { File.Delete(PathFor(id, ".part")); File.Delete(PathFor(id, ".json")); File.Delete(PathFor(id, ".expired.json")); }
         finally { gate.Release(); }
     }
 }

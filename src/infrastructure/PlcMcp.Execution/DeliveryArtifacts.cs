@@ -80,12 +80,14 @@ public sealed class DeliveryArtifacts(string directory) : IDeliveryArtifacts
             var metadata = PathFor(sha, ".json"); var metadataTemp = metadata + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try { await File.WriteAllTextAsync(metadataTemp, JsonSerializer.Serialize(descriptor, WorkerJson.Options), token); File.Move(metadataTemp, metadata, true); }
             finally { if (File.Exists(metadataTemp)) File.Delete(metadataTemp); }
+            File.Delete(PathFor(sha, ".expired.json"));
             return descriptor;
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
     public async Task<DeliveryChunk> ReadAsync(string id, long offset, int maxBytes, CancellationToken token)
     {
+        if (File.Exists(PathFor(id, ".expired.json"))) throw new ProjectEditException("delivery_expired");
         var metadata = PathFor(id, ".json");
         if (!File.Exists(metadata) || new FileInfo(metadata).Length > 4096) throw new ProjectEditException("delivery_not_found");
         var artifact = JsonSerializer.Deserialize<DeliveryArtifact>(await File.ReadAllTextAsync(metadata, token), WorkerJson.Options);

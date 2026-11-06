@@ -1,5 +1,7 @@
 # P8：图形编程扩展与混合语言工程
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 本批扩展同一个标准 MCP Server 的工程能力。OpenCode 负责生成程序、选择工具和根据诊断修正；服务负责模型校验、官方 ScriptEngine 交换调用、工程修改及结果反馈。没有新增客户端业务适配、会话管理或模型编排。
 
 当前交付为代码与离线回归，真实 InoProShop/IronPython、模型生成与 PLC 运行仍未验收。TestHost / ValidationHost 保持 74 个工具；当时的生产宿主仅开放两个查询工具；P9 已改为本地工具及按范围验收的 IDE 工具，见 docs/20，厂商能力均为 Unverified、engineeringReady=false。

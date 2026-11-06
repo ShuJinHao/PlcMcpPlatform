@@ -89,7 +89,7 @@ public static class PlcOpenGraphCodec
             case "jumpStep": e.Add(A("targetName", n.Name)); break;
             case "connector": case "continuation": e.Add(A("name", n.Name)); break;
             case "transition": e.Add(E("condition", E("inline", A("name", "condition_" + n.Id), St(n.Expression!)))); break;
-            case "actionBlock": e.Add(E("action", A("localId", n.Id), A("qualifier", n.Qualifier), Position("relPosition"), E("reference", A("name", n.Action)))); break;
+            case "actionBlock": e.Add(E("action", A("localId", n.Id), A("qualifier", n.Qualifier), A("duration", n.Duration), Position("relPosition"), E("reference", A("name", n.Action)))); break;
         }
         return e;
     }
@@ -149,7 +149,7 @@ public static class PlcOpenGraphCodec
             (string?)e.Element(P + "action")?.Element(P + "reference")?.Attribute("name"), (string?)e.Element(P + "action")?.Attribute("qualifier") ?? "N",
             e.Element(P + "inOutVariables")?.Elements(P + "variable").Any() == true
                 ? e.Element(P + "inOutVariables")!.Elements(P + "variable").Select(v => Pin(v.Element(P + "connectionPointIn")!, true, S(v, "formalParameter")!, B(v, "negated"))).ToArray() : null,
-            (int?)e.Attribute("priority"));
+            (int?)e.Attribute("priority"), (string?)e.Element(P + "action")?.Attribute("duration"));
     }
     public static string SemanticHash(GraphicalProgram p)
     {

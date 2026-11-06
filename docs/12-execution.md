@@ -1,5 +1,7 @@
 # 第一批执行实现与使用说明
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 本批交付持久化任务、进程执行器、四个工程工具、三个任务工具和对应的原创 ScriptEngine 调用脚本。独立测试宿主可以在没有 InoProShop 的环境中验证完整 MCP 流程。本页保留第一批行为说明；第二批已经增加创建、修改、保存和对账，当前入口见 [第二批交付](13-managed-editing.md)。真实汇川能力仍为 Unverified。
 
 ## 两个启动入口

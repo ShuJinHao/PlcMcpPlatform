@@ -226,6 +226,13 @@
               "null"
             ],
             "default": null
+          },
+          "duration": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
           }
         },
         "required": [

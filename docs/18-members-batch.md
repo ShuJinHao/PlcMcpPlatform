@@ -1,5 +1,7 @@
 # P7：汇川工程成员操作与批量修改
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 目标：补齐现有 PLC MCP Server 的工程对象读取与修改。OpenCode 或其他 MCP 客户端负责需求理解、模型调用、生成代码、会话历史与上下文压缩；服务负责读取实际工程、执行明确操作、检查版本、保存、调用 IDE 编译和返回结果。没有新增 OpenCode 业务适配器，也没有引入其他 PLC MCP。
 
 沿用 .NET 8、现有 DDD 分层、工程候选副本和版本发布机制。本批工程工具契约为 1.6，Worker 主协议仍为 1；测试/验证宿主共 74 个工具，生产宿主继续只开放 2 个查询工具。所有汇川能力仍为 `Unverified`，`engineeringReady=false`。

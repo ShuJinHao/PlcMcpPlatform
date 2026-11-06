@@ -1,5 +1,7 @@
 # 第五批：批量工程修改、大文件交换与版本交付
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 目标仍是 OpenCode 调用本项目 MCP，生成和修改 PLC 工程。本批把多个对象的编辑汇成一个可审阅的计划，把大 XML 从请求正文移到受控文件，并提供可校验的工程交付包。没有增加模型服务或下游汇川 MCP。
 
 TestHost / ValidationHost 新增 9 个工具，总数为 **67**；默认生产宿主保持 2 个查询工具。新增工具契约版本为 1.4，既有工具的输入/输出结构保持兼容。汇川能力保持 `Unverified`、`engineeringReady=false`；代码、fixture、CPython 和 OpenCode 连接检查均不能代替目标 InoProShop/IronPython 验收。
@@ -44,7 +46,7 @@ TestHost / ValidationHost 新增 9 个工具，总数为 **67**；默认生产�
 
 上传顺序为 `plc_exchange_upload_begin → append → complete`。begin 使用稳定 uploadKey、format、UTF-8 字节数和完整 SHA-256；相同键与描述返回已保存偏移。append 只接受准确字节偏移；重复的已写入同内容块可重试，内容或偏移冲突明确拒绝。服务重启后可用同一 begin 恢复。complete 检查总长、摘要、严格 UTF-8（包括带 BOM 的文件）和 XML 结构，才生成不可变 artifact；它不调用 IDE、不导入工程。
 
-`plc_exchange_upload_abort` 删除暂存数据和上传回执，不删除已完成的不可变制品。当前不自动清理历史上传回执、制品、候选和交付包；应纳入本机存储保留策略，不能宣称有自动回收。停止中的任务和未知结果的证据不得自动删除。
+`plc_exchange_upload_abort` 删除暂存数据和上传回执，不删除已完成的不可变制品。P5 当时未实现清理；P10 已提供上传、确定失败候选及历史交付 ZIP 的停服预览/执行，详见 docs/21。交换制品和执行证据仍保留。停止中的任务和未知结果的证据不得自动删除。
 
 工程导入的数据库请求只保存制品身份和策略，不复制完整 XML。执行时核验制品并加载；超过 inline 上限后使用调用目录内固定的 `exchange-input.xml` / `exchange-output.xml`，传递名字、字节数和摘要，禁止任意路径。接收方核验固定名称、文件长度、摘要及 UTF-8，再交给原有接口。JSON 与侧文件必须使用同一发布版本的 Worker，不能混用旧脚本。
 

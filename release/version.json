@@ -1,0 +1,7 @@
+{
+  "version": "0.1.0-rc.1",
+  "stage": "P10-delivery-closure",
+  "prerelease": true,
+  "realIdeValidated": false,
+  "plcRuntimeValidated": false
+}

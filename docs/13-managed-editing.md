@@ -1,5 +1,7 @@
 # 第二批：受控工程副本、程序写入与保存
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 本批把“读取工程—生成程序—修改—取得诊断—修复—保存版本”接到同一个 MCP 服务中。应用用例、文件管理、SQLite 记录、子进程协议和原创 ScriptEngine 调用均已有实现；在独立测试宿主中可以跨平台执行。真实 InoProShop / IronPython 兼容性与实际 OpenCode 客户端联调仍未验收。
 
 生产宿主仍只开放两个状态/能力工具，`engineeringReady=false`。第二批时测试宿主共 **22 个工具**，该批新增 13 个；P3 扩为 49 个，见 [当前说明](14-engineering-configuration.md)。返回 `executionMode=fixture`、`evidenceKind=simulated`。测试数据是 JSON，不是汇川工程，模拟诊断不代表 PLC 编译。
