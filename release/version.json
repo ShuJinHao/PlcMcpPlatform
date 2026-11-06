@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0-rc.1",
-  "stage": "P10-delivery-closure",
+  "version": "0.1.0-rc.2",
+  "stage": "P11-graph-initializers",
   "prerelease": true,
   "realIdeValidated": false,
   "plcRuntimeValidated": false

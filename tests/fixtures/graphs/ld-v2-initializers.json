@@ -1,0 +1,108 @@
+{
+  "name": "InitLD",
+  "pouType": "program",
+  "language": "LD",
+  "profile": "graph-v2",
+  "variables": [
+    {
+      "name": "Flags",
+      "type": "BOOL",
+      "dimensions": [
+        {
+          "lower": 0,
+          "upper": 3
+        }
+      ],
+      "initializer": {
+        "kind": "array",
+        "items": [
+          {
+            "value": {
+              "kind": "simple",
+              "value": "TRUE"
+            },
+            "repeat": 1
+          },
+          {
+            "value": {
+              "kind": "simple",
+              "value": "FALSE"
+            },
+            "repeat": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Running",
+      "type": "BOOL",
+      "initialValue": "FALSE"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "leftPowerRail",
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "contact",
+      "expression": "Flags[0]",
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "coil",
+      "expression": "Running",
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 2
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "executionOrder": 1
+    },
+    {
+      "id": 4,
+      "kind": "rightPowerRail",
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

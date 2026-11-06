@@ -36,7 +36,8 @@ public static class PlcOpenGraphCodec
             if (variables.Length == 0) continue;
             iface.Add(E(scope + "Vars", variables.Select(v => E("variable", A("name", v.Name),
                 E("type", EncodeType(new(v.Type, v.StringLength, v.Dimensions))),
-                v.InitialValue is null ? null : E("initialValue", E("simpleValue", A("value", v.InitialValue)))))));
+                v.Initializer is not null ? E("initialValue", PlcOpenValueCodec.Encode(v.Initializer))
+                    : v.InitialValue is null ? null : E("initialValue", E("simpleValue", A("value", v.InitialValue)))))));
         }
         return E("pou", A("name", p.Name), A("pouType", p.PouType), iface,
             p.Actions is { Length: > 0 } ? E("actions", p.Actions.Select(a => E("action", A("name", a.Name), E("body", St(a.Implementation))))) : null,
@@ -104,10 +105,13 @@ public static class PlcOpenGraphCodec
             if (pous.Length != 1) throw new ProjectEditException("single_graph_pou_required");
             var pou = pous[0]; var body = pou.Element(P + "body")!.Elements().Single();
             if (body.Name.Namespace != P || body.Name.LocalName is not ("LD" or "FBD" or "SFC")) throw new ProjectEditException("graph_language_outside_profile");
+            var initializerBudget = GraphInitializerRules.MaxNodes;
             var variables = pou.Element(P + "interface")!.Elements().SelectMany(group => group.Elements(P + "variable").Select(v => {
                 var type = DecodeType(v.Element(P + "type")!);
+                var initial = v.Element(P + "initialValue")?.Elements().Single();
                 return new GraphVariable(S(v, "name")!, type.Type,
-                    group.Name.LocalName.Replace("Vars", "", StringComparison.Ordinal), (string?)v.Element(P + "initialValue")?.Element(P + "simpleValue")?.Attribute("value"), type.StringLength, type.Dimensions);
+                    group.Name.LocalName.Replace("Vars", "", StringComparison.Ordinal), initial?.Name == P + "simpleValue" ? (string?)initial.Attribute("value") : null,
+                    type.StringLength, type.Dimensions, initial is null || initial.Name == P + "simpleValue" ? null : PlcOpenValueCodec.Decode(initial, ref initializerBudget));
             })).ToArray();
             var actions = pou.Element(P + "actions")?.Elements(P + "action").Select(a => new GraphAction(S(a, "name")!, a.Element(P + "body")!.Element(P + "ST")!.Element(H + "xhtml")!.Value)).ToArray() ?? [];
             var program = new GraphicalProgram(S(pou, "name")!, S(pou, "pouType")!, body.Name.LocalName, variables, body.Elements().Select(DecodeNode).ToArray(), actions,
@@ -169,7 +173,8 @@ public static class PlcOpenGraphCodec
             foreach (var a in e.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != "width" && a.Name != "height").OrderBy(a => a.Name.ToString(), StringComparer.Ordinal))
             {
                 if (a.Name.LocalName is "negated" or "initialStep" && a.Value is "false" or "0"
-                    || a.Name.LocalName is "edge" or "storage" && a.Value == "none" || a.Name == "qualifier" && a.Value == "N") continue;
+                    || a.Name.LocalName is "edge" or "storage" && a.Value == "none" || a.Name == "qualifier" && a.Value == "N"
+                    || e.Name == P + "value" && e.Parent?.Name == P + "arrayValue" && a.Name == "repetitionValue" && a.Value == "1") continue;
                 Token(a.Name.ToString()); Token(a.Value);
             }
             Token("attributes-end");

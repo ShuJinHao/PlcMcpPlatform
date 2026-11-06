@@ -64,6 +64,122 @@
               ]
             },
             "default": null
+          },
+          "initializer": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "items": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "default": null
+                        },
+                        "items": {
+                          "$ref": "#/properties/variables/items/properties/initializer/properties/items",
+                          "default": null,
+                          "items": {}
+                        },
+                        "members": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ],
+                                    "default": null
+                                  },
+                                  "items": {
+                                    "$ref": "#/properties/variables/items/properties/initializer/properties/items",
+                                    "default": null,
+                                    "items": {}
+                                  },
+                                  "members": {
+                                    "$ref": "#/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                                    "default": null,
+                                    "items": {}
+                                  }
+                                },
+                                "required": [
+                                  "kind"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "value"
+                            ]
+                          },
+                          "default": null
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ]
+                    },
+                    "repeat": {
+                      "type": "integer",
+                      "default": 1
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ]
+                },
+                "default": null
+              },
+              "members": {
+                "$ref": "#/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                "default": null,
+                "items": {}
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "default": null
           }
         },
         "required": [

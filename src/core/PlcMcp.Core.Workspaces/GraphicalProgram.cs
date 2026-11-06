@@ -8,7 +8,7 @@ public sealed record GraphicalProgram(string Name, string PouType, string Langua
 public sealed record GraphDimension(int Lower, int Upper);
 public sealed record GraphDataType(string Type, int? StringLength = null, GraphDimension[]? Dimensions = null);
 public sealed record GraphVariable(string Name, string Type, string Scope = "local", string? InitialValue = null,
-    int? StringLength = null, GraphDimension[]? Dimensions = null);
+    int? StringLength = null, GraphDimension[]? Dimensions = null, GraphInitializer? Initializer = null);
 public sealed record GraphAction(string Name, string Implementation);
 public sealed record GraphConnection(int SourceId, string? SourcePin = null);
 public sealed record GraphPin(string Name, GraphConnection[]? Connections = null, bool Negated = false);
