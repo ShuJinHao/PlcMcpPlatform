@@ -98,6 +98,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-fixture-check-') as tmp, tempfil
                     'plc_project_create', 'plc_project_save', 'plc_pou_create', 'plc_pou_update',
                     'plc_gvl_create', 'plc_gvl_update', 'plc_dut_create', 'plc_dut_update', 'plc_job_reconcile', 'plc_gvl_read', 'plc_dut_read'}
         expected.update({'plc_object_inspect', 'plc_device_set_parameter', 'plc_task_set_calls', 'plc_pou_member_create', 'plc_device_set_io_mapping', 'plc_folder_create', 'plc_library_remove', 'plc_pou_member_update', 'plc_task_create', 'plc_task_configuration_create', 'plc_task_update', 'plc_device_get_parameters', 'plc_device_add', 'plc_object_delete', 'plc_library_list_installed', 'plc_library_add', 'plc_object_rename', 'plc_object_move', 'plc_task_read', 'plc_task_list', 'plc_device_remove', 'plc_library_set_placeholder', 'plc_pou_member_read', 'plc_device_get_tree', 'plc_library_list', 'plc_task_delete', 'plc_device_get_io_mappings'})
+        expected.update({'plc_exchange_stage', 'plc_exchange_read', 'plc_exchange_validate', 'plc_graph_generate', 'plc_graph_decode', 'plc_project_export', 'plc_project_import', 'plc_pou_graph_read', 'plc_pou_graph_write'})
         assert names == expected, names
         for tool in tools:
             assert tool['inputSchema']['type'] == 'object'
@@ -108,6 +109,16 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-fixture-check-') as tmp, tempfil
         else:
             expected_tools = json.loads((root / 'contracts/mcp-tools.v1.json').read_text(encoding='utf-8'))
             assert sorted(tools, key=lambda t:t['name']) == expected_tools, 'MCP contract snapshot changed; review and update explicitly'
+        program_schema = json.loads(json.dumps(next(t for t in tools if t['name'] == 'plc_graph_generate')['inputSchema']['properties']['program'])
+                                    .replace('"#/properties/program/', '"#/'))
+        graph_schema = {'$schema': 'https://json-schema.org/draft/2020-12/schema', '$id': 'urn:plcmcp:graph-v1',
+                        'title': 'Graph-v1 transport shape',
+                        'description': 'Transport shape only. Runtime GraphRules and PLCopen codec additionally enforce profile, topology, limits and loss checks.', **program_schema}
+        graph_target = root / 'contracts/graph-v1.schema.json'
+        if args.write_contracts:
+            graph_target.write_text(json.dumps(graph_schema, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+        else:
+            assert json.loads(graph_target.read_text(encoding='utf-8')) == graph_schema, 'Graph contract snapshot changed'
         assert not client.call('plc_runtime_get_status', {})['schedulerBlocked']
         assert all(c['status'] == 'Unverified' for c in client.call('plc_capabilities_list', {})['capabilities'])
         common = dict(projectPath=str(sample), idempotencyKey='open-1')
@@ -141,7 +152,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-fixture-check-') as tmp, tempfil
         assert client.call('plc_project_open', dict(common, idempotencyKey='blocked'), error=True)['error']['code'] == 'execution_outcome_unknown'
         stop(process); process = start(); client = Client(env['PlcMcp__ApiKey'])
         assert client.call('plc_runtime_get_status', {})['schedulerBlocked'] is True
-        print('PASS: forty-nine tool schemas, fixture evidence, persistent jobs, source, diagnostics, idempotency, cancellation, timeout and restart quarantine')
+        print('PASS: fifty-eight tool schemas, fixture evidence, persistent jobs, source, diagnostics, idempotency, cancellation, timeout and restart quarantine')
     except Exception:
         log.seek(0); print(log.read())
         raise

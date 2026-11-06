@@ -17,14 +17,15 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from configuration_worker import ConfigurationEngine, READS as CONFIG_READS, WRITES as CONFIG_WRITES
 from collections import deque
+from exchange_worker import ExchangeEngine, READS as EXCHANGE_READS, WRITES as EXCHANGE_WRITES
 
 try:
     text_type = unicode
 except NameError:
     text_type = str
 
-EDIT_OPERATIONS = ("project.verify", "pou.create", "pou.update", "gvl.create", "gvl.update", "dut.create", "dut.update") + CONFIG_WRITES
-OPERATIONS = ("project.open", "project.tree.read", "pou.read", "gvl.read", "dut.read", "project.compile") + EDIT_OPERATIONS + CONFIG_READS
+EDIT_OPERATIONS = ("project.verify", "pou.create", "pou.update", "gvl.create", "gvl.update", "dut.create", "dut.update") + CONFIG_WRITES + EXCHANGE_WRITES
+OPERATIONS = ("project.open", "project.tree.read", "pou.read", "gvl.read", "dut.read", "project.compile") + EDIT_OPERATIONS + CONFIG_READS + EXCHANGE_READS
 MAX_REQUEST = 131072
 MAX_RESULT = 1048576
 
@@ -248,6 +249,8 @@ def execute(request, bindings):
     response = {"protocolVersion": 1, "requestId": request.get("requestId"), "jobId": request.get("jobId"),
                 "executionMode": "real", "outcome": "failed", "errorCode": None, "payload": None}
     project = None
+    exchange = None
+    exchange_history = []
     try:
         validate(request)
         projects, system = bindings.get("projects"), bindings.get("system")
@@ -276,7 +279,10 @@ def execute(request, bindings):
             else: requirements = payload.get("requirements")
             dependency_check = verify_requirements(project, requirements)
             proof_edit, key = payload["edit"], None
-            if operation in CONFIG_WRITES:
+            if operation in EXCHANGE_WRITES:
+                exchange = ExchangeEngine(project, bindings, WorkerError, engine)
+                before_save = exchange.apply(operation, proof_edit, requirements)
+            elif operation in CONFIG_WRITES:
                 key, before_save, proof_edit = engine.apply(operation, proof_edit, requirements)
             else: before_save = apply_edit(project, operation, proof_edit, bindings)
             engine.refresh()
@@ -293,7 +299,11 @@ def execute(request, bindings):
             if verify_requirements(project, dict(requirements, requiredLibraries=[])) != dependency_check: raise WorkerError("dependency_readback_mismatch")
             result["dependencies"] = dependency_check
             result["dependencySnapshot"] = dependencies
-            if operation in CONFIG_WRITES:
+            if operation in EXCHANGE_WRITES:
+                exchange_history = list(exchange.report)
+                exchange = ExchangeEngine(project, bindings, WorkerError, engine)
+                result["exchange"] = exchange.proof(before_save)
+            elif operation in CONFIG_WRITES:
                 after_reopen = engine.proof(operation, key, proof_edit, before_save)
                 if after_reopen != before_save: raise WorkerError("reopen_readback_mismatch")
                 result["configuration"] = {"operation": operation, "objectId": key, "data": after_reopen}
@@ -304,6 +314,13 @@ def execute(request, bindings):
             if revision(path) != saved_revision: raise WorkerError("workspace_revision_conflict")
             result.update({"baseRevision": before, "revision": saved_revision, "saved": True, "reopened": True,
                            "readBackVerified": True, "sessionClosedAfterOperation": True})
+        elif operation in EXCHANGE_READS:
+            engine = ConfigurationEngine(project, bindings, WorkerError, tree, declaration_header)
+            exchange = ExchangeEngine(project, bindings, WorkerError, engine)
+            if operation == "pou.graph.read": result["exchange"] = exchange.read_graph(payload["objectId"])
+            else:
+                query = payload["exchange"]
+                result["exchange"] = exchange.export(query["format"], query["objectIds"], query.get("recursive", True))
         elif operation in CONFIG_READS:
             engine = ConfigurationEngine(project, bindings, WorkerError, tree, declaration_header)
             result["configuration"] = {"operation": operation, "objectId": payload.get("objectId"),
@@ -336,6 +353,8 @@ def execute(request, bindings):
         response["outcome"] = "failed" if response["errorCode"] else "succeeded"
     except WorkerError as error:
         response["errorCode"] = str(error)
+        if exchange is not None:
+            response["payload"] = {"exchange": {"report": exchange.report}, "published": False}
     except (KeyError, TypeError, ValueError):
         response["errorCode"] = "invalid_request_or_vendor_result"
     except AttributeError:
@@ -348,6 +367,11 @@ def execute(request, bindings):
                 project.close()  # Only owned sessions are closed; no online PLC action is performed.
             except Exception:
                 response.update({"outcome": "unknown", "errorCode": "project_close_unconfirmed", "payload": None})
+        # Preserve observed import evidence even if the SDK throws, reopening fails,
+        # or the owned session cannot be closed. Evidence does not make a failure successful.
+        if response["outcome"] != "succeeded" and exchange is not None:
+            report = exchange_history + exchange.report
+            response["payload"] = {"exchange": {"report": report[:256], "reportTruncated": len(report) > 256}, "published": False}
     return response
 
 
@@ -364,7 +388,7 @@ def main(bindings):
     available = dict(bindings)
     try:
         import scriptengine
-        for name in ("projects", "system", "VersionUpdateFlags", "PouType", "DutType", "ImplementationLanguages", "KindOfTask", "librarymanager", "device_repository"):
+        for name in ("projects", "system", "VersionUpdateFlags", "PouType", "DutType", "ImplementationLanguages", "KindOfTask", "librarymanager", "device_repository", "ConflictResolve", "NativeImportResolve", "NativeImportResult"):
             if available.get(name) is None:
                 available[name] = getattr(scriptengine, name, None)
     except ImportError:

@@ -1,4 +1,5 @@
 using PlcMcp.Services.Contracts.Configuration;
+using PlcMcp.Services.Contracts.Exchange;
 using System.Text.Json;
 using PlcMcp.Services.Contracts.Execution;
 using PlcMcp.Services.Contracts.Editing;
@@ -28,6 +29,8 @@ public static class WorkerResultValidation
             }
             if (request.Operation == EditOperations.VerifyProject || EditOperations.Contains(request.Operation))
                 return input.Candidate && ValidEdit(request, payload, input.Edit!);
+            if (ExchangeOperations.IsRead(request.Operation))
+                return payload.GetProperty("revision").GetString() == request.ExpectedRevision && ExchangeResultValidation.IsValid(request.Operation, input, payload);
             if (ConfigurationOperations.IsRead(request.Operation))
                 return payload.GetProperty("revision").GetString() == request.ExpectedRevision && ConfigurationResultValidation.IsValid(request.Operation, input, payload, false);
             if (!payload.TryGetProperty("revision", out var revision) || revision.GetString() != request.ExpectedRevision) return false;
@@ -60,6 +63,7 @@ public static class WorkerResultValidation
             || !payload.GetProperty("dependencies").GetProperty("libraryReferencesMatched").GetBoolean()
             || payload.GetProperty("dependencies").GetProperty("installedDependenciesVerified").GetBoolean()) return false;
         if (payload.TryGetProperty("dependencySnapshot", out var snapshot) && !ConfigurationResultValidation.ValidDependencies(snapshot)) return false;
+        if (ExchangeOperations.IsWrite(request.Operation)) return ExchangeResultValidation.IsValid(request.Operation, request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!, payload);
         if (ConfigurationOperations.IsWrite(request.Operation)) return ConfigurationResultValidation.IsValid(request.Operation, request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!, payload, true);
         if (request.Operation == EditOperations.VerifyProject) return true;
         if (!Guid.TryParse(payload.GetProperty("objectId").GetString(), out var id) || id == Guid.Empty) return false;

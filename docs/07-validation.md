@@ -48,7 +48,7 @@
 
 ## 故障场景与剩余验收
 
-当前 35 项 Python 测试包含 10 项探针、12 项读取/编译与 13 项编辑脚本测试。调度、协议和副本写入故障已有离线覆盖；下列场景涉及真实 IDE 的部分仍需真实验收，Task/图形网络等缺口还需后续实现。探针依据与使用方式见 [官方接口基线](10-official-api-baseline.md)。
+P2 历史的 35 项 Python 测试包含 10 项探针、12 项读取/编译与 13 项编辑脚本测试。调度、协议和副本写入故障已有离线覆盖；下列场景涉及真实 IDE 的部分仍需真实验收，Task 和 graph-v1 的实现已在 P3/P4 补充，厂商兼容性仍待验证。探针依据与使用方式见 [官方接口基线](10-official-api-baseline.md)。
 
 1. 数据库入队后、Channel 通知前崩溃：恢复后任务仍可识别。
 2. 脚本已保存工程、服务未记录完成时断连：进入结果待确认，不自动重复写入。
@@ -67,8 +67,16 @@
 
 ## P3 工程组态验证
 
-第三批新增任务、成员、对象、库、设备参数与 IO 组态的应用校验、真实脚本 API 调用测试，以及保存重开的持久化集成测试。测试宿主现有 49 个工具；`eng/verify-configuration.py` 通过同一回归运行器执行 42 步 HTTP 场景，并检查错误模式与非法映射请求。
+第三批新增任务、成员、对象、库、设备参数与 IO 组态的应用校验、真实脚本 API 调用测试，以及保存重开的持久化集成测试。P3 交付时测试宿主有 49 个工具；`eng/verify-configuration.py` 通过同一回归运行器执行 42 步 HTTP 场景，并检查错误模式与非法映射请求。
 
 当前本地直接调用 57 个 .NET 用例通过，52 个 Python 测试通过，四组 HTTP 检查通过。本机标准 VSTest 启动受执行环境限制；正式标准测试结果以本批 PR 的 Windows/Ubuntu/macOS CI 为准。CI 链接在合并交付时给出，不将之前的通过结果用作本次证据。
 
 真实验证入口、版本记录、报告格式与边界见 [第三批说明](14-engineering-configuration.md)。本批没有执行真实 Windows/InoProShop/IronPython 或 OpenCode 客户端联调，没有改变任何汇川能力为 Supported。
+
+## P4 交换与图形验证
+
+本批标准检查为 69 个 .NET 用例、68 个 Python 测试和五组 HTTP 检查；最新提交的通过情况以 [PR #5 检查记录](https://github.com/ShuJinHao/PlcMcpPlatform/pull/5/checks) 为准。HTTP 契约明确比对 58 个工具及独立 graph-v1 结构，P4 场景包含 38 步。CI 不自动改写契约快照来通过检查。
+
+新增断言覆盖 LD/FBD/SFC 往返、几何与语义区别、重复/悬空连接、执行顺序、未知扩展、不可应用字段、DTD/实体、制品损坏、图形失真不能发布、幂等重试；脚本测试覆盖官方重载、冲突/替换身份、跳过/警告/部分失败、原生取消/丢失成员、保存重开失真。标准 .NET 检查在三系统 CI 执行；当前本地托管运行环境的进程信息限制导致 dotnet CLI/MSBuild 无法完整启动，本地 Roslyn 核心编译、图形往返和 Python 检查仅作开发证据。
+
+三个原创图形样例产生的 XML 已在开发时用官方 TC6 2.01 XSD 校验通过，未复制 schema 入库。XSD 样例校验、fixture、CPython、Windows CI 都不能替代 InoProShop、IronPython 和实际 OpenCode 回归。真实验收入口与剩余范围见 [docs/15](15-engineering-exchange.md)。

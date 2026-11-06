@@ -1,4 +1,6 @@
 using PlcMcp.EngineeringService.Configuration;
+using PlcMcp.EngineeringService.Exchange;
+using PlcMcp.Services.Contracts.Exchange;
 using PlcMcp.Services.Contracts.Configuration;
 using System.Security.Cryptography;
 using System.Text;
@@ -22,10 +24,13 @@ public sealed class EngineeringJobs(IJobStore store, IWorkspaceFiles files, IEng
             return Result<JobView>.Failure("invalid_request", "Invalid operation, identity or limits.");
         if (ConfigurationOperations.IsRead(submission.Operation) && ConfigurationValidation.Read(submission.Operation, submission.Input.ObjectId, submission.Input.Query) is { } validation)
             return Result<JobView>.Failure(validation, "Invalid configuration query.");
+        if (ExchangeOperations.IsRead(submission.Operation) && ExchangeValidation.Read(submission.Operation, submission.Input) is { } exchangeError)
+            return Result<JobView>.Failure(exchangeError, "Invalid exchange selection.");
         var path = files.NormalizePath(submission.Input.ProjectPath);
         if (!path.IsSuccess) return Result<JobView>.Failure(path.Error!.Code, path.Error.Message);
         var normalized = submission with { Input = submission.Input with { ProjectPath = path.Value!,
             ObjectId = Guid.TryParse(submission.Input.ObjectId, out var objectId) ? objectId.ToString() : submission.Input.ObjectId,
+            Exchange = submission.Input.Exchange is { } exchange ? exchange with { ObjectIds = exchange.ObjectIds.Select(id => Guid.TryParse(id, out var guid) ? guid.ToString() : id).ToArray() } : null,
             ApplicationId = Guid.TryParse(submission.Input.ApplicationId, out var appId) ? appId.ToString() : submission.Input.ApplicationId } };
         // File revision is deliberately not added to the fingerprint: retrying the same
         // command after execution must return its durable job, even if the file changed.

@@ -44,6 +44,10 @@
     "device.parameters.read",
     "device.parameter.write",
     "device.io.read",
-    "device.io.map"
+    "device.io.map",
+    "project.export",
+    "project.import",
+    "pou.graph.read",
+    "pou.graph.write"
   ]
 }

@@ -5,14 +5,14 @@
 | 项目 | 职责 | 当前已实现 | 后续工作 |
 |---|---|---|---|
 | SharedKernel | 最小领域标记、结果模型 | 聚合标记、`Result<T>` 与错误结构 | 按真实共性增加，禁止公共工具杂物箱 |
-| Core.Workspaces | 平台工作区生命周期 | 注册、修订条件更新、变更阶段规则 | 更丰富的工作区访问策略；路径授权在应用/基础设施执行 |
+| Core.Workspaces | 平台工作区生命周期 | 注册、修订条件更新、变更阶段、任务与 graph-v1 规则 | 更丰富的工作区访问策略；路径授权在应用/基础设施执行 |
 | Core.Automation | 自动化任务状态规则 | 入队、开始、取消、结果未知、证据确认终态 | 扩展恢复场景 |
 | Services.Contracts | 用例端口与稳定 DTO | 能力/任务/编辑端口、模板/文件清单/变更证据、Worker v1 与 Schema | 后续工程能力契约 |
-| EngineeringService | 工程用例编排 | 查询、幂等提交、调度、候选写入/备份/重开、发布与证据对账 | Task、库与交换用例 |
+| EngineeringService | 工程用例编排 | 查询、幂等提交、调度、候选写入/备份/重开、组态与交换、图形核对、发布与证据对账 | 真实版本差异与能力扩展 |
 | EntityFrameworkCore | SQLite 持久化实现 | 任务与编辑迁移、领取、恢复隔离、背压、当前头与证据事务 | 保留期与更多审计查询 |
-| Execution | 外部执行基础设施 | 路径限制、实例所有权、Channel、进程/JSON、文件清单/副本/版本目录 | 实机进程归属与存储保留策略 |
-| Inovance | 厂商能力与 ACL | 探针、启动策略、读取/编译/POU/GVL/DUT 写入与保存重开脚本 | 真实 IDE 验收及其他工程能力 |
-| McpHost | 组合根与 MCP 协议入口 | HTTP、鉴权、两个默认工具、二十个已实现但生产未开放的工具、状态和错误映射 | 验证后按能力开放生产工程工具 |
+| Execution | 外部执行基础设施 | 路径限制、实例所有权、Channel、进程/JSON、文件清单/副本/版本目录、不可变 XML 制品 | 实机进程归属与存储保留策略 |
+| Inovance | 厂商能力与 ACL | 探针、启动策略、读取/编译/POU/GVL/DUT、组态、交换与保存重开脚本 | 真实 IDE 验收及其他工程能力 |
+| McpHost | 组合根与 MCP 协议入口 | HTTP、鉴权、两个默认工具、56 个已实现但生产未开放的工程/任务工具、状态和错误映射 | 验证后按能力开放生产工程工具 |
 | Tests | 架构和业务行为证据 | 领域、SQLite、依赖、任务故障注入、真实子进程和 HTTP 契约；独立测试宿主 | 真实 IDE 与 OpenCode 客户端验收 |
 
 ## 工程对象模型
@@ -53,3 +53,11 @@ P1 已新增实际承载进程执行的 Execution 基础设施工程。当前采
 - Inovance 的 configuration_worker.py 隔离厂商对象、集合与参数行为；工程生命周期仍由 engineering_worker.py 管理。
 - ValidationHost 是真实集成回归的独立组合根，使用同一个 InovanceExecutor；TestHost 才使用 fixture。
 - 外层版本元数据带当前依赖快照，与模板要求分开。新旧 JSON 记录保持可读，无额外数据库迁移。
+
+## P4 模块扩展
+
+- GraphicalProgram 是应用传输与校验使用的领域图形模型，不是 SQLite 聚合或厂商全部对象的副本。
+- ExchangeService/ExchangeXml/PlcOpenGraphCodec 承担制品用例、解析与原创 graph-v1 编解码；IExchangeArtifacts 由 Execution 实现。
+- ExchangeExecutor 位于候选协调器之内、原始 Worker 之外；真实读回的模型语义验证通过后才允许外层发布。
+- exchange_worker.py 封装官方导入导出、冲突与报告回调；工程会话生命周期仍由 engineering_worker.py 统一管理。
+- 制品与 Worker 契约、身份变化、范围及验收方法见 [第四批说明](15-engineering-exchange.md)。

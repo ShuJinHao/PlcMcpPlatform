@@ -6,7 +6,7 @@
 
 ## 27 个新增工具
 
-加上前两批 22 个，测试宿主及专用验证宿主共有 49 个工具。所有写操作都提交持久化任务，使用工作区的 m2 修订，修改独立候选副本。成功后返回新版本；原版本和原模板保留。
+第三批交付时加上前两批 22 个共有 49 个工具；第四批追加后当前为 58 个，见 docs/15。所有写操作都提交持久化任务，使用工作区的 m2 修订，修改独立候选副本。成功后返回新版本；原版本和原模板保留。
 
 | 工具 | 工程行为 |
 |---|---|
@@ -54,7 +54,7 @@ Method/Action 当前创建于 Program/FB，Property 创建于 Program/FB/GVL；I
 
 Property 的 Get/Set 是独立子对象。返回值包含访问器标识和各自文本；缺失访问器返回明确错误，不猜测供应商未公开的创建方法。更新操作不接收语言/返回类型切换选项；需要修改声明时显式传递完整声明文本。
 
-创建成员可传入已有语言标识；非文本语言只创建空对象，不接收网络文本。完整 LD/FBD/SFC/CFC 网络编辑和 XML 往返是第四批内容。不能把空图形 POU/成员算作图形程序已生成。
+创建成员可传入已有语言标识；非文本语言只创建空对象，不接收网络文本。第四批已增加 LD/FBD/基础 SFC graph-v1 与 XML 往返；CFC 结构化编辑和复杂图形仍不在实现范围，见 docs/15。不能把空图形 POU/成员算作图形程序已生成。
 
 ### 对象管理
 
@@ -83,8 +83,8 @@ IO 映射按 `is_mappable_io` 和映射对象是否存在判断可映射性，�
 | 入口 | 用途 | 工具/执行来源 |
 |---|---|---|
 | `src/hosts/PlcMcp.McpHost` | 默认生产入口 | 2 个状态查询；不执行未验证工程能力 |
-| `tests/PlcMcp.TestHost` | Mac/Linux/Windows 自动开发检查 | 49 个工具；fixture/simulated |
-| `src/hosts/PlcMcp.ValidationHost` | 后续真实 Windows 集中回归 | 49 个工具；real/unverified；仅显式操作白名单可执行 |
+| `tests/PlcMcp.TestHost` | Mac/Linux/Windows 自动开发检查 | 当前 58 个工具；fixture/simulated |
+| `src/hosts/PlcMcp.ValidationHost` | 后续真实 Windows 集中回归 | 当前 58 个工具；real/unverified；仅显式操作白名单可执行 |
 
 验证宿主不是默认宿主的一个配置开关。它要求 Windows、独立且明确的数据目录和工作区、验证配置文件、实际 IDE 路径与匹配 Profile。执行器在入队及实际执行时检查白名单；模板创建/保存的内部 project.verify 也受原操作范围约束。没有模拟回退，也不会自动提升能力状态。
 
@@ -149,4 +149,4 @@ python eng/run-regression.py --scenario config/regression/p3-engineering.json --
 - [库管理器](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptLibManObject.html)：安装库、引用与占位符属于不同对象。
 - [设备对象](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptDeviceObject.html)、[参数及映射](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptDeviceParameters.html)：通用离线组态与 IO 路径。
 
-第四批继续 CODESYS/PLCopen XML 交换、图形程序内容编辑与相关往返核对；EtherCAT PDO 按独立官方依据推进。本批未增加这些占位工具。
+第四批已交付有界 CODESYS/PLCopen XML 交换与 graph-v1 内容编辑，见 [第四批说明](15-engineering-exchange.md)；EtherCAT PDO 按独立官方依据推进。

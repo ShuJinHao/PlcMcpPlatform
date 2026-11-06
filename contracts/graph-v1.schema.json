@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:plcmcp:graph-v1",
+  "title": "Graph-v1 transport shape",
+  "description": "Transport shape only. Runtime GraphRules and PLCopen codec additionally enforce profile, topology, limits and loss checks.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "pouType": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string"
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string",
+            "default": "local"
+          },
+          "initialValue": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number",
+            "default": 0
+          },
+          "y": {
+            "type": "number",
+            "default": 0
+          },
+          "expression": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "typeName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "instanceName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "inputs": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "connections": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sourceId": {
+                        "type": "integer"
+                      },
+                      "sourcePin": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "sourceId"
+                    ]
+                  },
+                  "default": null
+                },
+                "negated": {
+                  "type": "boolean",
+                  "default": false
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "default": null
+          },
+          "outputs": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/properties/nodes/items/properties/inputs/items"
+            },
+            "default": null
+          },
+          "negated": {
+            "type": "boolean",
+            "default": false
+          },
+          "edge": {
+            "type": "string",
+            "default": "none"
+          },
+          "storage": {
+            "type": "string",
+            "default": "none"
+          },
+          "executionOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "initial": {
+            "type": "boolean",
+            "default": false
+          },
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "qualifier": {
+            "type": "string",
+            "default": "N"
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ]
+      }
+    },
+    "actions": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "implementation": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "implementation"
+        ]
+      },
+      "default": null
+    }
+  },
+  "required": [
+    "name",
+    "pouType",
+    "language",
+    "variables",
+    "nodes"
+  ]
+}

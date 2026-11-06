@@ -1,0 +1,190 @@
+{
+  "name": "DelayAndCount",
+  "pouType": "functionBlock",
+  "language": "FBD",
+  "variables": [
+    {
+      "name": "Start",
+      "type": "BOOL"
+    },
+    {
+      "name": "Reset",
+      "type": "BOOL"
+    },
+    {
+      "name": "Running",
+      "type": "BOOL"
+    },
+    {
+      "name": "CountValue",
+      "type": "INT"
+    },
+    {
+      "name": "Delay",
+      "type": "TON"
+    },
+    {
+      "name": "Count",
+      "type": "CTU"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "inVariable",
+      "expression": "Start",
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "inVariable",
+      "expression": "T#1s",
+      "y": 40,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "block",
+      "typeName": "TON",
+      "instanceName": "Delay",
+      "executionOrder": 1,
+      "x": 80,
+      "inputs": [
+        {
+          "name": "IN",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        },
+        {
+          "name": "PT",
+          "connections": [
+            {
+              "sourceId": 2
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Q"
+        },
+        {
+          "name": "ET"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "outVariable",
+      "expression": "Running",
+      "x": 180,
+      "executionOrder": 2,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 3,
+              "sourcePin": "Q"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "kind": "inVariable",
+      "expression": "Reset",
+      "y": 120,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "kind": "inVariable",
+      "expression": "10",
+      "y": 160,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "kind": "block",
+      "typeName": "CTU",
+      "instanceName": "Count",
+      "executionOrder": 3,
+      "x": 80,
+      "y": 100,
+      "inputs": [
+        {
+          "name": "CU",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        },
+        {
+          "name": "R",
+          "connections": [
+            {
+              "sourceId": 5
+            }
+          ]
+        },
+        {
+          "name": "PV",
+          "connections": [
+            {
+              "sourceId": 6
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Q"
+        },
+        {
+          "name": "CV"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "kind": "outVariable",
+      "expression": "CountValue",
+      "x": 180,
+      "y": 100,
+      "executionOrder": 4,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 7,
+              "sourcePin": "CV"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
