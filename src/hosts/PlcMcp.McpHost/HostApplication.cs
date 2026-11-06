@@ -76,7 +76,7 @@ public static class HostApplication
         builder.Services.AddSingleton<IDeliveryArtifacts>(new DeliveryArtifacts(Path.Combine(data, "deliveries")));
         builder.Services.AddSingleton<DeliveryService>();
         builder.Services.AddSingleton<IEngineeringExecutor>(sp => new IncrementalReadExecutor(new DeliveryExecutor(
-            new ManagedProjectExecutor(new BatchExecutor(new IncrementalEditExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>())), sp.GetRequiredService<IBatchJournal>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>()),
+            new ManagedProjectExecutor(new BatchExecutor(new IncrementalEditExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>())), sp.GetRequiredService<IBatchJournal>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>()),
             sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IDeliveryArtifacts>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>()));
         builder.Services.AddSingleton<ManagedEditingJobs>();
         builder.Services.AddSingleton<EngineeringJobs>();

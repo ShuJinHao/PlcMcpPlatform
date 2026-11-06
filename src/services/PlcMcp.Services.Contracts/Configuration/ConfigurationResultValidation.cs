@@ -9,10 +9,14 @@ public static class ConfigurationResultValidation
 {
     public static bool CompleteTaskBindings(JsonElement payload)
     {
-        var data = payload.GetProperty("configuration").GetProperty("data");
-        return !data.GetProperty("truncated").GetBoolean() && data.GetProperty("tasks").EnumerateArray().All(task =>
-            task.GetProperty("calls").EnumerateArray().All(call => call.GetProperty("resolved").GetBoolean()
-                && Guid.TryParse(call.GetProperty("pouId").GetString(), out var id) && id != Guid.Empty));
+        try
+        {
+            var data = payload.GetProperty("configuration").GetProperty("data");
+            return !data.GetProperty("truncated").GetBoolean() && data.GetProperty("tasks").EnumerateArray().All(task =>
+                task.GetProperty("calls").EnumerateArray().All(call => call.GetProperty("resolved").GetBoolean()
+                    && Guid.TryParse(call.GetProperty("pouId").GetString(), out var id) && id != Guid.Empty));
+        }
+        catch (Exception e) when (e is KeyNotFoundException or InvalidOperationException or JsonException) { return false; }
     }
     public static bool ValidDependencies(JsonElement value)
     {

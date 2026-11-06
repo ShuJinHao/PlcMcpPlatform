@@ -15,7 +15,7 @@ using PlcMcp.SharedKernel.Results;
 
 namespace PlcMcp.EngineeringService.Editing;
 
-public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore changes, IManagedProjectFiles files, IEngineeringExecutor executor) : IProjectReconciliation
+public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore changes, IManagedProjectFiles files, IEngineeringExecutor executor, IProjectHistoryStore? history = null) : IProjectReconciliation
 {
     public async Task<Result<JobView>> SubmitAsync(string operation, EditInput input, string key, string? expectedRevision, int timeoutSeconds, CancellationToken token)
     {
@@ -58,7 +58,7 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
             }
             if (operation == IncrementalOperations.Restore)
             {
-                var record = await ((IProjectHistoryStore)changes).GetAsync(workspace, edit.RestoreRevision!, token) ?? throw new ProjectEditException("version_not_found");
+                var record = await (history ?? throw new ProjectEditException("history_unavailable")).GetAsync(workspace, edit.RestoreRevision!, token) ?? throw new ProjectEditException("version_not_found");
                 await files.VerifyAsync(await files.ReadVersionAsync(record, source.Template, token), token);
             }
             foreach (var required in IncrementalValidation.Required(operation))

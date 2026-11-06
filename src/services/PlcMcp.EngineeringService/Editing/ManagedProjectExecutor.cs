@@ -9,7 +9,7 @@ using PlcMcp.SharedKernel.Results;
 namespace PlcMcp.EngineeringService.Editing;
 
 /// <summary>Immutable candidate execution, followed by a short metadata publication transaction.</summary>
-public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManagedProjectFiles files, IProjectChangeStore changes) : IEngineeringExecutor
+public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManagedProjectFiles files, IProjectChangeStore changes, IProjectHistoryStore? history = null) : IEngineeringExecutor
 {
     public string ExecutionMode => worker.ExecutionMode;
     public OperationError? Unavailability => worker.Unavailability;
@@ -40,7 +40,7 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
             var source = current;
             if (request.Operation == IncrementalOperations.Restore)
             {
-                var record = await ((IProjectHistoryStore)changes).GetAsync(input.ProjectPath, edit.RestoreRevision!, token) ?? throw new ProjectEditException("version_not_found");
+                var record = await (history ?? throw new ProjectEditException("history_unavailable")).GetAsync(input.ProjectPath, edit.RestoreRevision!, token) ?? throw new ProjectEditException("version_not_found");
                 source = await files.ReadVersionAsync(record, current.Template, token);
             }
             if (source.Template.ExecutionMode != ExecutionMode) throw new ProjectEditException("execution_mode_mismatch");

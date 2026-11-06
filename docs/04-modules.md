@@ -69,3 +69,7 @@ P1 已新增实际承载进程执行的 Execution 基础设施工程。当前采
 - Execution.ExchangeUploads / WorkerExchangeFiles 实现有界传递；BatchJournalStore 和 DeliveryArtifacts 保存进度证据及不可变 ZIP。
 - DeliveryTools 增加 9 个协议入口，不新增第二套 MCP 服务。默认宿主的工程工具开放策略不变。
 - eng 下的发布、启动、诊断、传输与统一回归脚本用于工程交付；不做模型编排。详情见 docs/16。
+
+## P6 模块扩展
+
+Core 的 TextPatchRules 管理精确文本替换；IncrementalService 负责接入预览、版本查询和任务提交；IncrementalReadExecutor 负责上下文/差异，IncrementalEditExecutor 负责候选中的补丁/恢复验证。IProjectHistoryStore 只暴露历史发布元数据，不泄漏 EF 到服务层。ManagedProjectFiles 增加 imports 声明文件和历史清单校验，ManagedProjectExecutor 仍是唯一工程发布入口。新增 6 个 MCP 工具，合计 73 个；模块位置与输入输出见 docs/17。

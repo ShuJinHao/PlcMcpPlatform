@@ -28,9 +28,9 @@ public sealed class IncrementalTests
     {
         var artifacts = new ExchangeArtifacts(Path.Combine(h.Root, "exchange"));
         var managed = new ManagedProjectExecutor(new BatchExecutor(new IncrementalEditExecutor(new ExchangeExecutor(
-            raw ?? new FixtureExecutor(Path.Combine(h.Root, "incremental-calls")), artifacts)), new BatchJournalStore(Path.Combine(h.Root, "batch-journals"))), h.Files, h.Changes);
+            raw ?? new FixtureExecutor(Path.Combine(h.Root, "incremental-calls")), artifacts)), new BatchJournalStore(Path.Combine(h.Root, "batch-journals"))), h.Files, h.Changes, h.Changes);
         var executor = new IncrementalReadExecutor(managed, h.Files, h.Changes, h.Changes);
-        var edits = new ManagedEditingJobs(h.Store, h.Changes, h.Files, executor);
+        var edits = new ManagedEditingJobs(h.Store, h.Changes, h.Files, executor, h.Changes);
         return new(edits, new(h.Store, h.Files, h.Changes, h.Changes, executor), new(edits, artifacts), new(h.Store, executor));
     }
     private static async Task<JobView> Finish(ManagedEditingTests.Harness h, Services c, Result<JobView> receipt, string status = "Succeeded")
@@ -70,7 +70,10 @@ public sealed class IncrementalTests
             new("plant", first, h.Fixture.ApplicationId, h.Fixture.ProgramId, CompareRevision: second), "diff", 600, default));
         var difference = diff.Result!.Value.Deserialize<ProjectDiff>(WorkerJson.Options)!;
         Assert.Single(difference.Files); Assert.True(difference.ObjectDifference!.Value.GetProperty("implementationChanged").GetBoolean());
+        var preRestore = (await c.Edits.GetWorkspaceAsync("plant", default)).Value!;
+        var preRestoreBytes = await File.ReadAllBytesAsync(preRestore.ProjectPath);
         var restored = await Finish(h, c, await c.Edits.SubmitAsync(IncrementalOperations.Restore, new("plant", RestoreRevision: first), "restore", second, 600, default));
+        Assert.Equal(preRestoreBytes, await File.ReadAllBytesAsync(Path.Combine(restored.Result!.Value.GetProperty("backupPath").GetString()!, source.ProjectFile)));
         var third = restored.Result!.Value.GetProperty("revision").GetString()!;
         Assert.NotEqual(first, third); Assert.NotEqual(second, third);
         var history = await c.Reads.HistoryAsync("plant", third, 0, 2, default); Assert.Equal(2, history.Versions.Length); Assert.Equal(2, history.NextOffset);
@@ -231,6 +234,23 @@ public sealed class IncrementalTests
             payload["configuration"]!["data"]!["tasks"] = JsonSerializer.SerializeToNode(new[] { new { calls = new[] { new { pouId = (string?)null, resolved = false } } } });
             return response with { Payload = JsonSerializer.SerializeToElement(payload, WorkerJson.Options) };
         }
+    }
+    [Fact] public async Task Context_windows_preserve_utf16_boundaries_and_hash_the_complete_normalized_source()
+    {
+        await using var h = await ManagedEditingTests.Harness.Create(); var c = Compose(h);
+        const string source = "(* 🙂 *)\r\ncounter := 1;";
+        await File.WriteAllTextAsync(h.TemplateFile, JsonSerializer.Serialize(h.Fixture with { Implementation = source }, WorkerJson.Options));
+        var revision = (await h.Complete(EditOperations.CreateProject, new("demo", TemplateId: "sample"))).Result!.Value.GetProperty("revision").GetString()!;
+        var page = await Finish(h, c, await c.Reads.ReadAsync(IncrementalOperations.Context, revision,
+            new("demo", revision, h.Fixture.ApplicationId, h.Fixture.ProgramId, PageSize: 1, MaxTextChars: 4), "unicode", 600, default));
+        var text = page.Result!.Value.Deserialize<ContextPage>(WorkerJson.Options)!.Objects[0].Implementation!;
+        Assert.Equal("(* ", text.Text); Assert.Equal(3, text.NextOffset); Assert.Equal(TextPatchRules.Hash(source), text.Sha256);
+        var small = await Finish(h, c, await c.Reads.ReadAsync(IncrementalOperations.Context, revision,
+            new("demo", revision, h.Fixture.ApplicationId, h.Fixture.ProgramId, PageSize: 1, TextOffset: 3, MaxTextChars: 1), "small", 600, default), "Failed");
+        Assert.Equal("context_text_window_too_small", small.ErrorCode);
+        var split = await Finish(h, c, await c.Reads.ReadAsync(IncrementalOperations.Context, revision,
+            new("demo", revision, h.Fixture.ApplicationId, h.Fixture.ProgramId, PageSize: 1, TextOffset: 4, MaxTextChars: 4), "split", 600, default), "Failed");
+        Assert.Equal("invalid_text_offset", split.ErrorCode);
     }
     private sealed class FaultWorker(IEngineeringExecutor inner, string outcome) : IEngineeringExecutor
     {

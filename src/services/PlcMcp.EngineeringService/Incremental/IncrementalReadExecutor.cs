@@ -139,9 +139,9 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
         if (value.GetProperty(field).GetString() is not { } raw) return null;
         var text = TextPatchRules.Normalize(raw); var offset = Math.Min(query.TextOffset, text.Length); var length = Math.Min(query.MaxTextChars, text.Length - offset);
         // Offset/length use .NET UTF-16 units. Do not split a surrogate pair in a JSON string.
-        if (offset > 0 && offset < text.Length && char.IsLowSurrogate(text[offset])) offset--;
+        if (offset > 0 && offset < text.Length && char.IsLowSurrogate(text[offset])) throw new ProjectEditException("invalid_text_offset");
         if (offset + length < text.Length && length > 0 && char.IsHighSurrogate(text[offset + length - 1])) length--;
-        if (length == 0 && offset < text.Length) length = Math.Min(2, text.Length - offset);
+        if (length == 0 && offset < text.Length) throw new ProjectEditException("context_text_window_too_small");
         return new(TextPatchRules.Hash(text), text.Length, offset, text.Substring(offset, length), offset + length < text.Length ? offset + length : null);
     }
     private static JsonElement GraphDiff(JsonElement? before, JsonElement? after, IncrementalQuery query)

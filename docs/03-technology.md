@@ -48,3 +48,7 @@ P0 不引入 OBOT、RAG、消息中间件、分布式工作流平台或完整 Ag
 不增加生产 NuGet 依赖。发布与回归辅助程序使用 Python 标准库；运行发布宿主需要目标机器的 .NET 8 ASP.NET Core Runtime。发布目录带源提交、未提交状态和文件摘要，仍以工程师会话中的前台 Host 为当前启动方式，不提前安装 Windows 服务。
 
 OpenCode 连接 CI 固定官方 npm 包 opencode-ai 1.19.5，仅 Linux 安装该外部测试客户端，不成为 MCP 服务依赖。该检查不提供模型凭据、不发起 LLM 请求；真实模型生成单列验收。发布、启动及完整场景见 [docs/16](16-engineering-delivery.md)。
+
+## P6 增量能力
+
+无新增第三方依赖或运行时升级。SHA-256 与 LF 文本规范化由 .NET 8 标准库实现；历史复用已有 SQLite/EF Core 发布证据，无新增 PLC 对象表。上下文和恢复复用官方 ScriptEngine 文本/工程/任务/编译接口；不依赖新版 IDE 的工程 compare API。具体边界见 docs/17。

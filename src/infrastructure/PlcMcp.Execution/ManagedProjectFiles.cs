@@ -54,6 +54,7 @@ public sealed class ManagedProjectFiles(string workspaceRoot) : IManagedProjectF
     }
     private static void ValidateDefinition(TemplateDefinition template, string mode)
     {
+        if (JsonSerializer.SerializeToUtf8Bytes(template, WorkerJson.Options).Length > 65536) throw new ProjectEditException("template_too_large");
         if (!ValidName(template.Id) || template.ExecutionMode != mode || template.Files is not { Length: > 0 and <= 512 }
             || template.RequiredLibraries is null || template.RequiredLibraries.Length > 128 || template.RequiredLibraries.Any(string.IsNullOrWhiteSpace)
             || mode == "real" && (template.Controller is null || template.Controller.Type < 0 || string.IsNullOrWhiteSpace(template.Controller.Id) || string.IsNullOrWhiteSpace(template.Controller.Version))
@@ -88,7 +89,8 @@ public sealed class ManagedProjectFiles(string workspaceRoot) : IManagedProjectF
         var revision = "m2:" + evidence.JobId.ToString("N") + ":" + Hash(JsonSerializer.SerializeToUtf8Bytes(stamps, WorkerJson.Options));
         if (revision != result.Revision) throw new ProjectEditException("workspace_revision_conflict");
         var snapshot = evidence.Snapshot ?? new(directory, Path.GetRelativePath(directory, result.ProjectPath).Replace(Path.DirectorySeparatorChar, '/'), revision, stamps, legacyTemplate, result.CurrentDependencies);
-        if (Canonical(snapshot.Directory) != directory || snapshot.Revision != revision || !snapshot.Files.SequenceEqual(stamps))
+        if (Canonical(snapshot.Directory) != directory || snapshot.Revision != revision || !snapshot.Files.SequenceEqual(stamps)
+            || Canonical(Within(directory, snapshot.ProjectFile)) != Canonical(result.ProjectPath) || !stamps.Any(x => x.Path == snapshot.ProjectFile))
             throw new ProjectEditException("invalid_version_evidence");
         return snapshot;
     }

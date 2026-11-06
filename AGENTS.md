@@ -2,7 +2,7 @@
 
 ## 产品目标
 
-OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先读 README，再按变更范围读取 docs/01～16；文档与实际实现不一致时必须明确指出并修正状态。
+OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先读 README，再按变更范围读取 docs/01～17；文档与实际实现不一致时必须明确指出并修正状态。
 
 ## 实现规则
 
@@ -23,7 +23,7 @@ OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先�
 
 - 运行受影响的领域、契约、持久化和架构测试；正常交付运行 restore/build/test。
 - IDE 相关变更还需真实 Windows/InoProShop 验收；环境不可用时明确写未验证。
-- 执行与 MCP 变更还需运行 `python eng/verify-mcp.py` 、`python eng/verify-execution.py` 、`python eng/verify-editing.py` 、`python eng/verify-configuration.py` 、`python eng/verify-exchange.py`、`python eng/verify-delivery.py` 和发布检查 `python eng/verify-publish.py`；fixture 证据不能替代真实 IDE 验证。
+- 执行与 MCP 变更还需运行 `python eng/verify-mcp.py` 、`python eng/verify-execution.py` 、`python eng/verify-editing.py` 、`python eng/verify-configuration.py` 、`python eng/verify-exchange.py`、`python eng/verify-delivery.py`、`python eng/verify-incremental.py` 和发布检查 `python eng/verify-publish.py`；fixture 证据不能替代真实 IDE 验证。
 - Python 探针变更运行 `python -m unittest discover -s tests/script_engine -v`；CPython 测试不替代目标 IronPython/IDE 验证。
 - 提交更新实现状态和相关文档；保持锁文件，不使用预览依赖或关闭检查掩盖错误。
 - 后续功能使用独立分支和 PR，保持变更聚焦；发布、在线 PLC 操作按用户明确范围执行。
@@ -33,3 +33,5 @@ OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先�
 - P4 的图形语义核对必须位于候选发布之前；XML 导入后的重开一致不能宣称源工程无损。graph-v1 范围、制品限制与未知数据拒绝规则见 docs/15。
 
 - P5 批量是一个候选的一次发布，verified 日志不等于已发布；未知步骤不可自动续跑。大 XML 走制品与固定私有文件，ZIP 必须绑定准确 m2 修订及完整摘要。完整规则见 docs/16；统一代码检查入口为 python eng/verify.py。
+
+- P6 接入只处理 imports 下明确声明的已保存文件；上下文和差异绑定历史修订与当前头。补丁必须验证完整源码摘要与唯一原文，经过批量最终编译后发布。恢复备份当前头并创建新版本，未知结果继续隔离。完整约束见 docs/17。
