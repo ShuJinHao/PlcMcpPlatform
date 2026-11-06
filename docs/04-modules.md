@@ -12,7 +12,7 @@
 | EntityFrameworkCore | SQLite 持久化实现 | 任务与编辑迁移、领取、恢复隔离、背压、当前头与证据事务 | 保留期与更多审计查询 |
 | Execution | 外部执行基础设施 | 路径限制、实例所有权、Channel、进程/JSON、文件清单/副本/版本目录、不可变 XML 制品、分块上传、批量日志与 ZIP 交付 | 实机进程归属与存储保留策略 |
 | Inovance | 厂商能力与 ACL | 探针、启动策略、读取/编译/POU/GVL/DUT、组态、交换与保存重开脚本 | 真实 IDE 验收及其他工程能力 |
-| McpHost | 组合根与 MCP 协议入口 | HTTP、鉴权、两个默认工具、65 个已实现但生产未开放的工程/任务工具、状态和错误映射 | 验证后按能力开放生产工程工具 |
+| McpHost | 组合根与 MCP 协议入口 | HTTP、鉴权、两个默认工具、72 个已实现但生产未开放的工程/任务工具、状态和错误映射 | 验证后按能力开放生产工程工具 |
 | Tests | 架构和业务行为证据 | 领域、SQLite、依赖、任务故障注入、真实子进程和 HTTP 契约；独立测试宿主 | 真实 IDE 与 OpenCode 客户端验收 |
 
 ## 工程对象模型
@@ -77,3 +77,7 @@ Core 的 TextPatchRules 管理精确文本替换；IncrementalService 负责接�
 ## P7 模块补充
 
 `EngineeringQueryReader` / `EngineeringCursor` 提供版本一致的工程读取；`IncrementalEditExecutor` 通过既有 member 端口修改访问器；`BatchScope` 在每步修改后用实际对象树重建作用范围，共享资源修改由 `BatchExecutor` 编译全部 Application。未新增 Agent、模型或通用 MCP 平台模块。见 [P7](18-members-batch.md)。
+
+## P8 模块补充
+
+Core.Workspaces 的 GraphV2Rules / GraphSfcRules 定义类型、隐式标签边、双向端口及结构化 SFC 规则；PlcOpenGraphCodec 扩展 TC6 编解码且保留旧模型语义哈希。IncrementalReadExecutor 将 returnType 纳入差异。既有 ExchangeExecutor/BatchExecutor/ManagedProjectExecutor 继续承担读回、编译与发布；无新增宿主或厂商协议。见 [P8](19-graph-v2-engineering.md)。

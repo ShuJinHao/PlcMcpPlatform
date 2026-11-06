@@ -1,11 +1,11 @@
 # InoProShop ScriptEngine 能力清单与验证矩阵
 
 
-当前 P7 实现增量：标准工程对象分页查询、成员/访问器补丁和共享组态批量执行，测试/验证宿主共 74 个工具；厂商能力仍全部 Unverified。此前阶段描述作为历史记录，最新边界见 [P7](18-members-batch.md)。
+当前 P8 实现增量：graph-v2 类型、LD/FBD 连线与双向引脚、结构化 SFC 分支；测试/验证宿主仍为 74 个工具。厂商能力全部 Unverified，历史批次不代表最新完整实现范围；见 [P8](19-graph-v2-engineering.md)。
 
 ## 状态规则
 
-本表是完整覆盖目标，不是支持声明。当前 P5 尚未连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
+本表是完整覆盖目标，不是支持声明。当前尚未连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
 
 | 状态 | 含义 |
 |---|---|
@@ -123,3 +123,7 @@ Task、Member、Object、Library、Device/Parameter/IO 已有完整工具和原�
 ## P6 实现记录
 
 已实现工程接入、版本绑定上下文、text.patch 批量步骤、历史/差异/恢复的服务、原创 Worker 文本读取及自动回归。能力仍为 Unverified；源文本由实际文本标记读取，未推断语言 GUID。图形差异只覆盖 graph-v1，复杂 SFC、图形 POU 子成员、CFC 和 PDO 限制保持。详见 docs/17。
+
+## P8 实现范围
+
+LD/FBD 增加 Function 返回类型、数组/字符串长度、连接标签与 FBD 双向引脚；SFC 增加有界、完整汇合的选择/并行分支。旧 graph-v1 与语义哈希兼容，现有工具按 graph-v2 契约扩展。新增 31 个混合语言回归场景。复杂初值、任意跨分支流程、定时动作、图形子成员、CFC 结构与 PDO 仍有明确限制。代码和离线检查不提升厂商支持状态，详见 [P8](19-graph-v2-engineering.md)。

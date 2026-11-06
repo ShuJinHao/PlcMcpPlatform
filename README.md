@@ -8,17 +8,15 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
 
-## 当前阶段 P7 工程成员与批量修改
+## 当前阶段 P8 图形编程扩展
 
-新增标准工程对象查询，按修订分页读取成员、Get/Set、任务及库引用；精确文本修改扩展到 Method/Property/Action 和实际存在的访问器。原 `plc_project_context` 保留兼容，其职责是读取工程数据，不管理 Agent 对话。
+在保留 graph-v1 的基础上新增 graph-v2：函数返回类型、数组边界、字符串长度、LD/FBD 连接标签、FBD 双向引脚及结构化 SFC 选择/并行分支与汇合。新结构通过既有 MCP 工具生成、读取、修改，接入批量发布、版本差异和准确修订交付包。
 
-批量计划纳入已有成员、对象、任务删除、库和设备操作。设备及外部库管理器使用显式作用范围，操作后刷新对象树；涉及设备或库时检查全部 Application 的任务绑定并编译，最后只发布一个新版本。
+沿用 P7 成员/访问器与共享组态批量修改、P6 工程接入和历史恢复。TestHost / ValidationHost 仍为 **74 个工具**；.NET 8、DDD 分层、官方 MCP C# SDK 和原创厂商脚本保持不变。OpenCode 侧使用标准 MCP 连接。
 
-沿用 P6 工程接入、版本历史、差异与恢复能力，以及原有图形交换和交付机制。独立 TestHost / ValidationHost 共 **74 个工具**，服务保持 .NET 8，PLC 业务和厂商脚本自主实现。OpenCode 侧只有标准连接配置与连接验证。
+默认生产宿主只开放两个查询工具，所有汇川能力仍为 `Unverified`、`engineeringReady=false`。目标 InoProShop/IronPython、模型生成和 PLC 运行尚未验收，Mac 可以继续开发与离线回归。图形子对象、未知 XML 数据保护保持启用。
 
-默认生产宿主仍只有两个查询工具，所有汇川能力保持 `Unverified`、`engineeringReady=false`。自动回归使用原创测试数据；模型生成、真实 InoProShop/IronPython 和 PLC 运行尚未验证。Mac 可继续开发与回归准备。
-
-详情见 [第七批说明](docs/18-members-batch.md)。统一代码检查入口 `python eng/verify.py`，集中场景入口 `eng/run-regressions.py --suite all` 包含 P3～P7。精确提交的三系统检查见 [PR #8 checks](https://github.com/ShuJinHao/PlcMcpPlatform/pull/8/checks)。
+详情见 [第八批说明](docs/19-graph-v2-engineering.md)。统一检查 `python eng/verify.py`，集中场景 `eng/run-regressions.py --suite all` 包含 P3～P8；本批 31 个场景和 11 步混合语言工程创建见 [回归文件](config/regression/p8-graph-v2.json)。三系统检查见 [PR #9 checks](https://github.com/ShuJinHao/PlcMcpPlatform/pull/9/checks)。
 
 ## 文档入口
 
@@ -43,6 +41,7 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 | [第五批批量与交付](docs/16-engineering-delivery.md) | 批量计划、大文件传递、ZIP、发布启动、OpenCode 与集中回归 |
 | [第六批已有工程与增量编程](docs/17-incremental-engineering.md) | 工程接入、上下文、精确补丁、历史、差异和恢复 |
 | [第七批成员与批量修改](docs/18-members-batch.md) | 工程对象查询、访问器修改、设备/库作用范围和多应用检查 |
+| [第八批图形扩展](docs/19-graph-v2-engineering.md) | graph-v2 类型、LD/FBD 连线、SFC 分支、混合语言与回归边界 |
 
 ## 核心工程
 

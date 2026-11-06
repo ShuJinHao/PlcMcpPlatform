@@ -67,3 +67,7 @@ P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编�
 ## P7 接入范围
 
 继续使用现有标准 MCP 连接配置，无需安装本项目专用 OpenCode 插件。工程数据通过 `plc_project_objects_read` 按需读取；对话历史、上下文压缩与生成决策由客户端和模型负责。新增用例通过 `eng/run-regressions.py --suite p7` 运行，详见 [P7](18-members-batch.md)。
+
+## P8 图形回归
+
+完成 Release 构建后运行 `python eng/verify-graphs.py`，或在现有验证/测试宿主上用 `eng/run-regressions.py --suite p8`。31 个场景覆盖四种图形样例、ST/GVL/DUT/任务组合、批量修改、返回类型差异、旧哈希拒绝和交付包。`--suite all` 已包含 P8，完整说明见 [docs/19](19-graph-v2-engineering.md)。

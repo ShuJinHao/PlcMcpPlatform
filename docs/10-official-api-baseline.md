@@ -157,3 +157,7 @@ python -m unittest discover -s tests/script_engine -v
 ## P7 官网复核
 
 2026-11-06 核对官方 ScriptTextualObject 的独立声明/实现标志、get_text 参数，ScriptObject 的 guid/type/parent 以及原有 IEC 创建接口。读取现在保留无声明对象的实际实现；Method/Property 以实际声明和名称核对，Get/Set 结合父属性及唯一直接子对象识别，Action 仍依赖调用方固定实际类型 GUID。复用已实现的 member、device、library API，没有将供应商 CHM 的既有版本基线升级为新版运行证据。详见 [P7](18-members-batch.md)。
+
+## P8 官方格式复核
+
+2026-11-06 复核 PLCopen 官网 TC6 2.01 XSD 的 returnType、array/dimension、字符串 length、connector/continuation、block.inOutVariables、selection/simultaneous 分支及 transition.priority，并对照 [CODESYS 分支说明](https://content.helpme-codesys.com/en/CODESYS%20SFC/_cds_sfc_element_branch.html)。据此实现 graph-v2，不把标准格式存在等同于汇川版本兼容。继续复用 CHM 已核对的 ScriptObject XML 调用；保存重开、对象树与动作子对象仍待目标版本证据。新增四个及原有三个样例的生成 XML 通过本地官方 XSD 检查，未复制供应商文档或 XSD 到公有仓库。详见 [P8](19-graph-v2-engineering.md)。

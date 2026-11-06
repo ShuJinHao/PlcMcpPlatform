@@ -27,13 +27,15 @@ public sealed class GraphV2Tests
         Assert.Equal("graph_profile_mismatch", GraphRules.Validate(p with { Profile = "graph-v1" }));
     }
     [Theory]
-    [InlineData("ld-start-stop")]
-    [InlineData("fbd-delay-counter")]
-    [InlineData("sfc-sequence")]
-    public void Existing_documents_keep_the_v1_profile(string name)
+    [InlineData("ld-start-stop", "3086c50c8d96ed8f39e2573feb7679098de655ea9ad143ce7487dd7fc6ae428e")]
+    [InlineData("fbd-delay-counter", "c433ca874c38ed32b5f6a4d9d3384df9d979313f8707b3327a57e05d058c55fa")]
+    [InlineData("sfc-sequence", "702b826198dd96c0b63ef1820fb90b1c94e8c2067eec73edffd13063bf740484")]
+    public void Existing_documents_keep_the_v1_profile(string name, string p7Hash)
     {
         var p = Sample(name); var read = PlcOpenGraphCodec.Decode(PlcOpenGraphCodec.Encode(p));
         Assert.Equal("graph-v1", read.Profile);
+        // Golden values calculated with the merged P7 codec, not with the implementation under test.
+        Assert.Equal(p7Hash, read.SemanticSha256);
         Assert.Equal(PlcOpenGraphCodec.SemanticHash(p), read.SemanticSha256);
     }
     [Fact] public void Types_and_return_values_are_part_of_the_semantic_hash()
@@ -108,5 +110,29 @@ public sealed class GraphV2Tests
         var xml = XDocument.Parse(PlcOpenGraphCodec.Encode(p));
         xml.Descendants(ExchangeXml.Plc + element).First().SetAttributeValue("vendorPrivate", "preserve-me");
         Assert.Equal("graph_contains_unrepresented_data", Assert.Throws<ProjectEditException>(() => PlcOpenGraphCodec.Decode(xml.ToString())).Code);
+    }
+    [Fact] public void Selection_can_be_nested_inside_a_parallel_branch_without_crossing_joins()
+    {
+        var p = Change(Sample("sfc-v2-branches"), 15, n => n with { Inputs = [new("", [new(38)])] });
+        p = p with { Nodes = [..p.Nodes,
+            new(30, "selectionDivergence", Inputs: [new("", [new(13)])], Outputs: [new("A"), new("B")]),
+            new(31, "transition", X: 0, Expression: "Ready", Priority: 1, Inputs: [new("", [new(30, "A")])], Outputs: [new("")]),
+            new(32, "transition", X: 200, Expression: "Bypass", Priority: 2, Inputs: [new("", [new(30, "B")])], Outputs: [new("")]),
+            new(33, "step", Name: "ChoiceA", Inputs: [new("", [new(31)])], Outputs: [new("")]),
+            new(34, "step", Name: "ChoiceB", Inputs: [new("", [new(32)])], Outputs: [new("")]),
+            new(35, "transition", Expression: "TRUE", Inputs: [new("", [new(33)])], Outputs: [new("")]),
+            new(36, "transition", Expression: "TRUE", Inputs: [new("", [new(34)])], Outputs: [new("")]),
+            new(37, "selectionConvergence", Inputs: [new("", [new(35)]), new("", [new(36)])], Outputs: [new("")]),
+            new(38, "step", Name: "ChoiceDone", Inputs: [new("", [new(37)])], Outputs: [new("")]) ] };
+        Assert.Null(GraphRules.Validate(p));
+        Assert.Equal(PlcOpenGraphCodec.SemanticHash(p), PlcOpenGraphCodec.Decode(PlcOpenGraphCodec.Encode(p)).SemanticSha256);
+        var unjoined = new GraphicalProgram("Unjoined", "program", "SFC", [], [
+            new(1, "step", Name: "Idle", Initial: true, Outputs: [new("")]),
+            new(2, "selectionDivergence", Inputs: [new("", [new(1)])], Outputs: [new("A"), new("B")]),
+            new(3, "transition", X: 0, Expression: "TRUE", Priority: 1, Inputs: [new("", [new(2, "A")])], Outputs: [new("")]),
+            new(4, "transition", X: 200, Expression: "FALSE", Priority: 2, Inputs: [new("", [new(2, "B")])], Outputs: [new("")]),
+            new(5, "jumpStep", Name: "Idle", Inputs: [new("", [new(3)])]),
+            new(6, "jumpStep", Name: "Idle", Inputs: [new("", [new(4)])]) ], Profile: "graph-v2");
+        Assert.Equal("sfc_branch_requires_matching_join", GraphRules.Validate(unjoined));
     }
 }

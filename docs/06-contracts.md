@@ -128,3 +128,7 @@ Worker 输入新增 adoption/restoreRevision/patch/incremental 可选字段。pr
 ## P7 契约 1.6
 
 新增 `plc_project_objects_read` / `project.objects.read`，返回 objects/members/tasks/libraries 分页工程数据与绑定查询条件的 nextCursor。TextPatch 增加 memberKind、expectedTypeId、accessor；BatchPlan 增加 deviceScopeIds、libraryManagerIds。批量结果增加 checks、affectedApplicationIds、compileScope。兼容既有工具，Worker 主协议不变。主要新增错误包括 engineering_cursor_query_mismatch、invalid_engineering_cursor、batch_device_scope_mismatch、batch_library_scope_mismatch、batch_declared_scope_mismatch、property_accessor_ambiguous；具体范围见 [P7](18-members-batch.md)。
+
+## P8 graph-v2 契约
+
+工具仍为 74 个，通过现有图形工具扩展 program 的可选 profile/returnType、变量 stringLength/dimensions、节点 inOuts/priority 及分支/连接标签类别。默认 graph-v1；新字段必须显式使用 graph-v2。旧 graph-v1.schema.json 保留，新增 [graph-v2.schema.json](../contracts/graph-v2.schema.json)，MCP 快照对应最新兼容输入/输出。详细限制与错误码见 [P8](19-graph-v2-engineering.md)。
