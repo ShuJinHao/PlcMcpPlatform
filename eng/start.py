@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 from bundle import verify_bundle
@@ -32,13 +33,8 @@ def prepare(bundle, data, workspace, dotnet='dotnet', environment=None):
         if profile['profile'] != env.get('PlcMcp__Inovance__Profile'): raise ValueError('Executable Profile and validation Profile must agree.')
     env.update(PlcMcp__DataDirectory=str(data), PlcMcp__WorkspaceRoot=str(workspace),
                DOTNET_ENVIRONMENT='Development' if mode == 'fixture' else 'Production',
-               DOTNET_HOST_PATH=str(Path(shutil_which(dotnet) or dotnet).resolve()))
+               DOTNET_HOST_PATH=str(Path(shutil.which(dotnet) or dotnet).resolve()))
     return manifest, [dotnet, str(root/manifest['entryPoint'])], env
-
-
-def shutil_which(value):
-    import shutil
-    return shutil.which(value)
 
 
 def main():

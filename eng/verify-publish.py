@@ -48,6 +48,24 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-publish-') as tmp, tempfile.Temp
     assert (fixture/'bin/PlcMcp.TestHost.dll').is_file()
     assert (fixture/'bin/Scripts/engineering_worker.py').is_file()
     subprocess.run([sys.executable, str(fixture/'eng/init-fixture.py'), '--workspace-root', str(base/'fixture-workspace')], check=True)
+    _, command, env = prepare(fixture, base/'fixture-data', base/'fixture-workspace', args.dotnet, dict(os.environ, PlcMcp__ApiKey=key))
+    process = subprocess.Popen(command, env=env, cwd=fixture/'bin', stdout=log, stderr=log)
+    try:
+        for _ in range(300):
+            if process.poll() is not None: raise RuntimeError('Published fixture exited.')
+            try: urllib.request.urlopen('http://127.0.0.1:5088/health/live', timeout=1).close(); break
+            except OSError: time.sleep(0.1)
+        else: raise TimeoutError('Published fixture startup timed out.')
+        subprocess.run([sys.executable, str(fixture/'eng/doctor.py'), '--mode', 'fixture'], env=env, check=True)
+        subprocess.run([sys.executable, str(fixture/'eng/run-regressions.py'), '--suite', 'p5', '--expect-mode', 'fixture',
+                        '--variables', str(fixture/'config/regression/fixture-variables.json'), '--report', str(base/'p5.json')], env=env, check=True)
+    except Exception:
+        log.seek(0); print(log.read()[-6000:]); raise
+    finally:
+        if process.poll() is None:
+            process.terminate()
+            try: process.wait(timeout=10)
+            except subprocess.TimeoutExpired: process.kill(); process.wait(timeout=5)
     if sys.platform == 'win32':
         validation = base/'validation'; publish('validation', validation, args.dotnet)
         assert (validation/'bin/Scripts/exchange_worker.py').is_file()

@@ -206,4 +206,32 @@ public sealed class DeliveryTests
         public Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
         { Calls.Add(request.Operation); return request.Operation == EditOperations.CreatePou ? Task.FromResult(WorkerJson.Unknown(request, "worker_exited_without_result")) : inner.ExecuteAsync(request, token); }
     }
+
+    [Fact] public async Task Large_failure_evidence_is_preserved_as_an_artifact_without_inlining_xml()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "plc-failed-exchange-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var xml = "<Native>" + new string('x', 100000) + "</Native>";
+            var artifacts = new ExchangeArtifacts(root);
+            var executor = new ExchangeExecutor(new FailedExchangeWorker(xml), artifacts);
+            var request = new WorkerRequest(1, Guid.NewGuid(), Guid.NewGuid(), ExchangeOperations.Export, Guid.NewGuid(), new string('a', 64),
+                DateTimeOffset.UtcNow.AddMinutes(1), "fixture", JsonSerializer.SerializeToElement(new EngineeringInput("unused"), WorkerJson.Options));
+            var result = await executor.ExecuteAsync(request, default);
+            Assert.Equal("failed", result.Outcome); Assert.Equal("exchange_reopen_mismatch", result.ErrorCode);
+            var evidence = result.Payload!.Value.GetProperty("exchange");
+            Assert.False(evidence.TryGetProperty("xml", out _));
+            Assert.True(JsonSerializer.SerializeToUtf8Bytes(result, WorkerJson.Options).Length < 4096);
+            var stored = await artifacts.GetAsync(evidence.GetProperty("artifact").GetProperty("artifactId").GetString()!, default);
+            Assert.Equal(xml, stored.Xml);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+    private sealed class FailedExchangeWorker(string xml) : IEngineeringExecutor
+    {
+        public string ExecutionMode => "fixture";
+        public OperationError? Unavailability => null;
+        public Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token) => Task.FromResult(
+            WorkerJson.Failed(request, "exchange_reopen_mismatch") with { Payload = JsonSerializer.SerializeToElement(new { exchange = new { format = "codesys-native", xml, report = Array.Empty<string>() } }, WorkerJson.Options) });
+    }
 }

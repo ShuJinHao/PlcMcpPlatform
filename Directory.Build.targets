@@ -1,0 +1,8 @@
+<Project>
+  <!-- Restore lockfiles belong to source/build verification, not the runtime publish directory.
+       Referenced web hosts otherwise publish conflicting packages.lock.json files. -->
+  <ItemGroup>
+    <Content Update="packages.lock.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+    <None Update="packages.lock.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+</Project>
