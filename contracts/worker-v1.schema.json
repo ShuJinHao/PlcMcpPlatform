@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ShuJinHao/PlcMcpPlatform/contracts/worker-v1.schema.json",
   "title": "PLC MCP internal worker protocol v1",
-  "description": "Internal JSON envelope v1 with additive managed editing and engineering configuration. Runtime validation checks operation-specific rules, identities, revision scope, bounded values and save/reopen proofs. Schema validity is not vendor compatibility evidence. P4 adds bounded exchange queries, content-addressed XML import and graph operations. Validation scopes and warnings never imply vendor compatibility. P5 batch and package are application-coordinator operations, not vendor SDK methods. Exchange private-file integrity and graph semantic limits are validated separately at runtime.",
+  "description": "Internal JSON envelope v1 with additive managed editing and engineering configuration. Runtime validation checks operation-specific rules, identities, revision scope, bounded values and save/reopen proofs. Schema validity is not vendor compatibility evidence. P4 adds bounded exchange queries, content-addressed XML import and graph operations. Validation scopes and warnings never imply vendor compatibility. P5 batch and package are application-coordinator operations, not vendor SDK methods. Exchange private-file integrity and graph semantic limits are validated separately at runtime. P6 adds adopt/restore/context/diff/text.patch application operations and the vendor object.source.read port. Historical revisions are m2 manifests; context and diffs are bounded read projections, not a PLC database.",
   "$defs": {
     "input": {
       "type": "object",
@@ -115,6 +115,16 @@
               "type": "null"
             }
           ]
+        },
+        "incremental": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/incrementalQuery"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -200,7 +210,13 @@
             "pou.graph.read",
             "pou.graph.write",
             "project.batch",
-            "project.package"
+            "project.package",
+            "project.adopt",
+            "project.restore",
+            "project.context",
+            "project.diff",
+            "text.patch",
+            "object.source.read"
           ]
         },
         "expectedRevision": {
@@ -714,6 +730,33 @@
             {
               "type": "string",
               "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "adoption": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/adoptionSource"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "restoreRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "patch": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/textPatch"
             },
             {
               "type": "null"
@@ -2712,6 +2755,225 @@
         "artifact",
         "compile",
         "tasks"
+      ]
+    },
+    "adoptionSource": {
+      "type": "object",
+      "properties": {
+        "sourceName": {
+          "type": "string"
+        },
+        "projectFile": {
+          "type": "string"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ideProfile": {
+          "type": "string"
+        },
+        "targetController": {
+          "type": "string"
+        },
+        "requiredLibraries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "controller": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "type": {
+              "type": "integer"
+            },
+            "id": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id",
+            "version"
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "sourceName",
+        "projectFile",
+        "files",
+        "ideProfile",
+        "targetController",
+        "requiredLibraries"
+      ]
+    },
+    "textPatch": {
+      "type": "object",
+      "properties": {
+        "section": {
+          "enum": [
+            "declaration",
+            "implementation"
+          ]
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "oldText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536
+        },
+        "newText": {
+          "type": "string",
+          "maxLength": 65536
+        }
+      },
+      "required": [
+        "section",
+        "expectedSha256",
+        "oldText",
+        "newText"
+      ]
+    },
+    "incrementalQuery": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "applicationId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "objectId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "textOffset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 400000
+        },
+        "maxTextChars": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192
+        },
+        "compareRevision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "graph": {
+          "type": "boolean"
+        },
+        "compareObjectId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "workspaceName",
+        "revision"
+      ]
+    },
+    "genericSourceResult": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "typeId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "declaration": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "implementation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "implementationKind": {
+          "enum": [
+            "textual",
+            "graphical_or_unavailable",
+            "none"
+          ]
+        }
+      },
+      "required": [
+        "revision",
+        "objectId",
+        "name",
+        "kind",
+        "declaration",
+        "implementation",
+        "implementationKind"
+      ]
+    },
+    "incrementalReadResult": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "headRevision": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceName",
+        "headRevision"
       ]
     }
   },

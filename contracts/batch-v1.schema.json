@@ -494,6 +494,33 @@
                   "null"
                 ],
                 "default": null
+              },
+              "patch": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "section": {
+                    "type": "string"
+                  },
+                  "expectedSha256": {
+                    "type": "string"
+                  },
+                  "oldText": {
+                    "type": "string"
+                  },
+                  "newText": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "section",
+                  "expectedSha256",
+                  "oldText",
+                  "newText"
+                ],
+                "default": null
               }
             }
           }

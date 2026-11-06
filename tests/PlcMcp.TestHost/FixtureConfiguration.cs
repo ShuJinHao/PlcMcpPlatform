@@ -71,6 +71,18 @@ public sealed class FixtureConfiguration
             x.Value!["identification"]!.Deserialize<DeviceRequirement>(WorkerJson.Options)!, x.Value["module"]!.GetValue<string>())).ToArray(),
         nodes.Where(x => S(x.Value!.AsObject(), "kind") == "library_manager").OrderBy(x => x.Key, StringComparer.Ordinal).SelectMany(x => x.Value!["references"]!.AsArray()
             .OrderBy(r => r!["name"]!.GetValue<string>(), StringComparer.Ordinal).Select(r => r!.Deserialize<LibraryReference>(WorkerJson.Options)!)).ToArray());
+    private JsonObject TaskView(string id)
+    {
+        var result = Node(id).DeepClone().AsObject();
+        foreach (var item in result["calls"]!.AsArray())
+        {
+            var call = item!.AsObject(); var name = call["pouName"]!.GetValue<string>();
+            var matches = Descendants(fixture.ApplicationId).Where(key => Node(key)["name"]?.GetValue<string>() == name
+                && Node(key)["declaration"]?.GetValue<string>().StartsWith("PROGRAM ", StringComparison.OrdinalIgnoreCase) == true).ToArray();
+            call["resolved"] = matches.Length == 1; call["pouId"] = matches.Length == 1 ? matches[0] : null;
+        }
+        return result;
+    }
     public JsonObject Read(string op, string? id, ConfigurationQuery? query, int limit)
     {
         JsonObject List(string field, IEnumerable<JsonNode?> values)
@@ -80,8 +92,8 @@ public sealed class FixtureConfiguration
             case C.LibraryInstalled: return List("libraries", InstalledNames.Select(n => new JsonObject { ["name"] = n, ["version"] = "1.0", ["company"] = "Fixture" }));
             case C.DeviceTree: return List("devices", nodes.Where(x => S(x.Value!.AsObject(), "kind") == "device").Select(x => x.Value));
             case C.TaskList:
-                Kind(id!, "application"); return List("tasks", Descendants(id!).Where(x => S(Node(x), "kind") == "task").Select(Node));
-            case C.TaskRead: Kind(id!, "task"); return Node(id!).DeepClone().AsObject();
+                Kind(id!, "application"); return List("tasks", Descendants(id!).Where(x => S(Node(x), "kind") == "task").Select(TaskView));
+            case C.TaskRead: Kind(id!, "task"); return TaskView(id!);
             case C.MemberRead:
                 Kind(id!, query!.MemberKind!);
                 if (query.MemberKind == "Action" && query.ExpectedTypeId != TypeId) throw new ProjectEditException("member_type_evidence_required");

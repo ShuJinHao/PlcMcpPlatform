@@ -48,6 +48,7 @@ public sealed class DeliveryExecutor(IEngineeringExecutor worker, IManagedProjec
             var tasks = await Invoke(ConfigurationOperations.TaskList, new(project, ObjectId: delivery.ApplicationId, MaxObjects: 2000, IdeProfile: source.Template.IdeProfile));
             if (tasks.Outcome != "succeeded") return Failure(tasks);
             if (tasks.Payload!.Value.GetProperty("configuration").GetProperty("data").GetProperty("truncated").GetBoolean()) throw new ProjectEditException("task_inventory_incomplete");
+            if (!ConfigurationResultValidation.CompleteTaskBindings(tasks.Payload!.Value)) throw new ProjectEditException("task_binding_unresolved");
             var compile = await Invoke(EngineeringOperations.Compile, new(project, ApplicationId: delivery.ApplicationId, IdeProfile: source.Template.IdeProfile));
             if (compile.Outcome != "succeeded") return Failure(compile);
             await files.VerifyAsync(prepared.Candidate, token);

@@ -109,7 +109,7 @@ public static class WorkerResultValidation
                     && x.GetProperty("compile").GetProperty("revision").GetString() == revision
                     && x.GetProperty("compile").GetProperty("applicationId").GetString() == x.GetProperty("applicationId").GetString()
                     && ValidDiagnostics(x.GetProperty("compile").GetProperty("diagnostics"), true)
-                    && x.GetProperty("tasks").GetProperty("revision").GetString() == revision);
+                    && x.GetProperty("tasks").GetProperty("revision").GetString() == revision && ConfigurationResultValidation.CompleteTaskBindings(x.GetProperty("tasks")));
         }
         if (request.Operation == BatchOperations.Apply)
         {

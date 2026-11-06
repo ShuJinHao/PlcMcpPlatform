@@ -52,13 +52,13 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
                 if (!rows.Any(x => x.GetProperty("id").GetString() == query.ApplicationId && x.GetProperty("kind").GetString() == "application")) throw new ProjectEditException("application_required");
                 return rows;
             }
-            async Task<JsonElement?> Object(ProjectSnapshot snapshot)
+            async Task<JsonElement?> Object(ProjectSnapshot snapshot, string objectId)
             {
                 var read = await Copy(snapshot);
                 var rows = await Scope(read); var scope = Descendants(rows, query.ApplicationId!);
-                if (!rows.Any(x => x.GetProperty("id").GetString() == query.ObjectId)) return null;
-                if (!scope.Contains(query.ObjectId!)) throw new ProjectEditException("object_application_scope_mismatch");
-                return await session.Invoke(query.Graph ? ExchangeOperations.ReadGraph : IncrementalOperations.Source, read with { ObjectId = query.ObjectId }, token);
+                if (!rows.Any(x => x.GetProperty("id").GetString() == objectId)) return null;
+                if (!scope.Contains(objectId)) throw new ProjectEditException("object_application_scope_mismatch");
+                return await session.Invoke(query.Graph ? ExchangeOperations.ReadGraph : IncrementalOperations.Source, read with { ObjectId = objectId }, token);
             }
             var before = await Version(query.Revision);
             object result;
@@ -100,9 +100,9 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
                 JsonElement? objectDiff = null;
                 if (query.ObjectId is not null)
                 {
-                    var oldObject = await Object(before); var newObject = await Object(after);
+                    var oldObject = await Object(before, query.ObjectId); var newObject = await Object(after, query.CompareObjectId ?? query.ObjectId);
                     objectDiff = query.Graph ? GraphDiff(oldObject, newObject, query) : JsonSerializer.SerializeToElement(new {
-                        objectId = query.ObjectId, comparison = "normalized_source_text", before = TextObject(oldObject, query), after = TextObject(newObject, query),
+                        objectId = query.ObjectId, compareObjectId = query.CompareObjectId ?? query.ObjectId, comparison = "normalized_source_text", before = TextObject(oldObject, query), after = TextObject(newObject, query),
                         declarationChanged = SourceHash(oldObject, "declaration") != SourceHash(newObject, "declaration"),
                         implementationChanged = SourceHash(oldObject, "implementation") != SourceHash(newObject, "implementation") }, WorkerJson.Options);
                 }
@@ -165,7 +165,7 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
             }
             else if (!JsonNode.DeepEquals(oldValue, newValue)) deltas.Add(new { component = field, before = oldValue, after = newValue });
         }
-        return JsonSerializer.SerializeToElement(new { objectId = query.ObjectId, comparison = "graph-v1_including_node_pins_connections_and_order",
+        return JsonSerializer.SerializeToElement(new { objectId = query.ObjectId, compareObjectId = query.CompareObjectId ?? query.ObjectId, comparison = "graph-v1_including_node_pins_connections_and_order",
             beforeSemanticSha256 = a?["semanticSha256"], afterSemanticSha256 = b?["semanticSha256"], changes = deltas.Skip(query.Offset).Take(query.PageSize),
             totalChanges = deltas.Count, nextOffset = query.Offset + query.PageSize < deltas.Count ? (int?)(query.Offset + query.PageSize) : null }, WorkerJson.Options);
     }

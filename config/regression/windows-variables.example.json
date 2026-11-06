@@ -19,5 +19,20 @@
   "parameterValue": "12",
   "mappingAddress": {
     "parameterId": 1
+  },
+  "adoptionSource": {
+    "sourceName": "existing",
+    "projectFile": "REPLACE_WITH_SAVED_PROJECT_FILENAME",
+    "files": [
+      "REPLACE_WITH_SAVED_PROJECT_FILENAME"
+    ],
+    "ideProfile": "REPLACE_WITH_EXACT_IDE_PROFILE",
+    "targetController": "REPLACE_WITH_CONTROLLER_NAME",
+    "requiredLibraries": [],
+    "controller": {
+      "type": 0,
+      "id": "REPLACE_WITH_CONTROLLER_DEVICE_ID",
+      "version": "REPLACE_WITH_DEVICE_VERSION"
+    }
   }
 }

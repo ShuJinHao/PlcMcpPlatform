@@ -39,12 +39,12 @@ public sealed class IncrementalTools(IncrementalService incremental, ManagedEdit
         => Query(() => incremental.HistoryAsync(workspaceName, expectedHeadRevision, offset, pageSize, cancellationToken));
 
     [McpServerTool(Name = "plc_project_diff", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
-    [Description("Queue a comparison of two published revisions. File changes are exact hashes only. Optional objectId plus applicationId reads source before/after with hashes and bounded windows; graph=true compares supported graph-v1 variables, nodes, pins/connections, actions and ordering. Graphs outside graph-v1 return an explicit error. Offset/pageSize page file and graph changes; read completion through plc_job_get.")]
+    [Description("Queue a comparison of two published revisions. File changes are exact hashes only. Optional objectId plus applicationId reads source before/after with hashes and bounded windows; graph=true compares supported graph-v1 variables, nodes, pins/connections, actions and ordering. Use toObjectId when XML replacement changed the vendor object GUID. Graphs outside graph-v1 return an explicit error. Offset/pageSize page file and graph changes; read completion through plc_job_get.")]
     public Task<CallToolResult> Diff(string workspaceName, string expectedHeadRevision, string fromRevision, string toRevision, string idempotencyKey,
         CancellationToken cancellationToken, string? applicationId = null, string? objectId = null, bool graph = false, int offset = 0, int pageSize = 8,
-        int textOffset = 0, int maxTextChars = 4096, int timeoutSeconds = 600)
+        int textOffset = 0, int maxTextChars = 4096, int timeoutSeconds = 600, string? toObjectId = null)
         => Submit(incremental.ReadAsync(IncrementalOperations.Diff, expectedHeadRevision,
-            new(workspaceName, fromRevision, applicationId, objectId, offset, pageSize, textOffset, maxTextChars, toRevision, graph), idempotencyKey, timeoutSeconds, cancellationToken));
+            new(workspaceName, fromRevision, applicationId, objectId, offset, pageSize, textOffset, maxTextChars, toRevision, graph, toObjectId), idempotencyKey, timeoutSeconds, cancellationToken));
 
     [McpServerTool(Name = "plc_project_restore", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
     [Description("Restore historical project content by publishing a NEW revision, preserving every existing version. Requires the exact current head and an intact historical manifest. Validate historical dependencies, save/reopen a candidate, check tasks and compile every Application before publication. Failed or unknown execution never advances the head; unknown outcomes stay quarantined.")]

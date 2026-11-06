@@ -61,6 +61,7 @@ public sealed class IncrementalEditExecutor(IEngineeringExecutor worker) : IEngi
                     var id = app.GetProperty("id").GetString()!;
                     var tasks = await session.Invoke(ConfigurationOperations.TaskList, new(input.ProjectPath, ObjectId: id, MaxObjects: 2000, IdeProfile: input.IdeProfile), token);
                     if (tasks.GetProperty("configuration").GetProperty("data").GetProperty("truncated").GetBoolean()) throw new ProjectEditException("task_inventory_incomplete");
+                    if (!ConfigurationResultValidation.CompleteTaskBindings(tasks)) throw new ProjectEditException("task_binding_unresolved");
                     var compile = await session.Invoke(EngineeringOperations.Compile, new(input.ProjectPath, ApplicationId: id, IdeProfile: input.IdeProfile), token);
                     checks.Add(new { applicationId = id, tasks, compile });
                 }

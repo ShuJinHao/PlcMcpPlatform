@@ -111,23 +111,25 @@ public sealed class ManagedProjectFiles(string workspaceRoot) : IManagedProjectF
             if (!actual.SequenceEqual(snapshot.Files)) throw new ProjectEditException("workspace_revision_conflict");
         }
     }
-    public async Task<(ProjectSnapshot Candidate, string BackupPath)> PrepareAsync(string workspacePath, Guid jobId, ProjectSnapshot source, CancellationToken token)
+    public async Task<(ProjectSnapshot Candidate, string BackupPath)> PrepareAsync(string workspacePath, Guid jobId, ProjectSnapshot source, CancellationToken token, ProjectSnapshot? backupSource = null)
     {
         var change = Path.Combine(workspacePath, "changes", jobId.ToString("N"));
         GuardFuture(change);
         if (Directory.Exists(change)) throw new ProjectEditException("change_already_exists");
         await VerifyAsync(source, token);
+        backupSource ??= source;
+        await VerifyAsync(backupSource, token);
         var backup = Path.Combine(change, "before"); var candidate = Path.Combine(change, "candidate");
         Directory.CreateDirectory(backup); Directory.CreateDirectory(candidate);
+        foreach (var stamp in backupSource.Files)
+            await CopyAsync(Within(backupSource.Directory, stamp.Path), Within(backup, stamp.Path), token);
         foreach (var stamp in source.Files)
-        {
-            await CopyAsync(Within(source.Directory, stamp.Path), Within(backup, stamp.Path), token);
-            await CopyAsync(Within(backup, stamp.Path), Within(candidate, stamp.Path), token);
-        }
+            await CopyAsync(Within(source.Directory, stamp.Path), Within(candidate, stamp.Path), token);
         await VerifyAsync(source, token);
+        await VerifyAsync(backupSource, token);
         var copied = await CaptureAsync(candidate, Enumerate(candidate), token);
         var backedUp = await CaptureAsync(backup, Enumerate(backup), token);
-        if (!copied.SequenceEqual(source.Files) || !backedUp.SequenceEqual(source.Files)) throw new ProjectEditException("backup_verification_failed");
+        if (!copied.SequenceEqual(source.Files) || !backedUp.SequenceEqual(backupSource.Files)) throw new ProjectEditException("backup_verification_failed");
         return (new(candidate, source.ProjectFile, "candidate", copied, source.Template, source.Dependencies), backup);
     }
     public async Task<ProjectSnapshot> SealAsync(string workspacePath, Guid jobId, ProjectSnapshot candidate, CancellationToken token)

@@ -15,7 +15,7 @@ public sealed record AdoptionSource(string SourceName, string ProjectFile, strin
 public sealed record AdoptionPreview(string SourceRevision, FileStamp[] Files, TemplateDefinition Requirements, string Scope = "saved_declared_files_only");
 public sealed record TextPatch(string Section, string ExpectedSha256, string OldText, string NewText);
 public sealed record IncrementalQuery(string WorkspaceName, string Revision, string? ApplicationId = null, string? ObjectId = null,
-    int Offset = 0, int PageSize = 8, int TextOffset = 0, int MaxTextChars = 4096, string? CompareRevision = null, bool Graph = false);
+    int Offset = 0, int PageSize = 8, int TextOffset = 0, int MaxTextChars = 4096, string? CompareRevision = null, bool Graph = false, string? CompareObjectId = null);
 public sealed record VersionRecord(ChangeEvidence Evidence, string Operation, DateTimeOffset CreatedAt);
 public sealed record VersionView(string Revision, Guid JobId, string Operation, DateTimeOffset CreatedAt, string BaseRevision, bool IsCurrent);
 public sealed record HistoryPage(string WorkspaceName, string HeadRevision, VersionView[] Versions, int? NextOffset);

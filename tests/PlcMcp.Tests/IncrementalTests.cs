@@ -8,6 +8,9 @@ using PlcMcp.EngineeringService.Execution;
 using PlcMcp.EngineeringService.Incremental;
 using PlcMcp.Execution;
 using PlcMcp.Services.Contracts.Batch;
+using PlcMcp.Services.Contracts.Exchange;
+using PlcMcp.Services.Contracts.Configuration;
+using System.Text.Json.Nodes;
 using PlcMcp.Services.Contracts.Editing;
 using PlcMcp.Services.Contracts.Execution;
 using PlcMcp.Services.Contracts.Incremental;
@@ -158,6 +161,76 @@ public sealed class IncrementalTests
     {
         Assert.Equal(TextPatchRules.Hash("a\nb\n"), TextPatchRules.Hash("a\r\nb\r"));
         Assert.Equal("a\nc\n", TextPatchRules.Apply("a\r\nb\r\n", TextPatchRules.Hash("a\nb\n"), "b\r\n", "c\n").Source);
+    }
+    [Fact] public async Task Graph_diff_compares_explicit_replacement_ids_and_rejects_textual_graph_patches()
+    {
+        await using var h = await ManagedEditingTests.Harness.Create(); var c = Compose(h);
+        var first = (await h.Complete(EditOperations.CreateProject, new("demo", TemplateId: "sample"))).Result!.Value.GetProperty("revision").GetString()!;
+        var exchange = new ExchangeService(new ExchangeArtifacts(Path.Combine(h.Root, "exchange")), c.Edits);
+        var original = ExchangeTests.Sample("ld-start-stop"); var generated = await exchange.GenerateAsync(original, default);
+        var created = await Finish(h, c, await exchange.ImportAsync("demo", first, h.Fixture.ApplicationId, generated.Artifact.ArtifactId, "reject", false, "graph1", 600, default, graph: true));
+        var before = created.Result!.Value.GetProperty("revision").GetString()!;
+        var oldId = created.Result.Value.GetProperty("engineeringResult").GetProperty("exchange").GetProperty("objectIds")[0].GetString()!;
+        var changed = original with { Nodes = original.Nodes.Select(n => n.Kind == "coil" ? n with { Negated = !n.Negated } : n).ToArray(),
+            Variables = [.. original.Variables, new("NewInterlock", "BOOL")] };
+        var replacement = await exchange.GenerateAsync(changed, default);
+        var edited = await Finish(h, c, await exchange.ImportAsync("demo", before, h.Fixture.ApplicationId, replacement.Artifact.ArtifactId, "replace", false, "graph2", 600, default,
+            graph: true, objectId: oldId, expectedGraphSha256: generated.Graph.SemanticSha256));
+        var after = edited.Result!.Value.GetProperty("revision").GetString()!;
+        var newId = edited.Result.Value.GetProperty("engineeringResult").GetProperty("exchange").GetProperty("objectIds")[0].GetString()!;
+        var diff = await Finish(h, c, await c.Reads.ReadAsync(IncrementalOperations.Diff, after,
+            new("demo", before, h.Fixture.ApplicationId, oldId, CompareRevision: after, Graph: true, CompareObjectId: newId), "graph-diff", 600, default));
+        var data = diff.Result!.Value.GetProperty("objectDifference");
+        Assert.NotEqual(data.GetProperty("beforeSemanticSha256").GetString(), data.GetProperty("afterSemanticSha256").GetString());
+        Assert.Contains(data.GetProperty("changes").EnumerateArray(), x => x.GetProperty("component").GetString() == "variables");
+        Assert.Contains(data.GetProperty("changes").EnumerateArray(), x => x.GetProperty("component").GetString() == "nodes");
+        var plan = new BatchPlan(h.Fixture.ApplicationId, [new("patch", IncrementalOperations.Patch,
+            new(ObjectId: newId, Patch: new("implementation", TextPatchRules.Hash(""), "anything", "different")))]);
+        var preview = await c.Batches.PreviewAsync("demo", after, plan, default);
+        var rejected = await Finish(h, c, await c.Batches.ApplyAsync("demo", after, plan, preview.PlanSha256, "text-graph", 600, default), "Failed");
+        Assert.Equal("graphical_content_requires_specialized_editor", rejected.ErrorCode);
+    }
+    [Fact] public async Task Declaration_patches_support_gvl_dut_and_remain_inside_the_application()
+    {
+        await using var h = await ManagedEditingTests.Harness.Create(); var c = Compose(h);
+        var revision = (await h.Complete(EditOperations.CreateProject, new("demo", TemplateId: "sample"))).Result!.Value.GetProperty("revision").GetString()!;
+        foreach (var kind in new[] { "gvl", "dut" })
+        {
+            var source = kind == "gvl" ? "VAR_GLOBAL\nEnabled : BOOL;\nEND_VAR" : "TYPE State : (Idle, Running); END_TYPE";
+            var create = await h.Complete(kind + ".create", new("demo", ParentId: h.Fixture.ApplicationId, Name: kind == "gvl" ? "Globals" : "State", Declaration: source, DutType: kind == "dut" ? "Enumeration" : null), revision);
+            revision = create.Result!.Value.GetProperty("revision").GetString()!;
+            var id = create.Result.Value.GetProperty("engineeringResult").GetProperty("objectId").GetString()!;
+            var plan = new BatchPlan(h.Fixture.ApplicationId, [new("patch", IncrementalOperations.Patch,
+                new(ObjectId: id, Patch: new("declaration", TextPatchRules.Hash(source), kind == "gvl" ? "BOOL" : "Running", kind == "gvl" ? "BOOL := FALSE" : "Running, Stopped")))]);
+            var preview = await c.Batches.PreviewAsync("demo", revision, plan, default);
+            var job = await Finish(h, c, await c.Batches.ApplyAsync("demo", revision, plan, preview.PlanSha256, "patch-" + kind, 600, default));
+            revision = job.Result!.Value.GetProperty("revision").GetString()!;
+        }
+        var outside = await c.Reads.ReadAsync(IncrementalOperations.Context, revision,
+            new("demo", revision, h.Fixture.ApplicationId, FixtureConfiguration.ControllerId), "outside", 600, default);
+        Assert.Equal("object_application_scope_mismatch", (await Finish(h, c, outside, "Failed")).ErrorCode);
+    }
+    [Fact] public async Task Unresolved_existing_task_binding_blocks_restore_before_publication()
+    {
+        await using var h = await ManagedEditingTests.Harness.Create();
+        var first = (await h.Complete(EditOperations.CreateProject, new("demo", TemplateId: "sample"))).Result!.Value.GetProperty("revision").GetString()!;
+        var c = Compose(h, new UnresolvedTasks(new FixtureExecutor(Path.Combine(h.Root, "unresolved-calls"))));
+        var job = await Finish(h, c, await c.Edits.SubmitAsync(IncrementalOperations.Restore, new("demo", RestoreRevision: first), "restore", first, 600, default), "Failed");
+        Assert.Equal("task_binding_unresolved", job.ErrorCode);
+        Assert.Equal(first, (await c.Edits.GetWorkspaceAsync("demo", default)).Value!.Revision);
+    }
+    private sealed class UnresolvedTasks(IEngineeringExecutor inner) : IEngineeringExecutor
+    {
+        public string ExecutionMode => inner.ExecutionMode;
+        public OperationError? Unavailability => null;
+        public async Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
+        {
+            var response = await inner.ExecuteAsync(request, token);
+            if (request.Operation != ConfigurationOperations.TaskList || response.Outcome != "succeeded") return response;
+            var payload = JsonNode.Parse(response.Payload!.Value.GetRawText())!.AsObject();
+            payload["configuration"]!["data"]!["tasks"] = JsonSerializer.SerializeToNode(new[] { new { calls = new[] { new { pouId = (string?)null, resolved = false } } } });
+            return response with { Payload = JsonSerializer.SerializeToElement(payload, WorkerJson.Options) };
+        }
     }
     private sealed class FaultWorker(IEngineeringExecutor inner, string outcome) : IEngineeringExecutor
     {

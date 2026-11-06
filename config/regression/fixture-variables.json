@@ -19,5 +19,15 @@
   "parameterValue": "12",
   "mappingAddress": {
     "parameterId": 1
+  },
+  "adoptionSource": {
+    "sourceName": "existing",
+    "projectFile": "project.fixture.json",
+    "files": [
+      "project.fixture.json"
+    ],
+    "ideProfile": "fixture",
+    "targetController": "test-only",
+    "requiredLibraries": []
   }
 }

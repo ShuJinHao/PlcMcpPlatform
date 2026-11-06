@@ -46,7 +46,7 @@ public interface IManagedProjectFiles
     Task<ProjectSnapshot> ReadAdoptionAsync(AdoptionSource source, string mode, CancellationToken token);
     Task<ProjectSnapshot> ReadVersionAsync(VersionRecord record, TemplateDefinition legacyTemplate, CancellationToken token);
     Task VerifyAsync(ProjectSnapshot snapshot, CancellationToken token);
-    Task<(ProjectSnapshot Candidate, string BackupPath)> PrepareAsync(string workspacePath, Guid jobId, ProjectSnapshot source, CancellationToken token);
+    Task<(ProjectSnapshot Candidate, string BackupPath)> PrepareAsync(string workspacePath, Guid jobId, ProjectSnapshot source, CancellationToken token, ProjectSnapshot? backupSource = null);
     Task<ProjectSnapshot> SealAsync(string workspacePath, Guid jobId, ProjectSnapshot candidate, CancellationToken token);
     Task<string> ProjectFileRevisionAsync(ProjectSnapshot snapshot, CancellationToken token);
 }

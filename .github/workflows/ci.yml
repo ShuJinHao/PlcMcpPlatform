@@ -16,13 +16,6 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore PlcMcpPlatform.sln --locked-mode
       - run: dotnet build PlcMcpPlatform.sln -c Release --no-restore
-      - name: Generate reviewed P6 contract candidate
-        run: python eng/verify-execution.py --write-contracts
-      - uses: actions/upload-artifact@v4
-        if: runner.os == 'Linux'
-        with:
-          name: p6-contract-candidate
-          path: contracts/*.json
       - run: dotnet test PlcMcpPlatform.sln -c Release --no-build --no-restore
       - run: python eng/verify-mcp.py
       - run: python eng/verify-execution.py
@@ -39,5 +32,6 @@ jobs:
       - run: python eng/verify-delivery.py
         env:
           PLCMCP_OPENCODE: ${{ runner.os == 'Linux' && format('{0}/plc-opencode/node_modules/.bin/opencode', runner.temp) || '' }}
+      - run: python eng/verify-incremental.py
       - run: python eng/verify-publish.py
       - run: python -m unittest discover -s tests/script_engine -v

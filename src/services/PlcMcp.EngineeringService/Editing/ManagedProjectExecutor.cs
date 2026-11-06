@@ -45,7 +45,7 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
             }
             if (source.Template.ExecutionMode != ExecutionMode) throw new ProjectEditException("execution_mode_mismatch");
             await files.VerifyAsync(source, token); steps.Add("source_verified");
-            var prepared = await files.PrepareAsync(input.ProjectPath, request.JobId, source, token);
+            var prepared = await files.PrepareAsync(input.ProjectPath, request.JobId, source, token, current);
             var candidate = prepared.Candidate; steps.Add("backup_verified");
             evidence = evidence with { Stage = "prepared", CandidatePath = candidate.Directory, BackupPath = prepared.BackupPath, Steps = steps.ToArray() };
             await changes.RecordAsync(evidence, token);
