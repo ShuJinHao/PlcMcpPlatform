@@ -8,7 +8,7 @@ using PlcMcp.Services.Contracts.Workers;
 namespace PlcMcp.Execution;
 
 /// <summary>Immutable content-addressed exchange documents, separate from managed project files.</summary>
-public sealed class ExchangeArtifacts(string directory) : IExchangeArtifacts
+public sealed class ExchangeArtifacts(string directory, int maxXmlBytes = ExchangeOperations.DefaultMaxXmlBytes) : IExchangeArtifacts
 {
     private readonly string root = Path.GetFullPath(directory);
     private static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
@@ -22,7 +22,8 @@ public sealed class ExchangeArtifacts(string directory) : IExchangeArtifacts
     }
     public async Task<ExchangeArtifact> PutAsync(string format, string xml, CancellationToken token)
     {
-        if (!ExchangeOperations.Format(format) || string.IsNullOrWhiteSpace(xml) || Encoding.UTF8.GetByteCount(xml) > ExchangeOperations.MaxXmlBytes)
+        if (maxXmlBytes is < ExchangeOperations.MaxInlineXmlBytes or > ExchangeOperations.MaxXmlBytes
+            || !ExchangeOperations.Format(format) || string.IsNullOrWhiteSpace(xml) || Encoding.UTF8.GetByteCount(xml) > maxXmlBytes)
             throw new ProjectEditException("exchange_size_or_format_invalid");
         CheckRoot(); var descriptor = Describe(format, xml); var target = Path.Combine(root, descriptor.ArtifactId + ".json");
         var temporary = Path.Combine(root, Guid.NewGuid().ToString("N") + ".tmp");
@@ -41,14 +42,15 @@ public sealed class ExchangeArtifacts(string directory) : IExchangeArtifacts
         if (id is not { Length: 64 } || !id.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f')) throw new ProjectEditException("invalid_artifact_id");
         CheckRoot(); var path = Path.Combine(root, id + ".json"); var info = new FileInfo(path);
         if (!info.Exists) throw new ProjectEditException("artifact_not_found");
-        if ((info.Attributes & FileAttributes.ReparsePoint) != 0 || info.Length > ExchangeOperations.MaxXmlBytes * 7L) throw new ProjectEditException("artifact_invalid");
+        if ((info.Attributes & FileAttributes.ReparsePoint) != 0 || info.Length > maxXmlBytes * 7L) throw new ProjectEditException("artifact_invalid");
         try
         {
             await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (stream.Length > maxXmlBytes * 7L) throw new ProjectEditException("artifact_invalid");
             var bytes = new byte[checked((int)stream.Length)]; await stream.ReadExactlyAsync(bytes, token);
             var value = JsonSerializer.Deserialize<ExchangeDocument>(bytes, WorkerJson.Options);
             if (stream.ReadByte() != -1 || value is null || value.Artifact is null || value.Xml is null
-                || !ExchangeOperations.Format(value.Artifact.Format) || Encoding.UTF8.GetByteCount(value.Xml) > ExchangeOperations.MaxXmlBytes
+                || !ExchangeOperations.Format(value.Artifact.Format) || Encoding.UTF8.GetByteCount(value.Xml) > maxXmlBytes
                 || Describe(value.Artifact.Format, value.Xml) != value.Artifact || value.Artifact.ArtifactId != id) throw new ProjectEditException("artifact_integrity_mismatch");
             return value;
         }

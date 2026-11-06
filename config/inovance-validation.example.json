@@ -48,6 +48,9 @@
     "project.export",
     "project.import",
     "pou.graph.read",
-    "pou.graph.write"
+    "pou.graph.write",
+    "project.verify",
+    "project.batch",
+    "project.package"
   ]
 }

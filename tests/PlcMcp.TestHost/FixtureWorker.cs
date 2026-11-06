@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using PlcMcp.Execution;
 using PlcMcp.Services.Contracts.Configuration;
 using PlcMcp.Services.Contracts.Exchange;
 using PlcMcp.Services.Contracts.Execution;
@@ -20,6 +21,8 @@ public static class FixtureWorker
     public static async Task<int> RunAsync(string inputPath, string outputPath)
     {
         var request = JsonSerializer.Deserialize<WorkerRequest>(await File.ReadAllTextAsync(inputPath), WorkerJson.Options)!;
+        var maxExchange = int.TryParse(Environment.GetEnvironmentVariable("PLCMCP_EXCHANGE_MAX_BYTES"), out var configuredMaximum) ? configuredMaximum : ExchangeOperations.DefaultMaxXmlBytes;
+        request = await WorkerExchangeFiles.ReadRequestAsync(request, Path.GetDirectoryName(inputPath)!, maxExchange, default);
         if (request.ExecutionMode != "fixture" || request.ProtocolVersion != 1) return 2;
         var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!;
         var bytes = await File.ReadAllBytesAsync(input.ProjectPath);
@@ -167,6 +170,7 @@ public static class FixtureWorker
         }
         if (fixture.Fault == "wrong_id") response = response with { RequestId = Guid.NewGuid() };
         if (fixture.Fault == "wrong_mode") response = response with { ExecutionMode = "real" };
+        response = await WorkerExchangeFiles.PrepareResponseAsync(response, Path.GetDirectoryName(outputPath)!, maxExchange, default);
         var temporary = outputPath + ".tmp";
         await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(response, WorkerJson.Options));
         File.Move(temporary, outputPath);

@@ -31,14 +31,14 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-exchange-check-') as tmp, tempfi
             except OSError: time.sleep(0.1)
         else: raise TimeoutError('Fixture host startup timed out.')
         client=McpClient('http://127.0.0.1:5088/mcp',key)
-        tools=client.rpc('tools/list')['tools']; assert len(tools)==58,len(tools)
+        tools=client.rpc('tools/list')['tools']; assert len(tools)==67,len(tools)
         for tool in tools:
             assert tool['inputSchema']['type']=='object'; assert tool['outputSchema']['type']=='object'
         variables=json.loads((root/'config/regression/fixture-variables.json').read_text()); variables['runId']=secrets.token_hex(8)
         scenario=json.loads((root/'config/regression/p4-exchange.json').read_text())
         report=regression.run(client,scenario,variables,'fixture',30)
         if not report['succeeded']: raise AssertionError(json.dumps(report['cases'][-1],ensure_ascii=False,indent=2))
-        print('P4 HTTP regression: 58 tools, '+str(len(report['cases']))+' completed cases. Fixture only; no PLC compiler ran.')
+        print('P4 HTTP regression: 67 tools, '+str(len(report['cases']))+' completed cases. Fixture only; no PLC compiler ran.')
     except Exception:
         log.seek(0); print(log.read()[-6000:]); raise
     finally:

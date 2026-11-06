@@ -1,6 +1,10 @@
 using System.Net;
 using PlcMcp.EngineeringService.Exchange;
 using PlcMcp.Services.Contracts.Exchange;
+using PlcMcp.Services.Contracts.Batch;
+using PlcMcp.EngineeringService.Batch;
+using PlcMcp.EngineeringService.Delivery;
+using PlcMcp.Services.Contracts.Delivery;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +22,7 @@ using Serilog;
 
 namespace PlcMcp.McpHost;
 
-public sealed record HostPaths(string DataDirectory, string WorkspaceRoot);
+public sealed record HostPaths(string DataDirectory, string WorkspaceRoot, int MaxExchangeBytes = ExchangeOperations.DefaultMaxXmlBytes);
 public static class HostApplication
 {
     // Fixture composition comes from a separate tests/ executable, never production configuration.
@@ -39,7 +43,9 @@ public static class HostApplication
         if (validation && string.IsNullOrWhiteSpace(builder.Configuration["PlcMcp:WorkspaceRoot"])) throw new InvalidOperationException("Validation requires an explicit workspace root.");
         var validationProfile = validation ? InovanceValidationProfile.Load(builder.Configuration["PlcMcp:ValidationProfilePath"]
             ?? throw new InvalidOperationException("Set PlcMcp__ValidationProfilePath to an explicit local validation profile.")) : null;
-        var paths = new HostPaths(data, Path.GetFullPath(builder.Configuration["PlcMcp:WorkspaceRoot"] ?? Path.Combine(data, "workspaces")));
+        var maximum = builder.Configuration.GetValue("PlcMcp:Exchange:MaxXmlBytes", ExchangeOperations.DefaultMaxXmlBytes);
+        if (maximum is < ExchangeOperations.MaxInlineXmlBytes or > ExchangeOperations.MaxXmlBytes) throw new InvalidOperationException("Exchange MaxXmlBytes must be between 64 KiB and 64 MiB.");
+        var paths = new HostPaths(data, Path.GetFullPath(builder.Configuration["PlcMcp:WorkspaceRoot"] ?? Path.Combine(data, "workspaces")), maximum);
         Directory.CreateDirectory(paths.WorkspaceRoot);
         builder.Services.AddSerilog(config => config.WriteTo.Console());
         builder.Services.AddPlcMcpApplication();
@@ -47,16 +53,27 @@ public static class HostApplication
         builder.Services.AddSingleton(_ => new InstanceOwnership(paths.DataDirectory));
         IEngineeringExecutor rawWorker = testExecutor?.Invoke(paths) ?? new InovanceExecutor(new(
             builder.Configuration["PlcMcp:Inovance:ExecutablePath"] ?? "", builder.Configuration["PlcMcp:Inovance:Profile"] ?? "",
-            Path.Combine(AppContext.BaseDirectory, "Scripts", "engineering_worker.py"), Path.Combine(data, "invocations")), validationProfile: validationProfile);
+            Path.Combine(AppContext.BaseDirectory, "Scripts", "engineering_worker.py"), Path.Combine(data, "invocations"), maximum), validationProfile: validationProfile);
         builder.Services.AddSingleton<IWorkspaceFiles>(new WorkspaceFiles(paths.WorkspaceRoot));
         var options = new DbContextOptionsBuilder<PlcMcpDbContext>().UseSqlite(
             new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path.Combine(data, "execution.db"), DefaultTimeout = 10 }.ToString()).Options;
         builder.Services.AddSingleton<IJobStore>(_ => new SqliteJobStore(options, fixture ? "fixture" : "real"));
         builder.Services.AddSingleton<IManagedProjectFiles>(new ManagedProjectFiles(paths.WorkspaceRoot));
         builder.Services.AddSingleton<IProjectChangeStore>(new SqliteProjectChangeStore(options));
-        builder.Services.AddSingleton<IExchangeArtifacts>(new ExchangeArtifacts(Path.Combine(data, "exchange")));
+        builder.Services.AddSingleton<IExchangeArtifacts>(new ExchangeArtifacts(Path.Combine(data, "exchange"), maximum));
         builder.Services.AddSingleton<ExchangeService>();
-        builder.Services.AddSingleton<IEngineeringExecutor>(sp => new ManagedProjectExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>()));
+        builder.Services.AddSingleton<IExchangeUploads>(sp => new ExchangeUploads(Path.Combine(data, "uploads"), async (format, xml, token) =>
+        {
+            _ = ExchangeXml.Inspect(format, xml);
+            return await sp.GetRequiredService<IExchangeArtifacts>().PutAsync(format, xml, token);
+        }, maximum));
+        builder.Services.AddSingleton<IBatchJournal>(new BatchJournalStore(Path.Combine(data, "batches")));
+        builder.Services.AddSingleton<BatchService>();
+        builder.Services.AddSingleton<IDeliveryArtifacts>(new DeliveryArtifacts(Path.Combine(data, "deliveries")));
+        builder.Services.AddSingleton<DeliveryService>();
+        builder.Services.AddSingleton<IEngineeringExecutor>(sp => new DeliveryExecutor(
+            new ManagedProjectExecutor(new BatchExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>()), sp.GetRequiredService<IBatchJournal>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>()),
+            sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IDeliveryArtifacts>()));
         builder.Services.AddSingleton<ManagedEditingJobs>();
         builder.Services.AddSingleton<EngineeringJobs>();
         builder.Services.AddSingleton<JobDispatcher>();
@@ -64,7 +81,7 @@ public static class HostApplication
         builder.Services.AddHostedService<ExecutionService>();
         var mcp = builder.Services.AddMcpServer()
             .WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless).WithTools<PlatformTools>();
-        if (fixture || validation) mcp.WithTools<EngineeringTools>().WithTools<EditingTools>().WithTools<ConfigurationTools>().WithTools<ExchangeTools>();
+        if (fixture || validation) mcp.WithTools<EngineeringTools>().WithTools<EditingTools>().WithTools<ConfigurationTools>().WithTools<ExchangeTools>().WithTools<DeliveryTools>();
         var app = builder.Build();
         try
         {
@@ -84,7 +101,7 @@ public static class HostApplication
             }
             await next(context);
         });
-        app.MapGet("/health/live", () => Results.Ok(new { status = "alive", stage = "P4-exchange-graphs", engineeringReady = false, executionMode = fixture ? "fixture" : "real", validationSession = validation }));
+        app.MapGet("/health/live", () => Results.Ok(new { status = "alive", stage = "P5-engineering-delivery", engineeringReady = false, executionMode = fixture ? "fixture" : "real", validationSession = validation }));
         app.MapMcp("/mcp");
         return app;
     }

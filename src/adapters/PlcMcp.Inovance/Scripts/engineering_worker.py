@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from configuration_worker import ConfigurationEngine, READS as CONFIG_READS, WRITES as CONFIG_WRITES
 from collections import deque
-from exchange_worker import ExchangeEngine, READS as EXCHANGE_READS, WRITES as EXCHANGE_WRITES
+from exchange_worker import ExchangeEngine, READS as EXCHANGE_READS, WRITES as EXCHANGE_WRITES, read_transport, write_transport
 
 try:
     text_type = unicode
@@ -384,7 +384,7 @@ def main(bindings):
         raw = source.read(MAX_REQUEST + 1)
     if len(raw) > MAX_REQUEST:
         raise ValueError("Request too large")
-    request = json.loads(raw.decode("utf-8"))
+    request = read_transport(json.loads(raw.decode("utf-8")), os.path.dirname(request_path))
     available = dict(bindings)
     try:
         import scriptengine
@@ -393,7 +393,7 @@ def main(bindings):
                 available[name] = getattr(scriptengine, name, None)
     except ImportError:
         pass
-    response = execute(request, available)
+    response = write_transport(execute(request, available), os.path.dirname(result_path))
     raw = json.dumps(response, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
     if len(raw) > MAX_RESULT:
         response.update({"outcome": "failed", "errorCode": "result_too_large", "payload": None})

@@ -16,10 +16,17 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore PlcMcpPlatform.sln --locked-mode
       - run: dotnet build PlcMcpPlatform.sln -c Release --no-restore
+      - run: python eng/verify-execution.py --write-contracts
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux'
+        with:
+          name: p5-contract-review
+          path: contracts/*.json
       - run: dotnet test PlcMcpPlatform.sln -c Release --no-build --no-restore
       - run: python eng/verify-mcp.py
       - run: python eng/verify-execution.py
       - run: python eng/verify-editing.py
       - run: python eng/verify-configuration.py
       - run: python eng/verify-exchange.py
+      - run: python eng/verify-delivery.py
       - run: python -m unittest discover -s tests/script_engine -v

@@ -1,5 +1,7 @@
 using PlcMcp.EngineeringService.Configuration;
 using PlcMcp.EngineeringService.Exchange;
+using PlcMcp.EngineeringService.Batch;
+using PlcMcp.Services.Contracts.Batch;
 using PlcMcp.Services.Contracts.Exchange;
 using PlcMcp.Services.Contracts.Configuration;
 using System.Security.Cryptography;
@@ -32,6 +34,9 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
             var cached = await jobs.FindSubmissionAsync(workspace, operation, key, fingerprint, token);
             if (cached is not null) return cached;
             if (executor.CheckAvailability(operation) is { } unavailable) return Result<JobView>.Failure(unavailable.Code, unavailable.Message);
+            if (input.Batch is { } batch)
+                foreach (var required in BatchValidation.Required(batch))
+                    if (executor.CheckAvailability(required) is { } denied) return Result<JobView>.Failure(denied.Code, denied.Message);
             var head = await changes.GetHeadAsync(workspace, token);
             ProjectSnapshot source;
             if (operation == EditOperations.CreateProject)
@@ -103,13 +108,19 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
         catch (Exception error) when (error is ProjectEditException or IOException or UnauthorizedAccessException or JsonException or InvalidOperationException)
         { return Result<JobView>.Failure("reconciliation_conflict", "Saved evidence does not match current files. The slot remains blocked."); }
     }
-    private static string? Validate(string op, EditInput input, string key, string? revision, int timeout)
+    public static string? Validate(string op, EditInput input, string key, string? revision, int timeout)
     {
         if (!EditOperations.Contains(op) || string.IsNullOrWhiteSpace(key) || key.Length > 128 || timeout is < 1 or > 600
             || revision is { Length: > 128 } || string.IsNullOrWhiteSpace(input.WorkspaceName)) return "invalid_request";
         if (op == EditOperations.CreateProject)
             return string.IsNullOrWhiteSpace(input.TemplateId) ? "template_required" : null;
         if (string.IsNullOrWhiteSpace(revision)) return "expected_revision_required";
+        if (op == BatchOperations.Apply)
+        {
+            var error = BatchValidation.Validate(input.WorkspaceName, input.Batch);
+            return error ?? (BatchValidation.Hash(input.WorkspaceName, revision, input.Batch!) == input.PlanSha256 ? null : "batch_plan_changed");
+        }
+        if (input.Batch is not null || input.PlanSha256 is not null) return "batch_field_not_applicable";
         if (op == EditOperations.SaveProject) return null;
         if (ExchangeOperations.IsWrite(op)) return ExchangeValidation.Write(op, input);
         if (ConfigurationOperations.IsWrite(op)) return ConfigurationValidation.Write(op, input);

@@ -7,7 +7,8 @@ using PlcMcp.SharedKernel.Results;
 
 namespace PlcMcp.Inovance;
 
-public sealed record InovanceOptions(string ExecutablePath, string Profile, string ScriptPath, string WorkDirectory);
+public sealed record InovanceOptions(string ExecutablePath, string Profile, string ScriptPath, string WorkDirectory,
+    int MaxExchangeBytes = PlcMcp.Services.Contracts.Exchange.ExchangeOperations.DefaultMaxXmlBytes);
 
 public sealed class InovanceExecutor(InovanceOptions options, IInovanceLaunchProfile? launchProfile = null, InovanceValidationProfile? validationProfile = null) : IEngineeringExecutor
 {
@@ -35,7 +36,7 @@ public sealed class InovanceExecutor(InovanceOptions options, IInovanceLaunchPro
         if (request.Payload.TryGetProperty("ideProfile", out var requiredProfile) && requiredProfile.ValueKind == System.Text.Json.JsonValueKind.String
             && requiredProfile.GetString() != options.Profile) return WorkerJson.Failed(request, "ide_profile_mismatch");
         var profile = launchProfile ?? new ScriptEngine35LaunchProfile(options);
-        var worker = new ProcessWorker(options.WorkDirectory, profile.CreateInvocation);
+        var worker = new ProcessWorker(options.WorkDirectory, profile.CreateInvocation, maxExchangeBytes: options.MaxExchangeBytes);
         if (validationProfile!.Evidence(options.ScriptPath).ScriptSha256 != Validation!.ScriptSha256)
             return WorkerJson.Failed(request, "validation_scripts_changed_restart_required");
         var result = await worker.RunAsync(request, cancellationToken);

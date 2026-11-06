@@ -5,7 +5,8 @@ using PlcMcp.SharedKernel.Results;
 
 namespace PlcMcp.TestHost;
 
-public sealed class FixtureExecutor(string directory, string? workerAssembly = null) : IEngineeringExecutor
+public sealed class FixtureExecutor(string directory, string? workerAssembly = null,
+    int maxExchangeBytes = PlcMcp.Services.Contracts.Exchange.ExchangeOperations.DefaultMaxXmlBytes) : IEngineeringExecutor
 {
     public string ExecutionMode => "fixture";
     public OperationError? Unavailability => null;
@@ -13,7 +14,7 @@ public sealed class FixtureExecutor(string directory, string? workerAssembly = n
     {
         var runner = new ProcessWorker(directory, (input, output) => new(
             Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet",
-            [workerAssembly ?? typeof(FixtureExecutor).Assembly.Location, "--fixture-worker", input, output]), childlessTestWorker: true);
+            [workerAssembly ?? typeof(FixtureExecutor).Assembly.Location, "--fixture-worker", input, output]), childlessTestWorker: true, maxExchangeBytes: maxExchangeBytes);
         return runner.RunAsync(request, cancellationToken);
     }
 }

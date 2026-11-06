@@ -1,0 +1,787 @@
+{
+  "schemaVersion": 1,
+  "description": "Single-Application batch generation, failure preservation, mixed text/graph binding and exact-revision delivery. Target template has no Task Configuration; real compatibility remains unverified.",
+  "cases": [
+    {
+      "id": "create",
+      "tool": "plc_project_create",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "templateId": "${templateId}"
+      },
+      "bind": {
+        "baseRevision": "/result/revision"
+      }
+    },
+    {
+      "id": "preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "state",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineState",
+                "dutType": "Enumeration",
+                "declaration": "TYPE MachineState : (Idle, Running); END_TYPE"
+              }
+            },
+            {
+              "id": "globals",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineData",
+                "declaration": "VAR_GLOBAL\nEnabled : BOOL;\nEND_VAR"
+              }
+            },
+            {
+              "id": "block",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "FB_Counter",
+                "pouType": "FunctionBlock",
+                "language": "ST",
+                "declaration": "FUNCTION_BLOCK FB_Counter\nVAR_INPUT\nEnabled : BOOL;\nEND_VAR\nVAR_OUTPUT\nCount : DINT;\nEND_VAR",
+                "implementation": "IF Enabled THEN Count := Count + 1; END_IF;"
+              }
+            },
+            {
+              "id": "program",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Main",
+                "pouType": "Program",
+                "language": "ST",
+                "declaration": "PROGRAM Main\nVAR\nCounter : FB_Counter;\nEND_VAR",
+                "implementation": "Counter(Enabled := MachineData.Enabled);"
+              }
+            },
+            {
+              "id": "configuration",
+              "operation": "task.configuration.create",
+              "change": {
+                "parentId": "${applicationId}"
+              }
+            },
+            {
+              "id": "task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "MainTask",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "1",
+                    "interval": "20",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calls",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "@task",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "@program",
+                      "pouName": "Main"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "planHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "changed-plan",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "state",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineState",
+                "dutType": "Enumeration",
+                "declaration": "TYPE MachineState : (Idle, Running); END_TYPE"
+              }
+            },
+            {
+              "id": "globals",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineData",
+                "declaration": "VAR_GLOBAL\nEnabled : BOOL;\nEND_VAR"
+              }
+            },
+            {
+              "id": "block",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "FB_Counter",
+                "pouType": "FunctionBlock",
+                "language": "ST",
+                "declaration": "FUNCTION_BLOCK FB_Counter\nVAR_INPUT\nEnabled : BOOL;\nEND_VAR\nVAR_OUTPUT\nCount : DINT;\nEND_VAR",
+                "implementation": "IF Enabled THEN Count := Count + 1; END_IF;"
+              }
+            },
+            {
+              "id": "program",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Main",
+                "pouType": "Program",
+                "language": "ST",
+                "declaration": "PROGRAM Main\nVAR\nCounter : FB_Counter;\nEND_VAR",
+                "implementation": "Counter(Enabled := MachineData.Enabled);"
+              }
+            },
+            {
+              "id": "configuration",
+              "operation": "task.configuration.create",
+              "change": {
+                "parentId": "${applicationId}"
+              }
+            },
+            {
+              "id": "task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "MainTask",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "1",
+                    "interval": "20",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calls",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "@task",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "@program",
+                      "pouName": "Main"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "expectToolError": true,
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "batch_plan_changed"
+        }
+      ]
+    },
+    {
+      "id": "apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "state",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineState",
+                "dutType": "Enumeration",
+                "declaration": "TYPE MachineState : (Idle, Running); END_TYPE"
+              }
+            },
+            {
+              "id": "globals",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MachineData",
+                "declaration": "VAR_GLOBAL\nEnabled : BOOL;\nEND_VAR"
+              }
+            },
+            {
+              "id": "block",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "FB_Counter",
+                "pouType": "FunctionBlock",
+                "language": "ST",
+                "declaration": "FUNCTION_BLOCK FB_Counter\nVAR_INPUT\nEnabled : BOOL;\nEND_VAR\nVAR_OUTPUT\nCount : DINT;\nEND_VAR",
+                "implementation": "IF Enabled THEN Count := Count + 1; END_IF;"
+              }
+            },
+            {
+              "id": "program",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Main",
+                "pouType": "Program",
+                "language": "ST",
+                "declaration": "PROGRAM Main\nVAR\nCounter : FB_Counter;\nEND_VAR",
+                "implementation": "Counter(Enabled := MachineData.Enabled);"
+              }
+            },
+            {
+              "id": "configuration",
+              "operation": "task.configuration.create",
+              "change": {
+                "parentId": "${applicationId}"
+              }
+            },
+            {
+              "id": "task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "MainTask",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "1",
+                    "interval": "20",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calls",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "@task",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "@program",
+                      "pouName": "Main"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${planHash}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "batchJobId": "/jobId",
+        "programIdCreated": "/result/engineeringResult/batch/aliases/program",
+        "taskIdCreated": "/result/engineeringResult/batch/aliases/task"
+      },
+      "expect": [
+        {
+          "path": "/result/engineeringResult/batch/compile/succeeded",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "progress",
+      "tool": "plc_batch_get",
+      "arguments": {
+        "jobId": "${batchJobId}"
+      },
+      "expect": [
+        {
+          "path": "/value/journal/state",
+          "equals": "verified"
+        },
+        {
+          "path": "/value/job/status",
+          "equals": "Succeeded"
+        }
+      ]
+    },
+    {
+      "id": "read-program",
+      "tool": "plc_pou_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${programIdCreated}"
+      },
+      "expect": [
+        {
+          "path": "/result/implementation",
+          "equals": "Counter(Enabled := MachineData.Enabled);"
+        }
+      ]
+    },
+    {
+      "id": "package",
+      "tool": "plc_delivery_create",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "expectedRevision": "${revision}",
+        "applicationId": "${applicationId}"
+      },
+      "bind": {
+        "packageId": "/result/artifact/artifactId",
+        "packageSha": "/result/artifact/sha256",
+        "packageBytes": "/result/artifact/byteLength"
+      },
+      "expect": [
+        {
+          "path": "/result/artifact/engineeringReady",
+          "equals": false
+        },
+        {
+          "path": "/result/artifact/revision",
+          "equals": "${revision}"
+        }
+      ]
+    },
+    {
+      "id": "package-chunk",
+      "tool": "plc_delivery_read",
+      "arguments": {
+        "artifactId": "${packageId}",
+        "offset": 0,
+        "maxBytes": 512
+      },
+      "expect": [
+        {
+          "path": "/value/artifact/revision",
+          "equals": "${revision}"
+        }
+      ]
+    },
+    {
+      "id": "head-unchanged",
+      "tool": "plc_workspace_get",
+      "arguments": {
+        "workspaceName": "p5-${runId}"
+      },
+      "expect": [
+        {
+          "path": "/value/revision",
+          "equals": "${revision}"
+        }
+      ]
+    },
+    {
+      "id": "failure-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "first",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "ConflictState",
+                "dutType": "Enumeration",
+                "declaration": "TYPE ConflictState : (One, Two); END_TYPE"
+              }
+            },
+            {
+              "id": "second",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "ConflictState",
+                "dutType": "Enumeration",
+                "declaration": "TYPE ConflictState : (One, Two); END_TYPE"
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "failureHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "failure-apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "first",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "ConflictState",
+                "dutType": "Enumeration",
+                "declaration": "TYPE ConflictState : (One, Two); END_TYPE"
+              }
+            },
+            {
+              "id": "second",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "ConflictState",
+                "dutType": "Enumeration",
+                "declaration": "TYPE ConflictState : (One, Two); END_TYPE"
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${failureHash}"
+      },
+      "expect": [
+        {
+          "path": "/status",
+          "equals": "Failed"
+        },
+        {
+          "path": "/errorCode",
+          "equals": "object_name_conflict"
+        }
+      ]
+    },
+    {
+      "id": "failure-head-preserved",
+      "tool": "plc_workspace_get",
+      "arguments": {
+        "workspaceName": "p5-${runId}"
+      },
+      "expect": [
+        {
+          "path": "/value/revision",
+          "equals": "${revision}"
+        }
+      ]
+    },
+    {
+      "id": "old-package-revision",
+      "tool": "plc_delivery_create",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "applicationId": "${applicationId}"
+      },
+      "expectToolError": true,
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "workspace_revision_conflict"
+        }
+      ]
+    },
+    {
+      "id": "graph-generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "StartStop",
+          "pouType": "program",
+          "language": "LD",
+          "variables": [
+            {
+              "name": "Start",
+              "type": "BOOL"
+            },
+            {
+              "name": "Stop",
+              "type": "BOOL"
+            },
+            {
+              "name": "Running",
+              "type": "BOOL"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "leftPowerRail",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "contact",
+              "expression": "Start",
+              "x": 40,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "kind": "contact",
+              "expression": "Running",
+              "x": 40,
+              "y": 60,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "kind": "contact",
+              "expression": "Stop",
+              "negated": true,
+              "x": 120,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 2
+                    },
+                    {
+                      "sourceId": 3
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "kind": "coil",
+              "expression": "Running",
+              "x": 200,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 4
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ],
+              "executionOrder": 1
+            },
+            {
+              "id": 6,
+              "kind": "rightPowerRail",
+              "x": 280,
+              "y": 20,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "graphArtifact": "/value/artifact/artifactId"
+      }
+    },
+    {
+      "id": "graph-plan",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "graph",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "StartStop",
+                "artifactId": "${graphArtifact}"
+              }
+            },
+            {
+              "id": "bindGraph",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "${taskIdCreated}",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "${programIdCreated}",
+                      "pouName": "Main"
+                    },
+                    {
+                      "pouId": "@graph",
+                      "pouName": "StartStop"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "graphPlanHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "graph-batch",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p5-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "graph",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "StartStop",
+                "artifactId": "${graphArtifact}"
+              }
+            },
+            {
+              "id": "bindGraph",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "${taskIdCreated}",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "${programIdCreated}",
+                      "pouName": "Main"
+                    },
+                    {
+                      "pouId": "@graph",
+                      "pouName": "StartStop"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${graphPlanHash}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      },
+      "expect": [
+        {
+          "path": "/result/engineeringResult/batch/compile/succeeded",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "graph-head",
+      "tool": "plc_workspace_get",
+      "arguments": {
+        "workspaceName": "p5-${runId}"
+      },
+      "expect": [
+        {
+          "path": "/value/revision",
+          "equals": "${revision}"
+        }
+      ]
+    },
+    {
+      "id": "bad-delivery-id",
+      "tool": "plc_delivery_read",
+      "arguments": {
+        "artifactId": "../outside"
+      },
+      "expectToolError": true,
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "invalid_delivery_id"
+        }
+      ]
+    }
+  ]
+}

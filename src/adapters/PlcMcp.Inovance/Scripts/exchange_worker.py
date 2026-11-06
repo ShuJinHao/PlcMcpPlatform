@@ -19,7 +19,8 @@ except NameError:
 
 READS = ('project.export', 'pou.graph.read')
 WRITES = ('project.import', 'pou.graph.write')
-MAX_XML = 65536
+MAX_XML = int(os.environ.get('PLCMCP_EXCHANGE_MAX_BYTES', 8 * 1024 * 1024))
+if not 65536 <= MAX_XML <= 64 * 1024 * 1024: raise ValueError('Invalid exchange limit')
 P = '{http://www.plcopen.org/xml/tc6_0201}'
 
 
@@ -35,9 +36,41 @@ def parse_xml(xml, fail):
     queue, count = [(root, 0)], 0
     while queue:
         node, depth = queue.pop(); count += 1
-        if depth > 32 or count > 4096: fail('exchange_structure_too_large')
+        if depth > 32 or count > 100000: fail('exchange_structure_too_large')
         queue.extend((child, depth + 1) for child in node)
     return root
+
+
+def read_transport(request, directory):
+    change = (request.get('payload', {}).get('edit') or {}).get('exchange') or {}
+    ref = change.get('file')
+    if ref is None: return request
+    if change.get('xml') is not None or ref.get('name') != 'exchange-input.xml': raise ValueError('Invalid exchange transport')
+    size = ref.get('byteLength')
+    if type(size) is not int or not 0 < size <= MAX_XML: raise ValueError('Invalid exchange length')
+    path = os.path.join(directory, 'exchange-input.xml')
+    if os.path.islink(path) or os.path.getsize(path) != size: raise ValueError('Invalid exchange file')
+    with open(path, 'rb') as source: raw = source.read(size + 1)
+    if len(raw) != size or hashlib.sha256(raw).hexdigest() != ref.get('sha256'): raise ValueError('Exchange integrity mismatch')
+    change['xml'] = raw.decode('utf-8'); del change['file']
+    return request
+
+
+def write_transport(response, directory):
+    exchange = (response.get('payload') or {}).get('exchange')
+    if not exchange or not isinstance(exchange.get('xml'), text_type): return response
+    if exchange.get('file') is not None: raise ValueError('Ambiguous exchange transport')
+    raw = exchange['xml'].encode('utf-8')
+    if len(raw) > MAX_XML: raise ValueError('Exchange limit exceeded')
+    if len(raw) <= 65536: return response
+    path = os.path.join(directory, 'exchange-output.xml')
+    # Each invocation has a fresh directory. Never overwrite a pre-existing file or link.
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, 'wb') as target:
+        target.write(raw); target.flush(); os.fsync(target.fileno())
+    exchange['file'] = dict(name='exchange-output.xml', sha256=hashlib.sha256(raw).hexdigest(), byteLength=len(raw))
+    exchange['xml'] = None
+    return response
 
 
 def canonical(xml, format_name, fail):

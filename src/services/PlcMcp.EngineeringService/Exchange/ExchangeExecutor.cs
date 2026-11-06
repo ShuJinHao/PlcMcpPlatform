@@ -22,8 +22,17 @@ public sealed class ExchangeExecutor(IEngineeringExecutor worker, IExchangeArtif
         try
         {
             var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!;
+            if (input.Edit?.Exchange is { } change)
+            {
+                var stored = await artifacts.GetAsync(change.ArtifactId, token);
+                if (stored.Artifact.Format != change.Format || change.Xml is not null && change.Xml != stored.Xml)
+                    throw new ProjectEditException("artifact_integrity_mismatch");
+                input = input with { Edit = input.Edit with { Exchange = change with { Xml = stored.Xml } } };
+                if (ExchangeValidation.Write(request.Operation, input.Edit) is { } invalid) throw new ProjectEditException(invalid);
+                request = request with { Payload = JsonSerializer.SerializeToElement(input, WorkerJson.Options) };
+            }
             var graphWrite = request.Operation == ExchangeOperations.WriteGraph;
-            var expected = graphWrite ? PlcOpenGraphCodec.Decode(input.Edit!.Exchange!.Xml) : null;
+            var expected = graphWrite ? PlcOpenGraphCodec.Decode(input.Edit!.Exchange!.Xml!) : null;
             if (graphWrite && input.Edit!.ObjectId is { } id)
             {
                 var probe = request with { RequestId = Guid.NewGuid(), Operation = ExchangeOperations.ReadGraph,
