@@ -5,7 +5,6 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
-import tempfile
 import zipfile
 from release_metadata import metadata
 
@@ -51,6 +50,15 @@ def validate(directory, target):
     return release, [root/r['file'] for r in rows]+[root/'SHA256SUMS',root/'prerelease.json']
 
 
+def verify_existing(existing, tag, assets):
+    if existing.get('tag_name') != tag or not existing.get('prerelease') or existing.get('draft'):
+        raise ValueError('existing_release_is_not_the_expected_prerelease')
+    uploaded=existing.get('assets',[])
+    if len(uploaded)!=len(assets) or {a.get('name') for a in uploaded}!={p.name for p in assets} or any(
+            a.get('state')!='uploaded' or not isinstance(a.get('size'),int) or a['size']<=0 for a in uploaded):
+        raise ValueError('existing_release_incomplete_requires_review')
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--directory',required=True);parser.add_argument('--target',required=True)
     parser.add_argument('--repository');parser.add_argument('--publish',action='store_true');args=parser.parse_args()
@@ -60,7 +68,7 @@ def main():
     found=subprocess.run(['gh','api',f'repos/{args.repository}/releases/tags/{tag}'],capture_output=True,text=True)
     if found.returncode==0:
         existing=json.loads(found.stdout)
-        if not existing.get('prerelease') or existing.get('draft'): raise ValueError('existing_release_is_not_the_expected_prerelease')
+        verify_existing(existing,tag,assets)
         print(json.dumps(dict(status='existing_version_preserved',url=existing['html_url'])));return 0
     if 'HTTP 404' not in found.stderr: raise ValueError('release_lookup_failed')
     # A pre-existing tag without a release requires review; never repoint it implicitly.

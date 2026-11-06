@@ -45,3 +45,11 @@ class ReleaseCandidateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'checksum'):release.validate(self.root,self.target)
         self.packages();(self.root/'SHA256SUMS').write_text('not the inventory')
         with self.assertRaisesRegex(ValueError,'checksum_inventory'):release.validate(self.root,self.target)
+    def test_partial_existing_release_cannot_be_reported_as_success(self):
+        self.packages();metadata,assets=release.validate(self.root,self.target);tag='v'+metadata['version']
+        existing=dict(tag_name=tag,prerelease=True,draft=False,assets=[dict(name=p.name,state='uploaded',size=p.stat().st_size) for p in assets])
+        release.verify_existing(existing,tag,assets)
+        existing['assets'][0]['state']='starter'
+        with self.assertRaisesRegex(ValueError,'incomplete'):release.verify_existing(existing,tag,assets)
+        existing['assets'].pop(0)
+        with self.assertRaisesRegex(ValueError,'incomplete'):release.verify_existing(existing,tag,assets)

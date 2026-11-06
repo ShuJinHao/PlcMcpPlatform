@@ -112,6 +112,14 @@ public sealed class RetentionTests
         Assert.Equal("maintenance_execution_unresolved", (await Assert.ThrowsAsync<ProjectEditException>(() => maintenance.PreviewAsync(new(), DateTimeOffset.UtcNow, default))).Code);
         Assert.Equal("Queued", (await h.Store.GetAsync(job.Value!.JobId, default))!.Status);
     }
+    [Fact] public async Task Shared_workspace_with_another_data_directory_is_also_exclusively_owned()
+    {
+        using var f = new Files(); await f.Upload();
+        using (var owner = new InstanceOwnership(Path.Combine(f.Root, "other-data"), f.Workspace))
+            await Assert.ThrowsAsync<IOException>(() => f.Service.PreviewAsync(new(), f.Now, default));
+        Assert.Single((await f.Service.PreviewAsync(new(), f.Now, default)).Items);
+        using var sameRoot = new InstanceOwnership(f.Data, f.Data + Path.DirectorySeparatorChar);
+    }
     [Fact] public async Task Unsafe_candidate_path_and_unstopped_execution_are_never_deleted()
     {
         using var f = new Files(); var candidate = await f.Candidate(); var failed = f.Source.Value.Failures[0];

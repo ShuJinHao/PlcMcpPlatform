@@ -45,7 +45,6 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 | [第七批成员与批量修改](docs/18-members-batch.md) | 工程对象查询、访问器修改、设备/库作用范围和多应用检查 |
 | [第八批图形扩展](docs/19-graph-v2-engineering.md) | graph-v2 类型、LD/FBD 连线、SFC 分支、混合语言与回归边界 |
 | [第九批正式执行与预发布](docs/20-production-readiness.md) | 实际身份、验收范围、正式工具门禁、三种交付包与诊断 |
-
 | [第十批交付与统一回归](docs/21-delivery-closure.md) | 启动、保留策略、模型回归、候选发布 |
 | [当前工具清单](docs/22-current-tools.md) | 74 个实现的契约与代码入口 |
 | [当前功能范围与缺口](docs/23-capability-closure.md) | 已实现范围、厂商待验证和未实现项 |

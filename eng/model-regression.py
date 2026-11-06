@@ -30,6 +30,11 @@ def decode_output(value):
     if isinstance(value, str):
         try: return decode_output(json.loads(value))
         except (ValueError, TypeError): return None
+    if isinstance(value, list):
+        for block in value:
+            decoded = decode_output(block.get('text')) if isinstance(block, dict) else None
+            if decoded is not None: return decoded
+        return None
     if isinstance(value, dict) and 'structuredContent' in value: return value['structuredContent']
     if isinstance(value, dict) and 'content' in value:
         for block in value['content']:

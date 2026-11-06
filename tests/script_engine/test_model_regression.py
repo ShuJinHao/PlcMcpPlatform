@@ -21,6 +21,7 @@ class ModelRegressionTests(unittest.TestCase):
     def test_decode_stock_cli_tool_events_and_reject_duplicate_session_or_other_tool(self):
         event=dict(type='tool_use',sessionID='one',part=dict(callID='a',tool='plc_plc_job_get',state=dict(status='completed',input=dict(jobId='job'),output=json.dumps(dict(job=dict(jobId='job'))))))
         self.assertEqual(model.calls_from_events(json.dumps(event),{'plc_job_get'})[0]['output']['job']['jobId'],'job')
+        self.assertEqual(model.decode_output(json.dumps([dict(type='text',text=json.dumps(dict(job=dict(jobId='job'))))]))['job']['jobId'],'job')
         with self.assertRaises(ValueError):model.calls_from_events(json.dumps(event)+'\n'+json.dumps(event),{'plc_job_get'})
         event['part']['tool']='bash'
         with self.assertRaisesRegex(ValueError,'unexpected_non_plc_tool'):model.calls_from_events(json.dumps(event),{'plc_job_get'})

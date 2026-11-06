@@ -112,12 +112,12 @@ public sealed class RetentionMaintenance(string dataDirectory, string workspaceR
     }
     public async Task<RetentionPlan> PreviewAsync(RetentionPolicy policy, DateTimeOffset now, CancellationToken token)
     {
-        using var owner = new InstanceOwnership(data);
+        using var owner = new InstanceOwnership(data, workspace);
         return await Scan(policy, now, token);
     }
     public async Task<RetentionReceipt> ApplyAsync(RetentionPlan plan, DateTimeOffset now, CancellationToken token)
     {
-        using var owner = new InstanceOwnership(data);
+        using var owner = new InstanceOwnership(data, workspace);
         if (plan.SchemaVersion != 1 || plan.Policy is null || plan.Items is null || !Digest(plan.PlanSha256) || plan.PlanSha256 != Hash(plan with { PlanSha256 = "" })
             || plan.DataDirectory != data || plan.WorkspaceRoot != workspace) throw new ProjectEditException("maintenance_plan_invalid");
         var audit = Path.Combine(data, "maintenance"); Guard(data, audit); Directory.CreateDirectory(audit);

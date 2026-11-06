@@ -12,7 +12,7 @@
 - fixture：Mac/Linux/Windows 可运行模拟工程回归，结果明确为 simulated。
 - validation：后续 Windows + 目标 InoProShop 集中验证使用，需显式操作白名单；先完成 docs/20 的环境配置。
 
-三种模式分别使用数据目录。需要 .NET 8 ASP.NET Core Runtime；源码开发使用 .NET 8 SDK。辅助命令需要 Python 3，工程脚本仍由 IDE 内的 IronPython 执行。命令中的目录都由使用者选择；包本身保持只读。
+三种模式分别使用数据和工程目录。服务与维护命令同时锁定数据根和工程根，不能用不同数据目录绕过同一工程根的互斥。需要 .NET 8 ASP.NET Core Runtime；源码开发使用 .NET 8 SDK。辅助命令需要 Python 3，工程脚本仍由 IDE 内的 IronPython 执行。命令中的目录都由使用者选择；包本身保持只读。
 
 Mac/Linux fixture 示例（已解压 fixture 包，命令从包目录执行）：
 
