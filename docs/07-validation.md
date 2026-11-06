@@ -25,10 +25,12 @@
 | HTTP MCP 冒烟 | 实际启动 Host 后通过：鉴权、Origin 拒绝、协议初始化、工具发现、两个工具调用、能力状态及不存在的编译工具拒绝 |
 | 9 个测试方法 | 使用仓库外临时调用器逐一执行原有 xUnit Fact 方法及断言，9/9 通过，包括真实 SQLite 内存数据库约束与并发检查 |
 | 标准 `dotnet test` | 当前执行环境的 VSTest 在测试分发前抛出 `NullReferenceException`，没有得到标准测试运行器结果；直接调用结果不能替代此项 |
-| GitHub Actions | 已配置 Windows/Linux 标准构建、测试与 HTTP 冒烟；首次远端运行结果待确认 |
-| Windows / InoProShop / OpenCode | 尚未实机联调；没有宣称已生成、保存或编译真实 PLC 工程 |
+| GitHub Actions | Windows/Linux 均通过锁定还原、Release 构建、标准 `dotnet test`（每个平台 9/9，0 跳过）和 HTTP MCP 冒烟 |
+| InoProShop / OpenCode | 尚未实机联调；Windows CI 只验证核心工程和 MCP 接口，没有宣称已生成、保存或编译真实 PLC 工程 |
 
-临时调用器只用于定位当前环境下的测试运行器问题，没有改变测试代码或弱化断言，不作为产品交付。发布前必须在正常 Windows 开发机或 CI 上通过仓库内的标准 `dotnet test`。Windows/InoProShop 和 OpenCode 客户端现场联调不能由 Linux 检查替代。
+远端证据：[GitHub Actions 首次验证记录](https://github.com/ShuJinHao/PlcMcpPlatform/actions/runs/42149181790)，验证代码提交为 `524a84625817c7f62bc625307664ddb7627aa6df`。本次记录更新仅修改文档。
+
+临时调用器只用于定位当前本地环境下的测试运行器问题，没有改变测试代码或弱化断言，不作为产品交付。标准运行器验证已在 Windows/Linux CI 完成。InoProShop 和 OpenCode 客户端现场联调仍需在用户目标环境单独验收。
 
 ## 后续必须覆盖的故障场景
 

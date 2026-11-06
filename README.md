@@ -15,6 +15,8 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 **当前不能生成或编译真实 PLC 工程。** InoProShop Worker、脚本实现、持久化调度和工程写入属于后续阶段；没有模拟成功的工程工具。SQLite 当前提供领域映射与测试，Host 尚未接入运行数据库。
 
+P0 已通过 Windows/Linux 的 Release 构建、9 项测试和 HTTP MCP 冒烟验证，详见 [验收记录](docs/07-validation.md)。
+
 ## 文档入口
 
 | 文档 | 回答的问题 |
