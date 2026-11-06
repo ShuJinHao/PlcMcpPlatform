@@ -69,7 +69,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-members-check-') as tmp, tempfil
             applicationId=variables['applicationId'], collection='members', parentId=variables['motorId'], pageSize=2,
             cursor=variables['memberCursor'], idempotencyKey='stale-cursor'), allow_error=True)
         assert stale['error']['code'] == 'engineering_cursor_query_mismatch'
-        print('P7 HTTP regression: 74 tools, 22 scenario cases, 28-step engineering batch, member compile failure and revision-bound cursors passed. Fixture only.')
+        print('P7 HTTP regression: 74 tools, 21 scenario cases, 28-step engineering batch, member compile failure and revision-bound cursors passed. Fixture only.')
     except Exception:
         log.seek(0); print(log.read()[-6000:]); raise
     finally:

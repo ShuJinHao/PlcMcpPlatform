@@ -118,3 +118,7 @@ DeliveryExecutor 在最外层截获 project.package，在私有副本上读取�
 IncrementalReadExecutor 在只读任务中复制指定历史版本，读取上下文与差异；IncrementalEditExecutor 在既有候选内运行精确补丁或恢复验证。实际组合见 [docs/17](17-incremental-engineering.md)。新增历史端口显式注入，底层仍复用 SQLite 发布证据，不创建第二套 PLC 对象事实库。
 
 工程接入以 a1 绑定声明清单和控制器/依赖要求。恢复时当前头和历史源分别验证，备份当前头，候选来自历史源；只有唯一发布事务能推进头。项目文件、控制器和库仓库的不同修订范围继续分开。旧版本缺少完整清单元数据时只能在重建清单与原 m2 摘要一致后读取。
+
+## 工程查询与 Agent 的边界（P7）
+
+工程查询返回真实对象、源码及显式关联，由调用方决定如何使用。分页和摘要保障读取范围及版本一致性，不管理聊天历史、Token、提示词或模型调用。`EngineeringQueryReader` 与 `BatchScope` 属于工程应用层；OpenCode 连接示例和检查只存在于 config/eng。详见 [P7](18-members-batch.md)。

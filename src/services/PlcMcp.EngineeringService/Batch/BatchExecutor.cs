@@ -73,9 +73,11 @@ public sealed class BatchExecutor(IEngineeringExecutor worker, IBatchJournal jou
                 if (!Guid.TryParse(id, out var identity) || identity == Guid.Empty)
                 { await Record("unknown", "batch_object_identity_unconfirmed"); return Failure("unknown", "batch_object_identity_unconfirmed"); }
                 aliases.Add(step.Id, identity.ToString());
-                JsonElement? detail = result.TryGetProperty("configuration", out var config) ? config : result.TryGetProperty("exchange", out var exchange)
+                JsonElement? detail = result.TryGetProperty("configuration", out var config) ? BatchDetails.Configuration(config) : result.TryGetProperty("exchange", out var exchange)
                     ? JsonSerializer.SerializeToElement(new { artifact = exchange.GetProperty("artifact"), semanticSha256 = exchange.GetProperty("graph").GetProperty("semanticSha256"), report = exchange.GetProperty("report") }, WorkerJson.Options)
                     : result.TryGetProperty("patch", out var patch) ? patch : null;
+                if (result.TryGetProperty("patch", out var memberPatch) && result.TryGetProperty("configuration", out _))
+                    detail = JsonSerializer.SerializeToElement(new { configuration = detail, patch = memberPatch }, WorkerJson.Options);
                 steps.Add(new(step.Id, step.Operation, "succeeded", id, null, revision, detail)); await Record("step_completed");
                 // Rebuild scope after every write: moved/deleted descendants and vendor-created children must not use stale identities.
                 var updated = await Invoke(EngineeringOperations.Structure, new(input.ProjectPath, MaxObjects: 2000, IdeProfile: input.IdeProfile));
@@ -109,6 +111,7 @@ public sealed class BatchExecutor(IEngineeringExecutor worker, IBatchJournal jou
             payload["batch"] = JsonSerializer.SerializeToNode(new { state = "verified", steps, aliases, applicationId = plan.ApplicationId, planSha256 = input.Edit.PlanSha256,
                 compile = selectedCompile!.Payload, tasks = selectedTasks!.Payload, checks, affectedApplicationIds = applicationIds,
                 compileScope = BatchOperations.SharedWrite(plan) ? "all_applications" : "selected_application", verifiedProjectSha256 = revision }, WorkerJson.Options);
+            if (System.Text.Encoding.UTF8.GetByteCount(payload.ToJsonString()) > WorkerJson.MaxResponseBytes) throw new ProjectEditException("batch_result_too_large");
             await Record("verified");
             return new(1, request.RequestId, request.JobId, "succeeded", null, request.ExecutionMode, JsonSerializer.SerializeToElement(payload, WorkerJson.Options));
         }

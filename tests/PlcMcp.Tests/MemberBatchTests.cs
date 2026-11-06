@@ -140,6 +140,52 @@ public sealed partial class IncrementalTests
         Assert.Throws<ProjectEditException>(() => EngineeringCursor.Resume("new-head", query with { Cursor = cursor }));
         Assert.Throws<ProjectEditException>(() => EngineeringCursor.Resume("head", query with { Cursor = "not a cursor" }));
     }
+    [Fact] public async Task Task_and_library_pages_return_remaining_items_and_exclude_other_application_libraries()
+    {
+        await using var h = await ManagedEditingTests.Harness.Create(); var c = Compose(h);
+        var seed = new FixtureConfiguration(h.Fixture).Save();
+        var references = seed.Configuration![FixtureConfiguration.ManagerId]!["references"]!.AsArray();
+        foreach (var name in new[] { "Base, 1.0 (Fixture)", "Extra, 1.0 (Fixture)" })
+            references.Add(new JsonObject { ["managerId"] = FixtureConfiguration.ManagerId, ["name"] = name,
+                ["namespace"] = "Fixture", ["isPlaceholder"] = false });
+        var otherApp = Guid.NewGuid().ToString(); var otherManager = Guid.NewGuid().ToString();
+        seed.Configuration[otherApp] = new JsonObject { ["objectId"] = otherApp, ["name"] = "Other", ["kind"] = "application", ["parentId"] = FixtureConfiguration.ControllerId };
+        seed.Configuration[otherManager] = new JsonObject { ["objectId"] = otherManager, ["name"] = "OtherLibraries", ["kind"] = "library_manager", ["parentId"] = otherApp,
+            ["references"] = new JsonArray(new JsonObject { ["managerId"] = otherManager, ["name"] = "OtherOnly", ["namespace"] = "Other", ["isPlaceholder"] = false }) };
+        await File.WriteAllTextAsync(h.TemplateFile, JsonSerializer.Serialize(seed, WorkerJson.Options));
+        var revision = (await h.Complete(EditOperations.CreateProject, new("demo", TemplateId: "sample"))).Result!.Value.GetProperty("revision").GetString()!;
+        var built = await ApplyPlan(h, c, revision, new(h.Fixture.ApplicationId,
+        [
+            new("configuration", ConfigurationOperations.TaskConfigurationCreate, new(ParentId: h.Fixture.ApplicationId)),
+            new("first", ConfigurationOperations.TaskCreate, new(ParentId: "@configuration", Name: "First", Configuration: new(Task: new("Cyclic", "1", "20", "ms")))),
+            new("second", ConfigurationOperations.TaskCreate, new(ParentId: "@configuration", Name: "Second", Configuration: new(Task: new("Cyclic", "2", "20", "ms"))))
+        ]));
+        revision = built.GetProperty("revision").GetString()!;
+        foreach (var collection in new[] { "tasks", "libraries" })
+        {
+            var query = new IncrementalQuery("demo", revision, h.Fixture.ApplicationId, PageSize: 1, Collection: collection);
+            var first = await Finish(h, c, await c.Reads.ReadAsync(IncrementalOperations.Query, revision, query, collection + "-first", 600, default));
+            var page = first.Result!.Value.Deserialize<EngineeringPage>(WorkerJson.Options)!;
+            Assert.Equal(2, page.TotalItems); Assert.NotNull(page.NextCursor);
+            var second = await Finish(h, c, await c.Reads.ReadAsync(IncrementalOperations.Query, revision, query with { Cursor = page.NextCursor }, collection + "-next", 600, default));
+            var next = second.Result!.Value.Deserialize<EngineeringPage>(WorkerJson.Options)!;
+            Assert.Equal(2, next.TotalItems); Assert.Null(next.NextCursor);
+            Assert.NotEqual(page.Items[0].GetRawText(), next.Items[0].GetRawText());
+            if (collection == "libraries") Assert.Equal(FixtureConfiguration.ManagerId, next.Items[0].GetProperty("managerId").GetString());
+        }
+    }
+    [Fact] public void External_library_scope_is_explicit_and_device_scope_cannot_authorize_program_writes()
+    {
+        var app = Guid.NewGuid().ToString(); var device = Guid.NewGuid().ToString(); var manager = Guid.NewGuid().ToString();
+        var rows = JsonSerializer.SerializeToElement(new[] {
+            new { id = device, parentId = "project", kind = "device" }, new { id = app, parentId = device, kind = "application" },
+            new { id = manager, parentId = "project", kind = "library_manager" } }).EnumerateArray().ToArray();
+        var plan = new BatchPlan(app, [], DeviceScopeIds: [device]);
+        var scope = new BatchScope(plan, rows); scope.ValidateDeclaredScopes();
+        Assert.Throws<ProjectEditException>(() => scope.ValidateStep(ConfigurationOperations.LibraryAdd, new("demo", ObjectId: manager)));
+        Assert.Throws<ProjectEditException>(() => scope.ValidateStep(ConfigurationOperations.ObjectDelete, new("demo", ObjectId: device)));
+        new BatchScope(plan with { LibraryManagerIds = [manager] }, rows).ValidateStep(ConfigurationOperations.LibraryAdd, new("demo", ObjectId: manager));
+    }
     [Fact] public void Scope_and_member_patch_guards_reject_unpinned_or_ambiguous_requests()
     {
         var app = Guid.NewGuid().ToString();

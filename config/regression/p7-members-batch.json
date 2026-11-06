@@ -1008,23 +1008,7 @@
         "revision": "${revision}",
         "applicationId": "${applicationId}",
         "collection": "libraries",
-        "pageSize": 1
-      },
-      "bind": {
-        "libraryCursor": "/result/nextCursor"
-      }
-    },
-    {
-      "id": "libraries-next",
-      "tool": "plc_project_objects_read",
-      "arguments": {
-        "workspaceName": "p7-${runId}",
-        "expectedHeadRevision": "${revision}",
-        "revision": "${revision}",
-        "applicationId": "${applicationId}",
-        "collection": "libraries",
-        "pageSize": 1,
-        "cursor": "${libraryCursor}"
+        "pageSize": 8
       }
     },
     {

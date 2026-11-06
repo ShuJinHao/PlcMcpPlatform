@@ -22,6 +22,9 @@ public static class ConfigurationValidation
     }
     public static string? Write(string op, EditInput input)
     {
+        if (input.PouType is not null || input.Language is not null || input.DutType is not null || input.BaseType is not null
+            || op is not (C.MemberCreate or C.MemberUpdate) && (input.Declaration is not null || input.Implementation is not null))
+            return "configuration_field_not_applicable";
         if (C.IsCreate(op) && !(op == C.FolderCreate && input.ParentId == "project") && !GuidId(input.ParentId) || !C.IsCreate(op) && !GuidId(input.ObjectId)) return "invalid_object_identity";
         if (op is C.TaskCreate or C.MemberCreate or C.FolderCreate or C.DeviceAdd or C.ObjectRename && !Identifier(input.Name)) return "invalid_object_name";
         var config = input.Configuration ?? new();

@@ -96,3 +96,7 @@ Linux CI 安装固定官方 OpenCode 1.19.5，独立配置执行 mcp list，已�
 三系统检查包括 98 项 .NET 测试、75 项 Python 测试、七组 HTTP 检查与发布回归；最新结果见 [PR #7 checks](https://github.com/ShuJinHao/PlcMcpPlatform/pull/7/checks)。P6 场景为 14 步，另检验源码保护、原有任务绑定、ZIP 完整性、编译失败、预览后源变更和未知执行隔离。MCP 快照为 73 个工具，正常 CI 只核对已提交契约。
 
 .NET 增加声明/实现补丁、重叠歧义、版本冲突、旧格式历史回读、篡改历史拒绝、图形 GUID 更换后的比较、图形文本补丁拒绝、恢复失败/未知与未解析任务绑定。Python 新增实际文本标记和未知类型保留检查。OpenCode CLI 连通性沿用固定版本；模型生成、目标 IDE/IronPython 及 PLC 运行仍待真实验收。
+
+## P7 回归
+
+统一入口增加 `python eng/verify-members.py`，集中入口增加 `--suite p7`；详见 [P7 验证条件](18-members-batch.md)。覆盖成员/访问器源码、精确补丁、28 步批量组态、查询续读、共享资源的多应用编译失败和旧版本保护。真实模式须使用本地版本/设备/库参数，不以 fixture 结果升级厂商支持状态。

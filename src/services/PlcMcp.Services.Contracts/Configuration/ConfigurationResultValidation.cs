@@ -38,7 +38,10 @@ public static class ConfigurationResultValidation
             {
                 C.TaskList => Array(data, "tasks", input.MaxObjects),
                 C.TaskRead => data.GetProperty("settings").ValueKind == JsonValueKind.Object && Array(data, "calls", 128),
-                C.MemberRead => data.GetProperty("kind").GetString() == input.Query!.MemberKind,
+                C.MemberRead => data.GetProperty("kind").GetString() == input.Query!.MemberKind
+                    && data.GetProperty("objectId").GetString() == input.ObjectId
+                    && Guid.TryParse(data.GetProperty("typeId").GetString(), out var memberType) && memberType != Guid.Empty
+                    && (input.Query.ExpectedTypeId is null || memberType == Guid.Parse(input.Query.ExpectedTypeId)),
                 C.ObjectInspect => data.GetProperty("name").ValueKind == JsonValueKind.String && Array(data, "children", input.MaxObjects),
                 C.LibraryList => Array(data, "references", input.MaxObjects),
                 C.LibraryInstalled => Array(data, "libraries", input.MaxObjects),
@@ -66,7 +69,9 @@ public static class ConfigurationResultValidation
             case C.MemberCreate:
             case C.MemberUpdate:
                 var m = change!.Member!;
-                return data.GetProperty("kind").GetString() == m.Kind && (op != C.MemberCreate || data.GetProperty("name").GetString() == e.Name)
+                return data.GetProperty("kind").GetString() == m.Kind && data.GetProperty("objectId").GetString() == id
+                    && Guid.TryParse(data.GetProperty("typeId").GetString(), out var memberType) && memberType != Guid.Empty
+                    && (m.ExpectedTypeId is null || memberType == Guid.Parse(m.ExpectedTypeId)) && (op != C.MemberCreate || data.GetProperty("name").GetString() == e.Name)
                     && MatchText(e.Declaration, data, "declaration") && MatchText(e.Implementation, data, "implementation")
                     && (m.Getter is null || Supplied(JsonSerializer.SerializeToElement(m.Getter, WorkerJson.Options), data.GetProperty("getter")))
                     && (m.Setter is null || Supplied(JsonSerializer.SerializeToElement(m.Setter, WorkerJson.Options), data.GetProperty("setter")));

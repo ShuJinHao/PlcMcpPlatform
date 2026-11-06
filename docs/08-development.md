@@ -38,7 +38,7 @@ OpenCode 提示示例：“使用 plc MCP 查询平台状态和汇川能力，�
 
 ## 离线开发与真实执行准备
 
-P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编辑启动见 [第二批说明](13-managed-editing.md)，读取/调度背景见 [第一批说明](12-execution.md)。默认真实宿主仅注册两个查询工具；测试宿主提供 73 个工具，明确标注 fixture/simulated，不能将模拟结果视为汇川支持证据。
+P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编辑启动见 [第二批说明](13-managed-editing.md)，读取/调度背景见 [第一批说明](12-execution.md)。默认真实宿主仅注册两个查询工具；测试宿主提供 74 个工具，明确标注 fixture/simulated，不能将模拟结果视为汇川支持证据。
 
 真实环境后续确认 InoProShop 脚本入口、Profile、无 UI、进程归属和官方 API 兼容性。`IInovanceLaunchProfile` 隔离启动差异；当前首个策略仍为未验证。目标工程脚本由 IDE 内置环境执行，普通 CPython 只用于测试调用逻辑。
 
@@ -63,3 +63,7 @@ P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编�
 运行 `python eng/verify-incremental.py` 可检查完整 fixture 增量链路；`python eng/verify.py` 包含该检查。已有宿主使用 `eng/run-regressions.py --suite p6`；`all` 包含 P3/P4/P5/P6，P6 需提前准备 imports/sourceName 中的已保存工程和 adoptionSource 变量。Windows 样例配置已增加 6 个操作白名单项，仍必须填写实际版本和 Profile。
 
 用户在 Mac 时可以完成代码检查和 fixture 场景；真实工程统一验收按 [第六批说明](17-incremental-engineering.md) 和 [OpenCode 场景](../config/opencode-incremental-scenario.md) 执行。
+
+## P7 接入范围
+
+继续使用现有标准 MCP 连接配置，无需安装本项目专用 OpenCode 插件。工程数据通过 `plc_project_objects_read` 按需读取；对话历史、上下文压缩与生成决策由客户端和模型负责。新增用例通过 `eng/run-regressions.py --suite p7` 运行，详见 [P7](18-members-batch.md)。
