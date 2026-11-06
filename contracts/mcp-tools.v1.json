@@ -3273,6 +3273,122 @@
                           ]
                         },
                         "default": null
+                      },
+                      "initializer": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "items": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string"
+                                    },
+                                    "value": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ],
+                                      "default": null
+                                    },
+                                    "items": {
+                                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/initializer/properties/items",
+                                      "default": null,
+                                      "items": {}
+                                    },
+                                    "members": {
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "name": {
+                                            "type": "string"
+                                          },
+                                          "value": {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "type": "string"
+                                              },
+                                              "value": {
+                                                "type": [
+                                                  "string",
+                                                  "null"
+                                                ],
+                                                "default": null
+                                              },
+                                              "items": {
+                                                "$ref": "#/properties/value/properties/program/properties/variables/items/properties/initializer/properties/items",
+                                                "default": null,
+                                                "items": {}
+                                              },
+                                              "members": {
+                                                "$ref": "#/properties/value/properties/program/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                                                "default": null,
+                                                "items": {}
+                                              }
+                                            },
+                                            "required": [
+                                              "kind"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "name",
+                                          "value"
+                                        ]
+                                      },
+                                      "default": null
+                                    }
+                                  },
+                                  "required": [
+                                    "kind"
+                                  ]
+                                },
+                                "repeat": {
+                                  "type": "integer",
+                                  "default": 1
+                                }
+                              },
+                              "required": [
+                                "value"
+                              ]
+                            },
+                            "default": null
+                          },
+                          "members": {
+                            "$ref": "#/properties/value/properties/program/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                            "default": null,
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "default": null
                       }
                     },
                     "required": [
@@ -3571,7 +3687,7 @@
   },
   {
     "name": "plc_graph_generate",
-    "description": "Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; profile=graph-v2 adds Function returnType, bounded arrays/stringLength, connector/continuation labels, block inOuts and structured SFC forks/joins. Selection output order, transition priorities 1..N and left-to-right X positions must agree. Return an artifact and semantic hash. Does not run an IDE or PLC compiler.",
+    "description": "Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3636,6 +3752,122 @@
                         "upper"
                       ]
                     },
+                    "default": null
+                  },
+                  "initializer": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "items": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "default": null
+                                },
+                                "items": {
+                                  "$ref": "#/properties/program/properties/variables/items/properties/initializer/properties/items",
+                                  "default": null,
+                                  "items": {}
+                                },
+                                "members": {
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "value": {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "type": "string"
+                                          },
+                                          "value": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ],
+                                            "default": null
+                                          },
+                                          "items": {
+                                            "$ref": "#/properties/program/properties/variables/items/properties/initializer/properties/items",
+                                            "default": null,
+                                            "items": {}
+                                          },
+                                          "members": {
+                                            "$ref": "#/properties/program/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                                            "default": null,
+                                            "items": {}
+                                          }
+                                        },
+                                        "required": [
+                                          "kind"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "name",
+                                      "value"
+                                    ]
+                                  },
+                                  "default": null
+                                }
+                              },
+                              "required": [
+                                "kind"
+                              ]
+                            },
+                            "repeat": {
+                              "type": "integer",
+                              "default": 1
+                            }
+                          },
+                          "required": [
+                            "value"
+                          ]
+                        },
+                        "default": null
+                      },
+                      "members": {
+                        "$ref": "#/properties/program/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                        "default": null,
+                        "items": {}
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
                     "default": null
                   }
                 },
@@ -3994,6 +4226,122 @@
                                 "upper"
                               ]
                             },
+                            "default": null
+                          },
+                          "initializer": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
+                              },
+                              "items": {
+                                "type": [
+                                  "array",
+                                  "null"
+                                ],
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string"
+                                        },
+                                        "value": {
+                                          "type": [
+                                            "string",
+                                            "null"
+                                          ],
+                                          "default": null
+                                        },
+                                        "items": {
+                                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/initializer/properties/items",
+                                          "default": null,
+                                          "items": {}
+                                        },
+                                        "members": {
+                                          "type": [
+                                            "array",
+                                            "null"
+                                          ],
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "name": {
+                                                "type": "string"
+                                              },
+                                              "value": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "type": "string"
+                                                  },
+                                                  "value": {
+                                                    "type": [
+                                                      "string",
+                                                      "null"
+                                                    ],
+                                                    "default": null
+                                                  },
+                                                  "items": {
+                                                    "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/initializer/properties/items",
+                                                    "default": null,
+                                                    "items": {}
+                                                  },
+                                                  "members": {
+                                                    "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                                                    "default": null,
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "name",
+                                              "value"
+                                            ]
+                                          },
+                                          "default": null
+                                        }
+                                      },
+                                      "required": [
+                                        "kind"
+                                      ]
+                                    },
+                                    "repeat": {
+                                      "type": "integer",
+                                      "default": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "value"
+                                  ]
+                                },
+                                "default": null
+                              },
+                              "members": {
+                                "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                                "default": null,
+                                "items": {}
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
                             "default": null
                           }
                         },

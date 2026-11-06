@@ -8,7 +8,7 @@ public static class GraphV2Rules
     public static bool Divergence(string kind) => kind is "selectionDivergence" or "simultaneousDivergence";
     public static bool Convergence(string kind) => kind is "selectionConvergence" or "simultaneousConvergence";
     public static bool RequiresV2(GraphicalProgram p) => p.ReturnType is not null || p.PouType == "function"
-        || p.Variables?.Any(v => v is not null && (v.StringLength is not null || v.Dimensions is not null)) == true
+        || p.Variables?.Any(v => v is not null && (v.StringLength is not null || v.Dimensions is not null || v.Initializer is not null)) == true
         || p.Nodes?.Any(n => n is not null && (n.InOuts is not null || n.Priority is not null || n.Duration is not null || TimedQualifier(n.Qualifier)
             || Divergence(n.Kind) || Convergence(n.Kind) || n.Kind is "connector" or "continuation")) == true;
     public static bool TimedQualifier(string qualifier) => qualifier is "L" or "D" or "SD" or "DS" or "SL";
@@ -51,6 +51,7 @@ public static class GraphV2Rules
             || v.Scope is not ("local" or "input" or "output" or "inOut")
             || v.InitialValue is not null && (!GraphRules.Text(v.InitialValue, 256) || v.Dimensions is not null))
             || p.Variables.Select(v => v.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != p.Variables.Length) return "invalid_graph_variables";
+        if (GraphInitializerRules.Validate(p.Variables) is { } initializerError) return initializerError;
         if (p.Nodes.Any(n => n.Id <= 0) || p.Nodes.Select(n => n.Id).Distinct().Count() != p.Nodes.Length) return "duplicate_or_invalid_local_id";
         if (p.Nodes.Any(n => (n.Inputs ?? []).Concat(n.Outputs ?? []).Concat(n.InOuts ?? []).Any(pin => pin is null))) return "invalid_graph_pin";
         var byId = p.Nodes.ToDictionary(n => n.Id);

@@ -33,7 +33,7 @@ public sealed class ExchangeTools(ExchangeService exchange, EngineeringJobs jobs
         => Query(() => exchange.InspectAsync(artifactId, cancellationToken));
 
     [McpServerTool(Name = "plc_graph_generate", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<GeneratedGraph>))]
-    [Description("Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; profile=graph-v2 adds Function returnType, bounded arrays/stringLength, connector/continuation labels, block inOuts and structured SFC forks/joins. Selection output order, transition priorities 1..N and left-to-right X positions must agree. Return an artifact and semantic hash. Does not run an IDE or PLC compiler.")]
+    [Description("Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.")]
     public Task<CallToolResult> Generate(GraphicalProgram program, CancellationToken cancellationToken)
         => Query(() => exchange.GenerateAsync(program, cancellationToken));
 

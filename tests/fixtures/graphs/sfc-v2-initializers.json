@@ -1,0 +1,177 @@
+{
+  "name": "InitSequence",
+  "pouType": "program",
+  "language": "SFC",
+  "variables": [
+    {
+      "name": "Start",
+      "type": "BOOL"
+    },
+    {
+      "name": "Stop",
+      "type": "BOOL"
+    },
+    {
+      "name": "Running",
+      "type": "BOOL"
+    },
+    {
+      "name": "Delays",
+      "type": "TIME",
+      "dimensions": [
+        {
+          "lower": 0,
+          "upper": 1
+        }
+      ],
+      "initializer": {
+        "kind": "array",
+        "items": [
+          {
+            "value": {
+              "kind": "simple",
+              "value": "T#100ms"
+            },
+            "repeat": 2
+          }
+        ]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "name": "ResetOutput",
+      "implementation": "Running := FALSE;"
+    },
+    {
+      "name": "DriveOutput",
+      "implementation": "Running := TRUE;"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "step",
+      "name": "Idle",
+      "initial": true,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "transition",
+      "expression": "Start",
+      "y": 50,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "step",
+      "name": "Run",
+      "y": 100,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 2
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "actionBlock",
+      "action": "DriveOutput",
+      "x": 100,
+      "y": 100,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "kind": "transition",
+      "expression": "Stop",
+      "y": 150,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 3
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "kind": "jumpStep",
+      "name": "Idle",
+      "y": 200,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "kind": "actionBlock",
+      "action": "ResetOutput",
+      "x": 100,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "profile": "graph-v2"
+}

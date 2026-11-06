@@ -1,5 +1,7 @@
 # P10：功能收口与统一回归交付
 
+> 本文记录 rc.1 的运行基础；rc.2 的新增初始化能力及回归入口见 [P11](24-graph-initializers.md)。
+
 候选版本 `0.1.0-rc.1`。仍是一个标准 PLC MCP Server：OpenCode 负责模型、会话和规划；服务负责工程操作。74 个工具实现不变，无验收记录的正式宿主提供 22 个本地工具。当前权威入口是 [完整工具清单](22-current-tools.md)、[功能范围与缺口](23-capability-closure.md) 和 [P9 真实验收说明](20-production-readiness.md)。
 
 本批新增停服清理、可选真实模型回归入口、SFC 定时动作、代码与契约一致的工具清单及版本化预发布。没有真实 Windows/InoProShop、模型提供商或 PLC 验收记录；不会因代码实现完成自动转为 Supported。

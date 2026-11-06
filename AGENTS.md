@@ -2,7 +2,7 @@
 
 ## 产品目标
 
-OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先读 README，再按变更范围读取 docs/01～23；文档与实际实现不一致时必须明确指出并修正状态。
+OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先读 README，再按变更范围读取 docs/01～24；文档与实际实现不一致时必须明确指出并修正状态。
 
 ## 实现规则
 
@@ -23,7 +23,7 @@ OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先�
 
 - 运行受影响的领域、契约、持久化和架构测试；正常交付运行 restore/build/test。
 - IDE 相关变更还需真实 Windows/InoProShop 验收；环境不可用时明确写未验证。
-- 执行与 MCP 变更还需运行 `python eng/verify-mcp.py` 、`python eng/verify-execution.py` 、`python eng/verify-editing.py` 、`python eng/verify-configuration.py` 、`python eng/verify-exchange.py`、`python eng/verify-delivery.py`、`python eng/verify-incremental.py` 、`python eng/verify-members.py`、`python eng/verify-graphs.py` 和发布检查 `python eng/verify-publish.py`；fixture 证据不能替代真实 IDE 验证。
+- 执行与 MCP 变更还需运行 `python eng/verify-mcp.py` 、`python eng/verify-execution.py` 、`python eng/verify-editing.py` 、`python eng/verify-configuration.py` 、`python eng/verify-exchange.py`、`python eng/verify-delivery.py`、`python eng/verify-incremental.py` 、`python eng/verify-members.py`、`python eng/verify-graphs.py`、`python eng/verify-initializers.py` 和发布检查 `python eng/verify-publish.py`；fixture 证据不能替代真实 IDE 验证。
 - Python 探针变更运行 `python -m unittest discover -s tests/script_engine -v`；CPython 测试不替代目标 IronPython/IDE 验证。
 - 提交更新实现状态和相关文档；保持锁文件，不使用预览依赖或关闭检查掩盖错误。
 - 后续功能使用独立分支和 PR，保持变更聚焦；发布、在线 PLC 操作按用户明确范围执行。
@@ -51,3 +51,9 @@ OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先�
 - 修改工具后同步契约与自动生成清单；真实模型回归未执行必须报告 skipped，不拿 CLI 连接或模拟编译代替。
 - 定时 SFC duration 必须参与语义摘要与往返验证，旧 graph-v1 保持兼容，图形子对象保护不取消。
 - 候选版本由 release/version.json 决定；完整 main CI 通过后发布 prerelease，已有标签/附件不可覆盖。
+
+## P11 图形初始化
+- 聚合初值必须使用 TC6 arrayValue/structValue；简单初值与聚合初值互斥，不用文本冒充数组结构。
+- 保留成员与数组条目顺序、重复次数；总节点、嵌套深度和重复展开规模都必须有界。
+- 初值参与语义摘要、读回证明和修订差异；未知初始化属性不能被几何属性忽略规则丢弃。
+- DUT 成员类型和 ST 初值表达式由真实 IDE 编译核验，fixture 不证明类型或设备逻辑正确。
