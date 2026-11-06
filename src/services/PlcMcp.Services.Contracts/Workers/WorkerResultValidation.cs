@@ -1,3 +1,4 @@
+using PlcMcp.Services.Contracts.Configuration;
 using System.Text.Json;
 using PlcMcp.Services.Contracts.Execution;
 using PlcMcp.Services.Contracts.Editing;
@@ -27,6 +28,8 @@ public static class WorkerResultValidation
             }
             if (request.Operation == EditOperations.VerifyProject || EditOperations.Contains(request.Operation))
                 return input.Candidate && ValidEdit(request, payload, input.Edit!);
+            if (ConfigurationOperations.IsRead(request.Operation))
+                return payload.GetProperty("revision").GetString() == request.ExpectedRevision && ConfigurationResultValidation.IsValid(request.Operation, input, payload, false);
             if (!payload.TryGetProperty("revision", out var revision) || revision.GetString() != request.ExpectedRevision) return false;
             return request.Operation switch
             {
@@ -56,6 +59,8 @@ public static class WorkerResultValidation
         if (!payload.GetProperty("dependencies").GetProperty("controllerMatched").GetBoolean()
             || !payload.GetProperty("dependencies").GetProperty("libraryReferencesMatched").GetBoolean()
             || payload.GetProperty("dependencies").GetProperty("installedDependenciesVerified").GetBoolean()) return false;
+        if (payload.TryGetProperty("dependencySnapshot", out var snapshot) && !ConfigurationResultValidation.ValidDependencies(snapshot)) return false;
+        if (ConfigurationOperations.IsWrite(request.Operation)) return ConfigurationResultValidation.IsValid(request.Operation, request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!, payload, true);
         if (request.Operation == EditOperations.VerifyProject) return true;
         if (!Guid.TryParse(payload.GetProperty("objectId").GetString(), out var id) || id == Guid.Empty) return false;
         if (EditOperations.UpdatesObject(request.Operation) && payload.GetProperty("objectId").GetString() != edit.ObjectId) return false;

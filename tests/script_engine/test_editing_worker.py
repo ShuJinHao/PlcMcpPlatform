@@ -60,8 +60,10 @@ class EditingWorkerTests(unittest.TestCase):
             self.created_args = kwargs
             return make(kwargs['name'], 'dut')
         device = Node('Controller'); device.is_device = True
+        device.get_module_identification = lambda:''
         device.get_device_identification = lambda:types.SimpleNamespace(type=4096, id='test-controller', version='1.0')
         library = Node('LibraryManager'); library.is_libman = True; library.get_libraries = lambda recursive:['TestLibrary, 1.0 (Fixture)']
+        library.references = [types.SimpleNamespace(name='TestLibrary, 1.0 (Fixture)', namespace='TestLibrary', is_placeholder=False, system_library=False)]
         h.project.children.extend([device, library])
         h.app.create_pou, h.app.create_gvl, h.app.create_dut = pou, lambda name:make(name, 'gvl'), dut
         h.bindings.update(PouType=types.SimpleNamespace(Program='Program', FunctionBlock='FunctionBlock', Function='Function'),

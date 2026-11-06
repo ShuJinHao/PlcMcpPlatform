@@ -284,7 +284,7 @@ public sealed class ManagedEditingTests
         }
     }
 
-    private sealed class Harness : IAsyncDisposable
+    internal sealed class Harness : IAsyncDisposable
     {
         public string Root { get; } = Path.Combine(Path.GetTempPath(), "plcmcp-edit-tests", Guid.NewGuid().ToString("N"));
         public string TemplateFile => Path.Combine(Root, "templates", "sample", "project.fixture.json");

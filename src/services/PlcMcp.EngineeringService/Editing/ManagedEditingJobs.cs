@@ -1,3 +1,5 @@
+using PlcMcp.EngineeringService.Configuration;
+using PlcMcp.Services.Contracts.Configuration;
 using System.Security.Cryptography;
 using System.Text.Json;
 using PlcMcp.Services.Contracts.Editing;
@@ -16,14 +18,18 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
             var validation = Validate(operation, input, key, expectedRevision, timeoutSeconds);
             if (validation is not null) return Result<JobView>.Failure(validation, "Invalid editing request.");
             var workspace = files.WorkspacePath(input.WorkspaceName);
-            var edit = input with { ParentId = CanonicalGuid(input.ParentId), ObjectId = CanonicalGuid(input.ObjectId) };
+            var edit = input with { ParentId = CanonicalGuid(input.ParentId), ObjectId = CanonicalGuid(input.ObjectId),
+                Configuration = input.Configuration is { } configuration ? configuration with {
+                    Calls = configuration.Calls?.Select(c => c with { PouId = Guid.Parse(c.PouId).ToString() }).ToArray(),
+                    Member = configuration.Member is { } member ? member with { ExpectedTypeId = CanonicalGuid(member.ExpectedTypeId) } : null
+                } : null };
             var submission = new Submission(operation, new(workspace, Edit: edit), key, expectedRevision, timeoutSeconds);
             var bytes = JsonSerializer.SerializeToUtf8Bytes(submission, WorkerJson.Options);
             if (bytes.Length > WorkerJson.MaxRequestBytes - 16384) return Result<JobView>.Failure("request_too_large", "Split the source into smaller explicit edits.");
             var fingerprint = Convert.ToHexString(SHA256.HashData(bytes));
             var cached = await jobs.FindSubmissionAsync(workspace, operation, key, fingerprint, token);
             if (cached is not null) return cached;
-            if (executor.Unavailability is { } unavailable) return Result<JobView>.Failure(unavailable.Code, unavailable.Message);
+            if (executor.CheckAvailability(operation) is { } unavailable) return Result<JobView>.Failure(unavailable.Code, unavailable.Message);
             var head = await changes.GetHeadAsync(workspace, token);
             ProjectSnapshot source;
             if (operation == EditOperations.CreateProject)
@@ -38,7 +44,7 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
                 if (source.Template.ExecutionMode != executor.ExecutionMode) return Result<JobView>.Failure("execution_mode_mismatch", "Workspace mode mismatch.");
                 await files.VerifyAsync(source, token);
             }
-            if (bytes.Length + JsonSerializer.SerializeToUtf8Bytes(source.Template, WorkerJson.Options).Length > WorkerJson.MaxRequestBytes - 16384)
+            if (bytes.Length + JsonSerializer.SerializeToUtf8Bytes(source.Template, WorkerJson.Options).Length + JsonSerializer.SerializeToUtf8Bytes(source.Dependencies, WorkerJson.Options).Length > WorkerJson.MaxRequestBytes - 16384)
                 return Result<JobView>.Failure("request_too_large", "Source and template requirements exceed the worker limit.");
             return await jobs.SubmitAsync(submission, new(workspace, source.Revision), fingerprint, executor.ExecutionMode, token);
         }
@@ -54,7 +60,7 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
             if (head is null) return Result<WorkspaceInfo>.Failure("workspace_not_found", "No managed workspace with this name.");
             await files.VerifyAsync(head.Snapshot, token);
             return Result<WorkspaceInfo>.Success(new(name, head.Snapshot.Revision,
-                Path.Combine(head.Snapshot.Directory, head.Snapshot.ProjectFile), head.IsDelivery, head.Snapshot.Template, head.Snapshot.Files));
+                Path.Combine(head.Snapshot.Directory, head.Snapshot.ProjectFile), head.IsDelivery, head.Snapshot.Template, head.Snapshot.Files, CurrentDependencies: head.Snapshot.Dependencies));
         }
         catch (ProjectEditException error) { return Result<WorkspaceInfo>.Failure(error.Code, "Workspace verification failed."); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
@@ -103,6 +109,7 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
             return string.IsNullOrWhiteSpace(input.TemplateId) ? "template_required" : null;
         if (string.IsNullOrWhiteSpace(revision)) return "expected_revision_required";
         if (op == EditOperations.SaveProject) return null;
+        if (ConfigurationOperations.IsWrite(op)) return ConfigurationValidation.Write(op, input);
         if (EditOperations.CreatesObject(op) && (!ValidGuid(input.ParentId) || string.IsNullOrWhiteSpace(input.Name)
             || input.Name.Length > 128 || !System.Text.RegularExpressions.Regex.IsMatch(input.Name, "^[A-Za-z_][A-Za-z0-9_]*$"))) return "invalid_object_identity";
         if (EditOperations.UpdatesObject(op) && !ValidGuid(input.ObjectId)) return "invalid_object_identity";

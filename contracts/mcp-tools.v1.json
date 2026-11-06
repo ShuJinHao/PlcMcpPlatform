@@ -1,7 +1,7 @@
 [
   {
     "name": "plc_capabilities_list",
-    "description": "List planned PLC engineering capabilities and their verification status. Unverified capabilities cannot be executed.",
+    "description": "List planned PLC engineering capabilities and their verification status. Production blocks unverified capabilities. The separate validation host can execute explicitly allowlisted operations as unverified.",
     "inputSchema": {
       "type": "object",
       "properties": {}
@@ -79,6 +79,1145 @@
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true
+    }
+  },
+  {
+    "name": "plc_device_add",
+    "description": "Add or plug a device under an explicit parent using exact type/id/version/module. Device packages must already exist in the IDE.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "identification": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "integer"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "id",
+                "version"
+              ]
+            },
+            "module": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "plug": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "identification"
+          ]
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "parentId",
+        "name",
+        "settings",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_device_get_io_mappings",
+    "description": "Enumerate mappable IO variables with stable connector/parameter/element addresses. Not EtherCAT PDO configuration.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "maxObjects": {
+          "type": "integer",
+          "default": 256
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "deviceId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_device_get_parameters",
+    "description": "Enumerate offline device/connector parameters and nested element addresses, types, access rights and values; truncation is explicit.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "maxObjects": {
+          "type": "integer",
+          "default": 256
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "deviceId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_device_get_tree",
+    "description": "Read device identities, module IDs and parent relationships. No online connection.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "maxObjects": {
+          "type": "integer",
+          "default": 256
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_device_remove",
+    "description": "Remove a device in a candidate; explicitly acknowledge nonempty subtrees. The template controller and application roots are protected.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "expectedName": {
+          "type": "string"
+        },
+        "recursive": {
+          "type": "boolean"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "deviceId",
+        "expectedName",
+        "recursive",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_device_set_io_mapping",
+    "description": "Map one channel to a qualified existing variable, explicitly create an unqualified variable, or clear with an empty expression. Read back creation/existing mapping flags.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "parameterId": {
+              "type": "integer"
+            },
+            "connectorId": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "default": null
+            },
+            "elements": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              },
+              "default": null
+            }
+          },
+          "required": [
+            "parameterId"
+          ]
+        },
+        "variable": {
+          "type": "string"
+        },
+        "createVariable": {
+          "type": "boolean"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "deviceId",
+        "address",
+        "variable",
+        "createVariable",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_device_set_parameter",
+    "description": "Write one primitive offline parameter by device GUID and structural address. Check declared type, range/enum and offline access; never call online write APIs.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "parameterId": {
+              "type": "integer"
+            },
+            "connectorId": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "default": null
+            },
+            "elements": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              },
+              "default": null
+            }
+          },
+          "required": [
+            "parameterId"
+          ]
+        },
+        "value": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "deviceId",
+        "address",
+        "value",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
     }
   },
   {
@@ -420,6 +1559,153 @@
         "expectedRevision",
         "objectId",
         "declaration",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_folder_create",
+    "description": "Create a folder under a known object or project root. Return its actual GUID after creation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "parentId",
+        "name",
         "idempotencyKey"
       ]
     },
@@ -1493,6 +2779,1364 @@
     }
   },
   {
+    "name": "plc_library_add",
+    "description": "Add a reference to one exact installed library display name. Fail when missing or ambiguous.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "libraryManagerId": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "libraryManagerId",
+        "displayName",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_library_list",
+    "description": "Read references and placeholder resolution from an existing library manager. Does not create a manager during a read.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "libraryManagerId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "maxObjects": {
+          "type": "integer",
+          "default": 256
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "libraryManagerId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_library_list_installed",
+    "description": "Query the IDE library repository. Exact display names include version/company. Does not install or uninstall libraries.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "maxObjects": {
+          "type": "integer",
+          "default": 256
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_library_remove",
+    "description": "Remove an explicit project library reference by exact name; system references are protected.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "libraryManagerId": {
+          "type": "string"
+        },
+        "referenceName": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "libraryManagerId",
+        "referenceName",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_library_set_placeholder",
+    "description": "Create/update a placeholder with explicit default resolution and/or redirection. Null leaves a setting unchanged; empty redirection clears it. Return effective resolution separately.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "libraryManagerId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "defaultResolution": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "redirection": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "libraryManagerId",
+        "name",
+        "defaultResolution",
+        "redirection",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_object_delete",
+    "description": "Delete an object in a candidate. Nonempty subtree requires recursive=true; protected roots and known task dependencies are rejected.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "expectedName": {
+          "type": "string"
+        },
+        "recursive": {
+          "type": "boolean"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "objectId",
+        "expectedName",
+        "recursive",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_object_inspect",
+    "description": "Inspect a node, children and known task-call impacts. Use project for the root. This is not a compiler reference analysis.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "maxObjects": {
+          "type": "integer",
+          "default": 256
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "objectId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_object_move",
+    "description": "Move an object to a permitted parent with optional child index (-1 appends). Reject cycles, name collisions and known call dependencies.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "expectedName": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "objectId",
+        "expectedName",
+        "parentId",
+        "index",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_object_rename",
+    "description": "Rename a non-system object after checking its current name and task-call references. Does not promise global source refactoring.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "expectedName": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "objectId",
+        "expectedName",
+        "name",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
     "name": "plc_pou_create",
     "description": "Create Program/FunctionBlock/Function under a parent GUID, save and reopen a new workspace version. ST/IL accept text; LD/FBD/SFC/CFC creation leaves graphical content empty. Function needs returnType; SFC Function is invalid.",
     "inputSchema": {
@@ -1549,6 +4193,643 @@
         "pouType",
         "language",
         "declaration",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_pou_member_create",
+    "description": "Create Method/Property/Action under an eligible parent. Property bodies are getter/setter sources. Null source leaves generated content unchanged; graph languages create empty content.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "language": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "returnType": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "getter": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "declaration": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "implementation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "default": null
+            },
+            "setter": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "declaration": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "implementation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "default": null
+            },
+            "expectedTypeId": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        "declaration": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "implementation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "parentId",
+        "name",
+        "settings",
+        "declaration",
+        "implementation",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_pou_member_read",
+    "description": "Read Method/Property/Action source by GUID, including Property Get/Set children. Kind selects the expected member shape.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "memberKind": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "maxObjects": {
+          "type": "integer",
+          "default": 256
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        },
+        "expectedTypeId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "projectPath",
+        "objectId",
+        "memberKind",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_pou_member_update",
+    "description": "Update member source by GUID and expected kind; save/reopen/readback the member and property accessors. Does not change its language or return type.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "language": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "returnType": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "getter": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "declaration": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "implementation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "default": null
+            },
+            "setter": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "declaration": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "implementation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "default": null
+            },
+            "expectedTypeId": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        "declaration": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "implementation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "objectId",
+        "settings",
+        "declaration",
+        "implementation",
         "idempotencyKey"
       ]
     },
@@ -2720,6 +6001,48 @@
         },
         "reason": {
           "type": "string"
+        },
+        "validation": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "validationId": {
+              "type": "string"
+            },
+            "ideVersion": {
+              "type": "string"
+            },
+            "engineVersion": {
+              "type": "string"
+            },
+            "profile": {
+              "type": "string"
+            },
+            "scriptSha256": {
+              "type": "string"
+            },
+            "allowedOperations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "versionsVerified": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "validationId",
+            "ideVersion",
+            "engineVersion",
+            "profile",
+            "scriptSha256",
+            "allowedOperations"
+          ],
+          "default": null
         }
       },
       "required": [
@@ -2738,6 +6061,1240 @@
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": true
+    }
+  },
+  {
+    "name": "plc_task_configuration_create",
+    "description": "Create the Task Configuration under an Application if absent; no PLC online action.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "applicationId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "applicationId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_task_create",
+    "description": "Create a task under an existing Task Configuration, with explicit kind, units, priority and watchdog.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "taskConfigurationId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "priority": {
+              "type": "string"
+            },
+            "interval": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "intervalUnit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "event": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "externalEvent": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "parentSynchronTask": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "coreBinding": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "default": null
+            },
+            "watchdog": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "time": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "timeUnit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "sensitivity": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "kind",
+            "priority"
+          ]
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "taskConfigurationId",
+        "name",
+        "settings",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_task_delete",
+    "description": "Remove a task from a candidate version after checking its current name. Older versions remain available.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "taskId": {
+          "type": "string"
+        },
+        "expectedName": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "taskId",
+        "expectedName",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_task_list",
+    "description": "Read task configurations and tasks under an explicit Application. Preserve call order and units.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "applicationId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "maxObjects": {
+          "type": "integer",
+          "default": 256
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "applicationId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_task_read",
+    "description": "Read one task with its settings and ordered program calls.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "taskId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "maxObjects": {
+          "type": "integer",
+          "default": 256
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "projectPath",
+        "taskId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_task_set_calls",
+    "description": "Replace the complete ordered task call list. Empty array unbinds all. Each call supplies the Program GUID, name and comment; rejects ambiguous names and non-Program POUs.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "taskId": {
+          "type": "string"
+        },
+        "calls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pouId": {
+                "type": "string"
+              },
+              "pouName": {
+                "type": "string"
+              },
+              "comment": {
+                "type": "string",
+                "default": ""
+              }
+            },
+            "required": [
+              "pouId",
+              "pouName"
+            ]
+          }
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "taskId",
+        "calls",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_task_update",
+    "description": "Replace task scheduling settings. Omitted watchdog/core binding remain unchanged; kind-specific fields must be valid.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "taskId": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "priority": {
+              "type": "string"
+            },
+            "interval": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "intervalUnit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "event": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "externalEvent": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "parentSynchronTask": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "coreBinding": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "default": null
+            },
+            "watchdog": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "time": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "timeUnit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "sensitivity": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "kind",
+            "priority"
+          ]
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "taskId",
+        "settings",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
     }
   },
   {
@@ -3036,6 +7593,104 @@
             "dependencyValidation": {
               "type": "string",
               "default": "declared_files_only"
+            },
+            "currentDependencies": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "devices": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "objectId": {
+                        "type": "string"
+                      },
+                      "identification": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "id",
+                          "version"
+                        ]
+                      },
+                      "module": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "objectId",
+                      "identification",
+                      "module"
+                    ]
+                  }
+                },
+                "libraries": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "managerId": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "namespace": {
+                        "type": "string"
+                      },
+                      "isPlaceholder": {
+                        "type": "boolean"
+                      },
+                      "defaultResolution": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "effectiveResolution": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "redirection": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "managerId",
+                      "name",
+                      "namespace",
+                      "isPlaceholder",
+                      "defaultResolution",
+                      "effectiveResolution",
+                      "redirection"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "devices",
+                "libraries"
+              ],
+              "default": null
             }
           },
           "required": [

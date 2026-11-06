@@ -4,7 +4,7 @@
 
 端点为 `http://127.0.0.1:5088/mcp`，协议由官方 C# SDK 实现。默认真实宿主注册 `plc_capabilities_list`、`plc_runtime_get_status` 两个查询工具；真实汇川能力尚未验证，不注册工程工具。
 
-独立测试宿主共 22 个工具，以下是第一批七个工程/任务工具，复用生产用例与基础设施，执行结果显式标识 fixture/simulated。它们有实际实现，不是返回常量成功的占位工具；当前不能据此宣称目标 InoProShop 已支持。
+独立测试宿主共 49 个工具，以下是第一批七个工程/任务工具，复用生产用例与基础设施，执行结果显式标识 fixture/simulated。它们有实际实现，不是返回常量成功的占位工具；当前不能据此宣称目标 InoProShop 已支持。
 
 | 工具 | 主要输入 | 结果 |
 |---|---|---|
@@ -83,12 +83,18 @@ Worker 还会返回更具体的原因，例如 `worker_protocol_error`、`execut
 
 该协议不引用 CLR 类型名或 net8 DLL。未来旧运行时 Worker 可以独立实现相同契约。当前未采用 Named Pipe、HTTP 子服务或第二层 MCP。
 
-## 下一批能力
+## 第三批与下一批能力
 
-POU 成员、设备/任务/库、导入导出和图形网络编辑继续按能力域开发，尚未注册为工具。不提供通用 execute_python 代替这些业务接口。第一批行为与使用限制见 [执行说明](12-execution.md)。
+第三批已新增 POU 成员、对象、设备/任务/库的 27 个工具，完整清单见 [第三批说明](14-engineering-configuration.md)。默认生产宿主仍仅两个查询工具；真实验证宿主按白名单执行，结果始终 real/unverified。导入导出和图形网络编辑留待第四批。不提供通用 execute_python 代替这些业务接口。第一批行为与使用限制见 [执行说明](12-execution.md)。
 
 ## 编辑 Worker 扩展
 
 外层托管任务以 workspace 路径和 t2/m2 修订记录意图。ManagedProjectExecutor 将候选实际文件路径、主文件 SHA、candidate=true、edit、ideProfile、requirements 传入原始 Worker；外层 project.create/save 转为内部 project.verify。原始 Worker 不接受任意输出路径或绕开候选的写入请求。
 
 成功写入必须包含保存、重开、读回、自有会话关闭证明，以及请求内容/对象 ID 和修订匹配；只返回退出码 0 或 saved=true 不足以发布。dependencies 明确 controllerMatched、libraryReferencesMatched 与 installedDependenciesVerified=false，后者不能被错误提升成真实安装验证。
+
+## P3 契约扩展
+
+ConfigurationTools 返回版本 1.2。查询参数增加 query，写入增加结构化 configuration；不能提交任意脚本代码。工程结果形状为 configuration={operation,objectId,data}，再包在托管版本结果 engineeringResult 内。依赖检查增加 dependencySnapshot/currentDependencies；模板初始要求与当前实际引用分别存储。运行状态增加 validation，版本来源仍标 versionsVerified=false。
+
+具体错误包括：operation_not_in_validation_scope、dependency_snapshot_conflict、dependency_readback_mismatch、task_program_resolution_conflict、task_reference_conflict、task_call_representation_unverified、member_type_evidence_required、property_accessor_unavailable、protected_controller、library_not_installed、protected_system_library、device_description_not_installed、parameter_not_read_write、parameter_out_of_range、parameter_type_unverified、invalid_io_expression。均无自动写入重试；确切代码与参数限制以实现和 Schema 为准。

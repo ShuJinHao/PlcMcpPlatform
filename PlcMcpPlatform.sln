@@ -40,6 +40,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcMcp.Execution", "src\inf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcMcp.TestHost", "tests\PlcMcp.TestHost\PlcMcp.TestHost.csproj", "{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcMcp.ValidationHost", "src\hosts\PlcMcp.ValidationHost\PlcMcp.ValidationHost.csproj", "{86E7B801-4E70-4A61-83AE-57161603E901}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,10 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{86E7B801-4E70-4A61-83AE-57161603E901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86E7B801-4E70-4A61-83AE-57161603E901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86E7B801-4E70-4A61-83AE-57161603E901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86E7B801-4E70-4A61-83AE-57161603E901}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F6D37F3-6F00-5B9F-A61F-DD6482EF7025}.Release|Any CPU.ActiveCfg = Release|Any CPU

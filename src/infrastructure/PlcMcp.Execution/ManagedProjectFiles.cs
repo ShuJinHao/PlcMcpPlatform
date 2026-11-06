@@ -85,7 +85,7 @@ public sealed class ManagedProjectFiles(string workspaceRoot) : IManagedProjectF
         var copied = await CaptureAsync(candidate, Enumerate(candidate), token);
         var backedUp = await CaptureAsync(backup, Enumerate(backup), token);
         if (!copied.SequenceEqual(source.Files) || !backedUp.SequenceEqual(source.Files)) throw new ProjectEditException("backup_verification_failed");
-        return (new(candidate, source.ProjectFile, "candidate", copied, source.Template), backup);
+        return (new(candidate, source.ProjectFile, "candidate", copied, source.Template, source.Dependencies), backup);
     }
     public async Task<ProjectSnapshot> SealAsync(string workspacePath, Guid jobId, ProjectSnapshot candidate, CancellationToken token)
     {
@@ -95,7 +95,7 @@ public sealed class ManagedProjectFiles(string workspaceRoot) : IManagedProjectF
         GuardFuture(versionPath); Directory.CreateDirectory(Path.GetDirectoryName(versionPath)!);
         token.ThrowIfCancellationRequested();
         Directory.Move(candidate.Directory, versionPath);
-        return new(versionPath, candidate.ProjectFile, "m2:" + jobId.ToString("N") + ":" + Hash(JsonSerializer.SerializeToUtf8Bytes(stamps, WorkerJson.Options)), stamps, candidate.Template);
+        return new(versionPath, candidate.ProjectFile, "m2:" + jobId.ToString("N") + ":" + Hash(JsonSerializer.SerializeToUtf8Bytes(stamps, WorkerJson.Options)), stamps, candidate.Template, candidate.Dependencies);
     }
     public async Task<string> ProjectFileRevisionAsync(ProjectSnapshot snapshot, CancellationToken token)
     {

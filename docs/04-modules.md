@@ -44,3 +44,12 @@ P1 已新增实际承载进程执行的 Execution 基础设施工程。当前采
 3. 补充协议契约和故障/真实 IDE 验收。
 4. 对通过验证的能力登记支持证据，生产 Host 才开放相应工程工具；独立测试宿主按[开发计划](11-offline-development-plan.md)显式标识测试来源。
 5. 如需 .NET Framework，创建独立 Worker 工程与构建环境；本期 .NET 8 解决方案不加入无法构建的旧运行时项目。
+
+## P3 模块扩展
+
+- Core.Workspaces 增加任务类型、周期与单位规则。
+- Services.Contracts.Configuration 定义按能力区分的请求、依赖快照与结果校验；EngineeringService.Configuration 在入队前校验业务输入。
+- ConfigurationTools 只映射 MCP 参数、提交任务和返回结果；复用已有 ManagedEditingJobs / ManagedProjectExecutor，不新建另一套写入通道。
+- Inovance 的 configuration_worker.py 隔离厂商对象、集合与参数行为；工程生命周期仍由 engineering_worker.py 管理。
+- ValidationHost 是真实集成回归的独立组合根，使用同一个 InovanceExecutor；TestHost 才使用 fixture。
+- 外层版本元数据带当前依赖快照，与模板要求分开。新旧 JSON 记录保持可读，无额外数据库迁移。

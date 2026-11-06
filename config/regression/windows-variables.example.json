@@ -1,0 +1,23 @@
+{
+  "templateId": "REPLACE_WITH_REGISTERED_TEMPLATE",
+  "applicationId": "REPLACE_WITH_APPLICATION_GUID",
+  "programId": "REPLACE_WITH_PROGRAM_GUID",
+  "programName": "PLC_PRG",
+  "controllerId": "REPLACE_WITH_CONTROLLER_GUID",
+  "libraryManagerId": "REPLACE_WITH_LIBRARY_MANAGER_GUID",
+  "libraryName": "REPLACE_WITH_INSTALLED_UNUSED_LIBRARY",
+  "deviceSettings": {
+    "identification": {
+      "type": 0,
+      "id": "REPLACE_WITH_DEVICE_ID",
+      "version": "REPLACE_WITH_DEVICE_VERSION"
+    }
+  },
+  "parameterAddress": {
+    "parameterId": 1
+  },
+  "parameterValue": "12",
+  "mappingAddress": {
+    "parameterId": 1
+  }
+}

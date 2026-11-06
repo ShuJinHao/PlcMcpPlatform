@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ShuJinHao/PlcMcpPlatform/contracts/worker-v1.schema.json",
   "title": "PLC MCP internal worker protocol v1",
-  "description": "Internal JSON envelope v1, additive managed-editing operations. Raw IDE requests use candidate=true and a file hash; durable managed jobs use manifest revisions. Runtime validation also checks cross-message IDs, operation-specific results, limits and ownership. Schema validity alone is not execution evidence.",
+  "description": "Internal JSON envelope v1 with additive managed editing and engineering configuration. Runtime validation checks operation-specific rules, identities, revision scope, bounded values and save/reopen proofs. Schema validity is not vendor compatibility evidence.",
   "$defs": {
     "input": {
       "type": "object",
@@ -20,6 +20,9 @@
             },
             {
               "type": "null"
+            },
+            {
+              "const": "project"
             }
           ]
         },
@@ -67,6 +70,26 @@
           "anyOf": [
             {
               "$ref": "#/$defs/template"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "query": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/configurationQuery"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currentDependencies": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/dependencySnapshot"
             },
             {
               "type": "null"
@@ -124,7 +147,34 @@
             "gvl.create",
             "gvl.update",
             "dut.create",
-            "dut.update"
+            "dut.update",
+            "task.list",
+            "task.read",
+            "task.configuration.create",
+            "task.create",
+            "task.update",
+            "task.delete",
+            "task.calls.set",
+            "member.read",
+            "member.create",
+            "member.update",
+            "object.inspect",
+            "folder.create",
+            "object.rename",
+            "object.move",
+            "object.delete",
+            "library.list",
+            "library.installed",
+            "library.add",
+            "library.remove",
+            "library.placeholder.set",
+            "device.tree.read",
+            "device.add",
+            "device.remove",
+            "device.parameters.read",
+            "device.parameter.write",
+            "device.io.read",
+            "device.io.map"
           ]
         },
         "expectedRevision": {
@@ -487,6 +537,9 @@
             },
             {
               "type": "null"
+            },
+            {
+              "const": "project"
             }
           ]
         },
@@ -585,6 +638,16 @@
             {
               "type": "string",
               "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configuration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/configurationChange"
             },
             {
               "type": "null"
@@ -739,6 +802,15 @@
         },
         "dependencies": {
           "$ref": "#/$defs/dependencyResult"
+        },
+        "dependencySnapshot": {
+          "$ref": "#/$defs/dependencySnapshot"
+        },
+        "configuration": {
+          "$ref": "#/$defs/configurationEnvelope"
+        },
+        "validation": {
+          "$ref": "#/$defs/validationEvidence"
         }
       },
       "required": [
@@ -812,6 +884,16 @@
         },
         "simulated": {
           "type": "boolean"
+        },
+        "currentDependencies": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/dependencySnapshot"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -856,6 +938,730 @@
         "objectId",
         "kind",
         "declaration"
+      ]
+    },
+    "taskSettings": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "Cyclic",
+            "Freewheeling",
+            "Event",
+            "ExternalEvent",
+            "Status",
+            "ParentSynchron"
+          ]
+        },
+        "priority": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "interval": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "intervalUnit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "event": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "externalEvent": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "parentSynchronTask": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "coreBinding": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": null
+        },
+        "watchdog": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "time": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "timeUnit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "sensitivity": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind",
+        "priority"
+      ]
+    },
+    "memberSettings": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "Method",
+            "Property",
+            "Action"
+          ]
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "returnType": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "getter": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "declaration": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "implementation": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            }
+          },
+          "default": null
+        },
+        "setter": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "declaration": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            },
+            "implementation": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            }
+          },
+          "default": null
+        },
+        "expectedTypeId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "taskCalls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pouId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pouName": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "comment": {
+            "type": "string",
+            "default": "",
+            "maxLength": 1024
+          }
+        },
+        "required": [
+          "pouId",
+          "pouName"
+        ]
+      },
+      "maxItems": 128
+    },
+    "deviceSettings": {
+      "type": "object",
+      "properties": {
+        "identification": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "integer"
+            },
+            "id": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "id",
+            "version"
+          ]
+        },
+        "module": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "plug": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "identification"
+      ]
+    },
+    "parameterAddress": {
+      "type": "object",
+      "properties": {
+        "parameterId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "connectorId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": null
+        },
+        "elements": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "default": null,
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "parameterId"
+      ]
+    },
+    "objectSettings": {
+      "type": "object",
+      "properties": {
+        "expectedName": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recursive": {
+          "type": "boolean"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": -1,
+          "maximum": 2000
+        }
+      },
+      "required": []
+    },
+    "librarySettings": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "defaultResolution": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "redirection": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "parameterSettings": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "$ref": "#/$defs/parameterAddress"
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "address",
+        "value"
+      ]
+    },
+    "mappingSettings": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "$ref": "#/$defs/parameterAddress"
+        },
+        "variable": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "createVariable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "address",
+        "variable"
+      ]
+    },
+    "configurationChange": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/taskSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "calls": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/taskCalls"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "member": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/memberSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "object": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/objectSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "library": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/librarySettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "device": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/deviceSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parameter": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/parameterSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mapping": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/mappingSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": []
+    },
+    "configurationQuery": {
+      "type": "object",
+      "properties": {
+        "memberKind": {
+          "anyOf": [
+            {
+              "enum": [
+                "Method",
+                "Property",
+                "Action"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expectedTypeId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": []
+    },
+    "deviceReference": {
+      "type": "object",
+      "properties": {
+        "objectId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "identification": {
+          "$ref": "#/$defs/deviceRequirement"
+        },
+        "module": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "objectId",
+        "identification",
+        "module"
+      ]
+    },
+    "libraryReference": {
+      "type": "object",
+      "properties": {
+        "managerId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "namespace": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "isPlaceholder": {
+          "type": "boolean"
+        },
+        "defaultResolution": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effectiveResolution": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "redirection": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "managerId",
+        "name",
+        "namespace",
+        "isPlaceholder",
+        "defaultResolution",
+        "effectiveResolution",
+        "redirection"
+      ]
+    },
+    "dependencySnapshot": {
+      "type": "object",
+      "properties": {
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deviceReference"
+          },
+          "maxItems": 512
+        },
+        "libraries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/libraryReference"
+          },
+          "maxItems": 1024
+        }
+      },
+      "required": [
+        "devices",
+        "libraries"
+      ]
+    },
+    "configurationEnvelope": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "enum": [
+            "task.list",
+            "task.read",
+            "task.configuration.create",
+            "task.create",
+            "task.update",
+            "task.delete",
+            "task.calls.set",
+            "member.read",
+            "member.create",
+            "member.update",
+            "object.inspect",
+            "folder.create",
+            "object.rename",
+            "object.move",
+            "object.delete",
+            "library.list",
+            "library.installed",
+            "library.add",
+            "library.remove",
+            "library.placeholder.set",
+            "device.tree.read",
+            "device.add",
+            "device.remove",
+            "device.parameters.read",
+            "device.parameter.write",
+            "device.io.read",
+            "device.io.map"
+          ]
+        },
+        "objectId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "const": "project"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "operation",
+        "objectId",
+        "data"
+      ]
+    },
+    "configurationReadResult": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "revisionScope": {
+          "const": "project_file_sha256"
+        },
+        "configuration": {
+          "$ref": "#/$defs/configurationEnvelope"
+        }
+      },
+      "required": [
+        "revision",
+        "revisionScope",
+        "configuration"
+      ]
+    },
+    "validationEvidence": {
+      "type": "object",
+      "properties": {
+        "validationId": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "ideVersion": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "engineVersion": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "profile": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "scriptSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "allowedOperations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "maxItems": 64
+        },
+        "versionsVerified": {
+          "const": false
+        }
+      },
+      "required": [
+        "validationId",
+        "ideVersion",
+        "engineVersion",
+        "profile",
+        "scriptSha256",
+        "allowedOperations",
+        "versionsVerified"
       ]
     }
   },
