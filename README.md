@@ -17,6 +17,8 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 P0 已通过 Windows/Linux 的 Release 构建、9 项测试和 HTTP MCP 冒烟验证，详见 [验收记录](docs/07-validation.md)。
 
+P1 开始依据供应商 API 参考与 CODESYS 官网自主实现汇川脚本，不接入第三方 PLC MCP。已增加[官方接口对照与只读探针](docs/10-official-api-baseline.md)；探针用于确认实际 IDE 暴露的接口，尚未接入 MCP 工程工具，也不改变能力的 `Unverified` 状态。
+
 ## 文档入口
 
 | 文档 | 回答的问题 |
@@ -31,6 +33,7 @@ P0 已通过 Windows/Linux 的 Release 构建、9 项测试和 HTTP MCP 冒烟�
 | [验收方案](docs/07-validation.md) | 自动测试和真实 IDE 验收方法 |
 | [开发与 OpenCode 接入](docs/08-development.md) | 如何构建、启动和连接 |
 | [架构决策记录](docs/09-decisions.md) | 关键取舍与调整条件 |
+| [官方接口对照与原创探针](docs/10-official-api-baseline.md) | CHM 与官网如何对应，如何验证目标 IDE 接口 |
 
 ## 核心工程
 
