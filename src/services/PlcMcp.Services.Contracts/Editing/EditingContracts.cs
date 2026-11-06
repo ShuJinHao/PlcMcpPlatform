@@ -1,4 +1,5 @@
 using PlcMcp.Services.Contracts.Configuration;
+using PlcMcp.Services.Contracts.Exchange;
 using System.Text.Json;
 using PlcMcp.Services.Contracts.Workers;
 using PlcMcp.SharedKernel.Results;
@@ -9,14 +10,14 @@ public static class EditOperations
 {
     public const string CreateProject = "project.create", SaveProject = "project.save", VerifyProject = "project.verify";
     public const string CreatePou = "pou.create", UpdatePou = "pou.update", CreateGvl = "gvl.create", UpdateGvl = "gvl.update", CreateDut = "dut.create", UpdateDut = "dut.update";
-    public static bool Contains(string value) => ConfigurationOperations.IsWrite(value) || value is CreateProject or SaveProject or CreatePou or UpdatePou or CreateGvl or UpdateGvl or CreateDut or UpdateDut;
+    public static bool Contains(string value) => ExchangeOperations.IsWrite(value) || ConfigurationOperations.IsWrite(value) || value is CreateProject or SaveProject or CreatePou or UpdatePou or CreateGvl or UpdateGvl or CreateDut or UpdateDut;
     public static bool CreatesObject(string value) => value is CreatePou or CreateGvl or CreateDut;
     public static bool UpdatesObject(string value) => value is UpdatePou or UpdateGvl or UpdateDut;
 }
 
 public sealed record EditInput(string WorkspaceName, string? TemplateId = null, string? ParentId = null,
     string? ObjectId = null, string? Name = null, string? Declaration = null, string? Implementation = null,
-    string? PouType = null, string? Language = null, string? DutType = null, string? BaseType = null, ConfigurationChange? Configuration = null);
+    string? PouType = null, string? Language = null, string? DutType = null, string? BaseType = null, ConfigurationChange? Configuration = null, ExchangeChange? Exchange = null);
 public sealed record TemplateDefinition(string Id, string ProjectFile, string[] Files, string IdeProfile,
     string TargetController, string[] RequiredLibraries, string ExecutionMode, DeviceRequirement? Controller = null);
 public sealed record DeviceRequirement(int Type, string Id, string Version);

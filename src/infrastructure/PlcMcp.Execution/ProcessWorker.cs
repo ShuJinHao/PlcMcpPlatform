@@ -18,7 +18,7 @@ public sealed class ProcessWorker(string workRoot, Func<string, string, ProcessI
     {
         if (request.ProtocolVersion != 1 || request.JobId == Guid.Empty || request.RequestId == Guid.Empty
             || request.WorkspaceId == Guid.Empty || !(EngineeringOperations.Contains(request.Operation) || request.Operation == EditOperations.VerifyProject
-                || ConfigurationOperations.IsWrite(request.Operation) || EditOperations.CreatesObject(request.Operation) || EditOperations.UpdatesObject(request.Operation))
+                || PlcMcp.Services.Contracts.Exchange.ExchangeOperations.IsWrite(request.Operation) || ConfigurationOperations.IsWrite(request.Operation) || EditOperations.CreatesObject(request.Operation) || EditOperations.UpdatesObject(request.Operation))
             || request.ExecutionMode is not ("real" or "fixture") || request.Payload.ValueKind != JsonValueKind.Object)
             return WorkerJson.Failed(request, "invalid_worker_request");
         if (!EngineeringOperations.Contains(request.Operation) && (!request.Payload.TryGetProperty("candidate", out var candidate) || candidate.ValueKind != JsonValueKind.True))

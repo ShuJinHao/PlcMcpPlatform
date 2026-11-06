@@ -1,0 +1,139 @@
+{
+  "name": "StartStop",
+  "pouType": "program",
+  "language": "LD",
+  "variables": [
+    {
+      "name": "Start",
+      "type": "BOOL"
+    },
+    {
+      "name": "Stop",
+      "type": "BOOL"
+    },
+    {
+      "name": "Running",
+      "type": "BOOL"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "leftPowerRail",
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "contact",
+      "expression": "Start",
+      "x": 40,
+      "y": 20,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "contact",
+      "expression": "Running",
+      "x": 40,
+      "y": 60,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "contact",
+      "expression": "Stop",
+      "negated": true,
+      "x": 120,
+      "y": 20,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 2
+            },
+            {
+              "sourceId": 3
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "kind": "coil",
+      "expression": "Running",
+      "x": 200,
+      "y": 20,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 4
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ],
+      "executionOrder": 1
+    },
+    {
+      "id": 6,
+      "kind": "rightPowerRail",
+      "x": 280,
+      "y": 20,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 5
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

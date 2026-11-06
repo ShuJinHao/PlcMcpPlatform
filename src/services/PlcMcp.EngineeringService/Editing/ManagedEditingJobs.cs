@@ -1,4 +1,6 @@
 using PlcMcp.EngineeringService.Configuration;
+using PlcMcp.EngineeringService.Exchange;
+using PlcMcp.Services.Contracts.Exchange;
 using PlcMcp.Services.Contracts.Configuration;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -109,6 +111,7 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
             return string.IsNullOrWhiteSpace(input.TemplateId) ? "template_required" : null;
         if (string.IsNullOrWhiteSpace(revision)) return "expected_revision_required";
         if (op == EditOperations.SaveProject) return null;
+        if (ExchangeOperations.IsWrite(op)) return ExchangeValidation.Write(op, input);
         if (ConfigurationOperations.IsWrite(op)) return ConfigurationValidation.Write(op, input);
         if (EditOperations.CreatesObject(op) && (!ValidGuid(input.ParentId) || string.IsNullOrWhiteSpace(input.Name)
             || input.Name.Length > 128 || !System.Text.RegularExpressions.Regex.IsMatch(input.Name, "^[A-Za-z_][A-Za-z0-9_]*$"))) return "invalid_object_identity";

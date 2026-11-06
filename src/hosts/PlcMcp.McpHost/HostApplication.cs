@@ -1,4 +1,6 @@
 using System.Net;
+using PlcMcp.EngineeringService.Exchange;
+using PlcMcp.Services.Contracts.Exchange;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -52,7 +54,9 @@ public static class HostApplication
         builder.Services.AddSingleton<IJobStore>(_ => new SqliteJobStore(options, fixture ? "fixture" : "real"));
         builder.Services.AddSingleton<IManagedProjectFiles>(new ManagedProjectFiles(paths.WorkspaceRoot));
         builder.Services.AddSingleton<IProjectChangeStore>(new SqliteProjectChangeStore(options));
-        builder.Services.AddSingleton<IEngineeringExecutor>(sp => new ManagedProjectExecutor(rawWorker, sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>()));
+        builder.Services.AddSingleton<IExchangeArtifacts>(new ExchangeArtifacts(Path.Combine(data, "exchange")));
+        builder.Services.AddSingleton<ExchangeService>();
+        builder.Services.AddSingleton<IEngineeringExecutor>(sp => new ManagedProjectExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>()));
         builder.Services.AddSingleton<ManagedEditingJobs>();
         builder.Services.AddSingleton<EngineeringJobs>();
         builder.Services.AddSingleton<JobDispatcher>();
@@ -60,7 +64,7 @@ public static class HostApplication
         builder.Services.AddHostedService<ExecutionService>();
         var mcp = builder.Services.AddMcpServer()
             .WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless).WithTools<PlatformTools>();
-        if (fixture || validation) mcp.WithTools<EngineeringTools>().WithTools<EditingTools>().WithTools<ConfigurationTools>();
+        if (fixture || validation) mcp.WithTools<EngineeringTools>().WithTools<EditingTools>().WithTools<ConfigurationTools>().WithTools<ExchangeTools>();
         var app = builder.Build();
         try
         {
@@ -80,7 +84,7 @@ public static class HostApplication
             }
             await next(context);
         });
-        app.MapGet("/health/live", () => Results.Ok(new { status = "alive", stage = "P3-engineering-configuration", engineeringReady = false, executionMode = fixture ? "fixture" : "real", validationSession = validation }));
+        app.MapGet("/health/live", () => Results.Ok(new { status = "alive", stage = "P4-exchange-graphs", engineeringReady = false, executionMode = fixture ? "fixture" : "real", validationSession = validation }));
         app.MapMcp("/mcp");
         return app;
     }

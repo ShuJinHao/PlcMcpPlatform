@@ -55,12 +55,12 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
             {
                 evidence = evidence with { Stage = "unknown", ErrorCode = result.ErrorCode };
                 await changes.RecordAsync(evidence, CancellationToken.None);
-                return WithFailureEvidence(request, result.Outcome, result.ErrorCode!, evidence);
+                return WithFailureEvidence(request, result.Outcome, result.ErrorCode!, evidence, result.Payload);
             }
             stopped = true;
             if (result.Outcome != "succeeded")
             {
-                var failure = WithFailureEvidence(request, result.Outcome, result.ErrorCode!, evidence);
+                var failure = WithFailureEvidence(request, result.Outcome, result.ErrorCode!, evidence, result.Payload);
                 await changes.RecordAsync(evidence with { Stage = result.Outcome == "cancelled" ? "cancelled" : "failed", ErrorCode = result.ErrorCode,
                     ExecutorStopped = true, Response = failure }, CancellationToken.None);
                 return failure;
@@ -102,10 +102,10 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
             return response;
         }
     }
-    private static WorkerResponse WithFailureEvidence(WorkerRequest request, string outcome, string code, ChangeEvidence evidence) =>
+    private static WorkerResponse WithFailureEvidence(WorkerRequest request, string outcome, string code, ChangeEvidence evidence, JsonElement? vendorDetails = null) =>
         new(1, request.RequestId, request.JobId, outcome, code, request.ExecutionMode,
             JsonSerializer.SerializeToElement(new { published = false, baseRevision = request.ExpectedRevision,
                 candidatePath = evidence.VersionPath ?? evidence.CandidatePath, backupPath = evidence.BackupPath,
-                steps = evidence.Steps, candidateMayContainChanges = evidence.Stage is "executing" or "verified" or "unknown",
+                steps = evidence.Steps, vendorDetails, candidateMayContainChanges = evidence.Stage is "executing" or "verified" or "unknown",
                 simulated = request.ExecutionMode == "fixture" }, WorkerJson.Options));
 }

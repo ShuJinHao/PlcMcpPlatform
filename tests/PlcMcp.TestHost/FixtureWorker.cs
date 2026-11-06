@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using PlcMcp.Services.Contracts.Configuration;
+using PlcMcp.Services.Contracts.Exchange;
 using PlcMcp.Services.Contracts.Execution;
 using PlcMcp.Services.Contracts.Editing;
 using PlcMcp.Services.Contracts.Workers;
@@ -10,7 +11,7 @@ namespace PlcMcp.TestHost;
 
 public sealed record FixtureProject(string ApplicationId, string ProgramId, string Declaration = "PROGRAM PLC_PRG",
     string Implementation = "counter := counter + 1;", bool CompileError = false, int DelayMilliseconds = 0, string? Fault = null, FixtureObject[]? Objects = null, JsonObject? Configuration = null);
-public sealed record FixtureObject(string Id, string Name, string Kind, string Declaration, string? Implementation, string? Language = null);
+public sealed record FixtureObject(string Id, string Name, string Kind, string Declaration, string? Implementation, string? Language = null, string? ExchangeXml = null);
 
 /// <summary>Childless deterministic test process. It never interprets or compiles PLC code.</summary>
 public static class FixtureWorker
@@ -40,6 +41,29 @@ public static class FixtureWorker
             {
             switch (request.Operation)
             {
+                case var op when ExchangeOperations.IsRead(op):
+                    payload["exchange"] = FixtureExchange.Export(fixture, input, op == ExchangeOperations.ReadGraph); break;
+                case var op when ExchangeOperations.IsWrite(op):
+                    if (!input.Candidate || input.Edit is null) { error = "managed_candidate_required"; break; }
+                    var exchangeState = new FixtureConfiguration(fixture, input.Requirements);
+                    if (input.CurrentDependencies is not null && JsonSerializer.Serialize(exchangeState.Dependencies(), WorkerJson.Options) != JsonSerializer.Serialize(input.CurrentDependencies, WorkerJson.Options))
+                    { error = "dependency_snapshot_conflict"; break; }
+                    var imported = FixtureExchange.Apply(fixture, input, op == ExchangeOperations.WriteGraph);
+                    if (fixture.Fault == "save_failure") { error = "save_failed"; break; }
+                    await File.WriteAllTextAsync(input.ProjectPath, JsonSerializer.Serialize(imported.Project, WorkerJson.Options));
+                    if (fixture.Fault == "after_save_exit") return 9;
+                    var exchangeReopen = JsonSerializer.Deserialize<FixtureProject>(await File.ReadAllTextAsync(input.ProjectPath), WorkerJson.Options)!;
+                    var exportInput = input with { ObjectId = imported.Result["objectIds"]![0]!.GetValue<string>(), Exchange = new(input.Edit.Exchange!.Format,
+                        imported.Result["objectIds"]!.Deserialize<string[]>(WorkerJson.Options)!) };
+                    var proof = FixtureExchange.Export(exchangeReopen, exportInput, op == ExchangeOperations.WriteGraph);
+                    if (fixture.Fault == "reopen_mismatch" || proof["xml"]!.GetValue<string>() != imported.Result["xml"]!.GetValue<string>()) { error = "exchange_reopen_mismatch"; break; }
+                    payload["exchange"] = imported.Result;
+                    payload["dependencySnapshot"] = new FixtureConfiguration(exchangeReopen, input.Requirements).Dependencies();
+                    payload["baseRevision"] = revision;
+                    payload["revision"] = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(input.ProjectPath))).ToLowerInvariant();
+                    payload["dependencies"] = new { controllerMatched = true, libraryReferencesMatched = true, installedDependenciesVerified = false, simulated = true };
+                    payload["saved"] = fixture.Fault != "false_save"; payload["reopened"] = true; payload["readBackVerified"] = true; payload["sessionClosedAfterOperation"] = true;
+                    break;
                 case var op when ConfigurationOperations.IsRead(op):
                     var configRead = new FixtureConfiguration(fixture);
                     payload["configuration"] = new { operation = op, objectId = input.ObjectId, data = configRead.Read(op, input.ObjectId, input.Query, input.MaxObjects) }; break;
