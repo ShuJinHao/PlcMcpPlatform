@@ -4,7 +4,7 @@
 
 端点为 `http://127.0.0.1:5088/mcp`，协议由官方 C# SDK 实现。默认真实宿主注册 `plc_capabilities_list`、`plc_runtime_get_status` 两个查询工具；真实汇川能力尚未验证，不注册工程工具。
 
-独立测试宿主共 58 个工具，以下是第一批七个工程/任务工具，复用生产用例与基础设施，执行结果显式标识 fixture/simulated。它们有实际实现，不是返回常量成功的占位工具；当前不能据此宣称目标 InoProShop 已支持。
+独立测试宿主共 67 个工具，以下是第一批七个工程/任务工具，复用生产用例与基础设施，执行结果显式标识 fixture/simulated。它们有实际实现，不是返回常量成功的占位工具；当前不能据此宣称目标 InoProShop 已支持。
 
 | 工具 | 主要输入 | 结果 |
 |---|---|---|
@@ -106,3 +106,13 @@ ConfigurationTools 返回版本 1.2。查询参数增加 query，写入增加结
 原始 Worker 的 exchange 结果包括格式、XML、对象标识和报告；ExchangeExecutor 校验后保存为制品，将成功结果中的原始 XML 替换成 artifact，图形读写另返回 graph。失败保留已取得的报告与候选证据。一般导入 reexportVerified 仅证明导入后与重开后的导出一致；图形写入另比对源模型语义，均不表示 PLC 运行验收。
 
 新增错误包括 invalid_exchange_xml、exchange_structure_too_large、artifact_integrity_mismatch、exchange_reported_error、exchange_warning_requires_acknowledgement、exchange_reopen_mismatch、graph_revision_conflict、graph_contains_unrepresented_data、graph_object_has_children、graph_semantic_readback_mismatch。未知执行仍按原状态机隔离，不自动重放。独立 [graph-v1 schema](../contracts/graph-v1.schema.json) 与 MCP 参数快照一起核对，领域约束由 GraphRules 和编解码器额外执行。
+
+## P5 契约扩展
+
+新增 9 个工具返回 contractVersion=1.4：plc_project_batch_preview/apply、plc_batch_get、plc_exchange_upload_begin/append/complete/abort、plc_delivery_create/read。既有工具结构不变，运行状态的版本和阶段更新。独立 [batch-v1 schema](../contracts/batch-v1.schema.json) 与 MCP 工具快照一起核对；步骤数量、操作字段、前序引用和 Application 范围还需运行时验证。
+
+batch 计划摘要绑定 workspace、m2 修订与规范化内容；原有幂等键规则不变。上传键绑定格式、UTF-8 长度和摘要；分块偏移是字节。交付任务绑定当前 m2 修订，返回 ZIP 身份和主文件摘要；分块下载需完整 ZIP SHA 验证。
+
+Worker 仍为主版本 1。新增 batch/package 属于应用协调操作，不作为新方法传给厂商脚本。队列中的 edit.exchange 可省略 xml，执行时验证 artifactId 后加载；线上传输允许固定 file={name,sha256,byteLength}，与非空 xml 互斥。侧文件只在单次私有调用目录中读取，默认 8 MiB、最高 64 MiB；JSON 请求/响应仍限制 128 KiB / 1 MiB。新 Host 和三份配套脚本须一起发布。
+
+新增错误包括 batch_plan_changed、batch_reference_not_ready、batch_application_scope_mismatch、batch_scope_incomplete、task_inventory_incomplete、invalid_upload_request、upload_offset_conflict、upload_chunk_conflict、upload_incomplete、upload_hash_mismatch、upload_requires_utf8、invalid_exchange_file、exchange_file_integrity_mismatch、invalid_delivery_id、delivery_integrity_mismatch。失败、取消、未知状态均沿用既有任务语义。完整范围、事务含义与示例见 [docs/16](16-engineering-delivery.md)。

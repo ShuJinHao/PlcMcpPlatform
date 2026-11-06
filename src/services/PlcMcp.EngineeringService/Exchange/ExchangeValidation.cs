@@ -21,17 +21,20 @@ public static class ExchangeValidation
         var change = edit.Exchange;
         if (change is null || !ExchangeOperations.Format(change.Format) || edit.ParentId != "project" && !Identity(edit.ParentId)
             || change.ConflictPolicy is not ("reject" or "replace" or "skip") || change.ArtifactId is not { Length: 64 }
-            || !change.ArtifactId.All(Uri.IsHexDigit)) return "invalid_exchange_request";
+            || !change.ArtifactId.All(Uri.IsHexDigit) || change.File is not null) return "invalid_exchange_request";
         try
         {
+            if (change.Xml is not null)
+            {
             var digest = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(change.Format + "\0" + change.Xml))).ToLowerInvariant();
             if (digest != change.ArtifactId) return "artifact_integrity_mismatch";
             _ = ExchangeXml.Inspect(change.Format, change.Xml);
+            }
             if (operation == ExchangeOperations.WriteGraph)
             {
                 if (change.Format != "plcopen" || edit.ParentId == "project") return "graph_parent_required";
-                var graph = PlcOpenGraphCodec.Decode(change.Xml);
-                if (edit.Name != graph.Program.Name) return "graph_name_mismatch";
+                if (!PlcMcp.Core.Workspaces.GraphRules.Identifier(edit.Name)) return "graph_name_mismatch";
+                if (change.Xml is not null && edit.Name != PlcOpenGraphCodec.Decode(change.Xml).Program.Name) return "graph_name_mismatch";
                 if (edit.ObjectId is not null && (!Identity(edit.ObjectId) || change.ExpectedGraphSha256 is not { Length: 64 } || !change.ExpectedGraphSha256.All(Uri.IsHexDigit))) return "expected_graph_revision_required";
                 if (edit.ObjectId is null && change.ExpectedGraphSha256 is not null) return "unexpected_graph_revision";
                 if (change.ConflictPolicy != (edit.ObjectId is null ? "reject" : "replace") || change.AllowWarnings) return "invalid_graph_policy";

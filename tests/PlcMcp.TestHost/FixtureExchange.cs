@@ -45,7 +45,7 @@ public static class FixtureExchange
     {
         var edit = input.Edit!; var change = edit.Exchange!;
         if (edit.ParentId != fixture.ApplicationId) throw new ProjectEditException("fixture_exchange_parent_unsupported");
-        var root = ExchangeXml.Parse(change.Xml).Root!;
+        var root = ExchangeXml.Parse(change.Xml ?? throw new ProjectEditException("exchange_xml_required")).Root!;
         if (change.Format == "codesys-native")
         {
             if (root.Name != "FixtureNative" || (string?)root.Attribute("simulated") != "true") throw new ProjectEditException("fixture_cannot_parse_vendor_native_format");

@@ -10,16 +10,18 @@ public static class ExchangeXml
 {
     public static readonly XNamespace Plc = "http://www.plcopen.org/xml/tc6_0201";
     public static readonly XNamespace Xhtml = "http://www.w3.org/1999/xhtml";
-    public static XDocument Parse(string xml)
+    public static XDocument Parse(string xml, int maxBytes = ExchangeOperations.MaxXmlBytes)
     {
-        if (string.IsNullOrWhiteSpace(xml) || Encoding.UTF8.GetByteCount(xml) > ExchangeOperations.MaxXmlBytes) throw new ProjectEditException("exchange_size_invalid");
+        if (string.IsNullOrWhiteSpace(xml) || Encoding.UTF8.GetByteCount(xml) > maxBytes) throw new ProjectEditException("exchange_size_invalid");
         try
         {
-            using var input = new StringReader(xml);
+            // A decoded UTF-8 BOM is an encoding marker, not XML content. Keep the
+            // original bytes/string for artifact identity; strip it only for parsing.
+            using var input = new StringReader(xml[0] == '\uFEFF' ? xml[1..] : xml);
             using var reader = XmlReader.Create(input, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit,
-                XmlResolver = null, MaxCharactersInDocument = ExchangeOperations.MaxXmlBytes, IgnoreComments = false });
+                XmlResolver = null, MaxCharactersInDocument = maxBytes, IgnoreComments = false });
             var document = XDocument.Load(reader, LoadOptions.PreserveWhitespace);
-            if (document.Descendants().Count() > 4096 || document.Descendants().Any(e => e.Ancestors().Count() > 32)) throw new ProjectEditException("exchange_structure_too_large");
+            if (document.Descendants().Count() > 100000 || document.Descendants().Any(e => e.Ancestors().Count() > 32)) throw new ProjectEditException("exchange_structure_too_large");
             return document;
         }
         catch (XmlException) { throw new ProjectEditException("invalid_exchange_xml"); }

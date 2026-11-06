@@ -27,6 +27,7 @@ public sealed record InovanceValidationProfile(string ValidationId, string IdeVe
     }
     public bool Allows(string operation) => operation == EditOperations.VerifyProject
         ? AllowedOperations.Contains(EditOperations.CreateProject, StringComparer.Ordinal) || AllowedOperations.Contains(EditOperations.SaveProject, StringComparer.Ordinal)
+            || AllowedOperations.Contains(PlcMcp.Services.Contracts.Batch.BatchOperations.Apply, StringComparer.Ordinal)
         : AllowedOperations.Contains(operation, StringComparer.Ordinal);
     public ValidationEvidence Evidence(string scriptPath)
     {

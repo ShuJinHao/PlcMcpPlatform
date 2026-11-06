@@ -1,5 +1,7 @@
 using PlcMcp.Services.Contracts.Configuration;
 using PlcMcp.Services.Contracts.Exchange;
+using PlcMcp.Services.Contracts.Batch;
+using PlcMcp.Services.Contracts.Delivery;
 using System.Text.Json;
 using PlcMcp.Services.Contracts.Execution;
 using PlcMcp.Services.Contracts.Editing;
@@ -10,11 +12,22 @@ public static class WorkerResultValidation
 {
     public static bool IsValid(WorkerRequest request, WorkerResponse response)
     {
-        if (response.Outcome != "succeeded" && response.ErrorCode != "compile_failed") return true;
+        if (response.Outcome != "succeeded" && (response.ErrorCode != "compile_failed" || request.Operation != EngineeringOperations.Compile)) return true;
         if (response.Payload is not { ValueKind: JsonValueKind.Object } payload) return false;
         try
         {
             var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!;
+            if (request.Operation == DeliveryOperations.Create)
+            {
+                var artifact = payload.GetProperty("artifact"); var compilation = payload.GetProperty("compile"); var sha = artifact.GetProperty("projectSha256").GetString();
+                return payload.GetProperty("packaged").GetBoolean() && payload.GetProperty("revision").GetString() == request.ExpectedRevision
+                    && artifact.GetProperty("revision").GetString() == request.ExpectedRevision && artifact.GetProperty("workspaceName").GetString() == input.Delivery!.WorkspaceName
+                    && artifact.GetProperty("executionMode").GetString() == request.ExecutionMode && !artifact.GetProperty("engineeringReady").GetBoolean()
+                    && artifact.GetProperty("artifactId").GetString() is { Length: 64 } id && id.All(Uri.IsHexDigit) && artifact.GetProperty("sha256").GetString() == id
+                    && compilation.GetProperty("applicationId").GetString() == input.Delivery.ApplicationId && compilation.GetProperty("revision").GetString() == sha
+                    && compilation.GetProperty("succeeded").GetBoolean() && ValidDiagnostics(compilation.GetProperty("diagnostics"), true)
+                    && payload.GetProperty("tasks").GetProperty("revision").GetString() == sha;
+            }
             if (EditOperations.Contains(request.Operation) && !input.Candidate)
             {
                 var revisionValue = payload.GetProperty("revision").GetString();
@@ -63,6 +76,19 @@ public static class WorkerResultValidation
             || !payload.GetProperty("dependencies").GetProperty("libraryReferencesMatched").GetBoolean()
             || payload.GetProperty("dependencies").GetProperty("installedDependenciesVerified").GetBoolean()) return false;
         if (payload.TryGetProperty("dependencySnapshot", out var snapshot) && !ConfigurationResultValidation.ValidDependencies(snapshot)) return false;
+        if (request.Operation == BatchOperations.Apply)
+        {
+            var batch = payload.GetProperty("batch");
+            return batch.GetProperty("state").GetString() == "verified" && batch.GetProperty("planSha256").GetString() == edit.PlanSha256
+                && batch.GetProperty("steps").GetArrayLength() == edit.Batch!.Steps.Length
+                && batch.GetProperty("steps").EnumerateArray().All(s => s.GetProperty("status").GetString() == "succeeded")
+                && batch.GetProperty("verifiedProjectSha256").GetString() == revision
+                && batch.GetProperty("compile").GetProperty("revision").GetString() == revision
+                && batch.GetProperty("compile").GetProperty("applicationId").GetString() == edit.Batch.ApplicationId
+                && batch.GetProperty("compile").GetProperty("succeeded").GetBoolean()
+                && ValidDiagnostics(batch.GetProperty("compile").GetProperty("diagnostics"), true)
+                && batch.GetProperty("tasks").GetProperty("revision").GetString() == revision;
+        }
         if (ExchangeOperations.IsWrite(request.Operation)) return ExchangeResultValidation.IsValid(request.Operation, request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!, payload);
         if (ConfigurationOperations.IsWrite(request.Operation)) return ConfigurationResultValidation.IsValid(request.Operation, request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!, payload, true);
         if (request.Operation == EditOperations.VerifyProject) return true;

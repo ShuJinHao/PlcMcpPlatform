@@ -47,6 +47,8 @@ public sealed class InovanceCapabilityProvider : IPlcCapabilityProvider
         Describe("library.reference.manage", OperationRisk.ModifyProject),
         Describe("exchange.codesys_xml", OperationRisk.ModifyProject),
         Describe("exchange.plcopen_xml", OperationRisk.ModifyProject),
+        Describe("project.batch", OperationRisk.ModifyProject),
+        Describe("project.package", OperationRisk.Read),
         Describe("project.export", OperationRisk.Read),
         Describe("project.import", OperationRisk.ModifyProject),
         Describe("pou.graph.read", OperationRisk.Read),

@@ -3,6 +3,6 @@ using PlcMcp.TestHost;
 
 if (args.Length == 3 && args[0] == "--fixture-worker")
     return await FixtureWorker.RunAsync(args[1], args[2]);
-await using var app = await HostApplication.BuildAsync(args, paths => new FixtureExecutor(Path.Combine(paths.DataDirectory, "invocations")));
+await using var app = await HostApplication.BuildAsync(args, paths => new FixtureExecutor(Path.Combine(paths.DataDirectory, "invocations"), maxExchangeBytes: paths.MaxExchangeBytes));
 await app.RunAsync();
 return 0;

@@ -12,7 +12,7 @@ public sealed record ProcessInvocation(string FileName, IReadOnlyList<string> Ar
 
 /// <summary>One request per owned process. Private JSON files separate protocol from IDE output.</summary>
 public sealed class ProcessWorker(string workRoot, Func<string, string, ProcessInvocation> createInvocation,
-    bool childlessTestWorker = false)
+    bool childlessTestWorker = false, int maxExchangeBytes = PlcMcp.Services.Contracts.Exchange.ExchangeOperations.DefaultMaxXmlBytes)
 {
     public async Task<WorkerResponse> RunAsync(WorkerRequest request, CancellationToken cancellationToken)
     {
@@ -35,10 +35,11 @@ public sealed class ProcessWorker(string workRoot, Func<string, string, ProcessI
         Task? stdout = null, stderr = null;
         try
         {
-            var json = JsonSerializer.SerializeToUtf8Bytes(request, WorkerJson.Options);
-            if (json.Length > WorkerJson.MaxRequestBytes) return WorkerJson.Failed(request, "request_too_large");
             Directory.CreateDirectory(directory);
             if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(directory, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            var transmitted = await WorkerExchangeFiles.PrepareRequestAsync(request, directory, maxExchangeBytes, deadline.Token);
+            var json = JsonSerializer.SerializeToUtf8Bytes(transmitted, WorkerJson.Options);
+            if (json.Length > WorkerJson.MaxRequestBytes) return WorkerJson.Failed(request, "request_too_large");
             await File.WriteAllBytesAsync(requestPath, json, deadline.Token);
             var invocation = createInvocation(requestPath, responsePath);
             process.StartInfo = new ProcessStartInfo(invocation.FileName)
@@ -49,6 +50,7 @@ public sealed class ProcessWorker(string workRoot, Func<string, string, ProcessI
             foreach (var arg in invocation.Arguments) process.StartInfo.ArgumentList.Add(arg);
             if (invocation.Environment is not null)
                 foreach (var pair in invocation.Environment) process.StartInfo.Environment[pair.Key] = pair.Value;
+            process.StartInfo.Environment["PLCMCP_EXCHANGE_MAX_BYTES"] = maxExchangeBytes.ToString(System.Globalization.CultureInfo.InvariantCulture);
             cancellationToken.ThrowIfCancellationRequested();
             started = process.Start();
             if (!started) return WorkerJson.Failed(request, "worker_start_failed");
@@ -58,7 +60,7 @@ public sealed class ProcessWorker(string workRoot, Func<string, string, ProcessI
             await process.WaitForExitAsync(deadline.Token);
             await Task.WhenAll(stdout, stderr).WaitAsync(TimeSpan.FromSeconds(2), deadline.Token);
             if (process.ExitCode != 0) return WorkerJson.Unknown(request, "worker_exited_without_result");
-            return await ReadResponseAsync(request, responsePath);
+            return await ReadResponseAsync(request, responsePath, maxExchangeBytes);
         }
         catch (OperationCanceledException)
         {
@@ -70,6 +72,8 @@ public sealed class ProcessWorker(string workRoot, Func<string, string, ProcessI
             // Killing a parent does not prove that a vendor IDE's descendant or delegated session stopped.
             return WorkerJson.Unknown(request, cancellationToken.IsCancellationRequested ? "cancellation_unconfirmed" : "execution_timeout");
         }
+        catch (ProjectEditException error)
+        { return started ? WorkerJson.Unknown(request, error.Code) : WorkerJson.Failed(request, error.Code); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception
             or JsonException or InvalidOperationException or TimeoutException or ArgumentException)
         {
@@ -87,7 +91,7 @@ public sealed class ProcessWorker(string workRoot, Func<string, string, ProcessI
         }
     }
 
-    private static async Task<WorkerResponse> ReadResponseAsync(WorkerRequest request, string path)
+    private static async Task<WorkerResponse> ReadResponseAsync(WorkerRequest request, string path, int maxExchangeBytes)
     {
         if (!File.Exists(path) || (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
             return WorkerJson.Unknown(request, "worker_result_missing");
@@ -97,6 +101,7 @@ public sealed class ProcessWorker(string workRoot, Func<string, string, ProcessI
         await stream.ReadExactlyAsync(bytes);
         if (stream.ReadByte() != -1) return WorkerJson.Unknown(request, "worker_result_size_invalid");
         var response = JsonSerializer.Deserialize<WorkerResponse>(bytes, WorkerJson.Options);
+        if (response is not null) response = await WorkerExchangeFiles.ReadResponseAsync(response, Path.GetDirectoryName(path)!, maxExchangeBytes, CancellationToken.None);
         return response is not null && WorkerJson.Matches(request, response) && WorkerResultValidation.IsValid(request, response)
             ? response : WorkerJson.Unknown(request, "worker_protocol_error");
     }

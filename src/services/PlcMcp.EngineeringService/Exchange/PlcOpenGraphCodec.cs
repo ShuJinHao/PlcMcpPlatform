@@ -77,6 +77,7 @@ public static class PlcOpenGraphCodec
     }
     public static GraphDocument Decode(string xml)
     {
+        _ = ExchangeXml.Parse(xml, ExchangeOperations.MaxInlineXmlBytes);
         _ = ExchangeXml.Inspect("plcopen", xml);
         var root = ExchangeXml.Parse(xml).Root!;
         try

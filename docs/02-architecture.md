@@ -104,3 +104,11 @@ Host 用 .NET 8 提供 MCP HTTP；汇川 Worker 由目标 Windows IDE 的真实�
 未来 .NET Framework Worker 使用版本化 JSON 协议，不引用 `net8.0` Contracts DLL。西门子各版本所需运行时以其实际 SDK 为准，不统一假设全部要求 4.8。协议传 DTO 和稳定 ID，不传 CLR 类型名、厂商对象或 .NET 序列化二进制。
 
 新增厂商主要新增适配器、能力声明与执行器；遇到新增业务语义仍可能演进契约，通过版本化保持已发布接口兼容，不承诺核心永远零修改。
+
+## P5：批量与交付的事务边界
+
+BatchService 做计划校验与提交，BatchExecutor 位于 ManagedProjectExecutor 内部。批量有一个候选和一个最终发布事务，各步骤继续复用已有保存重开机制；逐步文件日志只作为观察证据，不承担执行恢复所有权。对象引用只解析为前序步骤返回的真实 GUID，Application 范围在执行时检查。
+
+DeliveryExecutor 在最外层截获 project.package，在私有副本上读取任务并编译；ZIP 从同一源修订的已验证文件清单创建，不推进当前头。交付 manifest、工作区版本和编译对应的主文件 SHA 各有明确范围。
+
+大 XML 通过制品身份进入队列，执行时再传私有侧文件。固定名称、长度、摘要与字符编码校验属于基础设施边界，不向模型开放服务器任意文件路径。具体组合、限额和故障语义见 [docs/16](16-engineering-delivery.md)。

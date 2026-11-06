@@ -133,3 +133,17 @@ python -m unittest discover -s tests/script_engine -v
 本批实现进一步核对官方 [ScriptProject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProject.html) 与 [ScriptObject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptObject.html) 的 PLCopen/native 导入导出、冲突和报告接口。Project 与对象级 import_xml 的参数不同；当前使用 reporter 处理冲突，不给 Project 传入对象重载专有参数。原生接口按 filenames/handler 与 destination/reporter 调用，并检查 NativeImportResult。
 
 官方报告区分非导出对象、警告、取消与丢失序列化成员。递归导出可能静默忽略不可导出子对象，因此本实现先展开目标，再显式选择对象以取得报告。TC6 2.01 图形格式依据 [PLCopen 官方下载](https://www.plcopen.org/downloads/) 中的 schema；三个原创样例做过 schema 校验。此处是官网文档对照和离线代码证据，没有补作目标汇川 IDE 的运行确认；CHM 的既有版本基线也没有据此升级。细节见 [docs/15](15-engineering-exchange.md)。
+
+## P5 继续调查的边界
+
+本批再次核对下列官网资料（2026-11-06）。结论只限定本项目当前实现范围，不把未找到公开接口写成供应商绝对不支持。
+
+| 项目 | 官方资料与可确认事实 | 本项目决定 |
+|---|---|---|
+| CFC 结构化编辑 | [语言容器](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptIecLanguageObjectContainer.html) 声明 CFC/分页 CFC 的语言身份；[工程交换说明](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_project_export_import.html) 区分原生与 PLCopen 格式 | 枚举不能证明有完整网络编辑 API。保留官方原生交换，未建立可验证结构模型前不生成自造 CFC XML |
+| SFC 动作子成员 | [SFC Action](https://content.helpme-codesys.com/en/CODESYS%20SFC/_cds_sfc_element_action.html) 区分 IEC 动作与入口/主体/出口动作；动作引用及嵌入对象具有不同语义 | 现有 POU 子成员保护继续生效。需要目标版本的保存重开、对象树和导出样例，才能扩展父子对象身份和引用重建 |
+| SFC 定时与分支 | [限定符说明](https://content.helpme-codesys.com/en/CODESYS%20SFC/_cds_sfc_action_qualifier.html) 描述延时、限时、保持及复位的独立行为 | 不把 N/S/R/P 的现有检查推广到时间限定符或复杂拓扑。继续维持有界基础 SFC |
+| EtherCAT PDO | [ScriptDeviceParameters](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptDeviceParameters.html) 的参数列表由设备描述决定，列表不可任意增删；io_mapping 提供可映射数据项的变量关系 | 通用 IO 映射不能证明可重新安排 PDO 条目与布局；未取得明确设备扩展 API/验证交换路径前保持待研究 |
+| XML 导入导出 | [ScriptProject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProject.html) 和 [ScriptObject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptObject.html) 给出字符串/文件入口及报告机制 | 大文件扩容只改变内部传递方式，继续复用已实现 API，不借此宣称格式兼容或源工程无损 |
+
+上述内容未引入第三方 MCP 实现，也没有将用户供应商 CHM 复制到公有仓库。当前先完成有依据的通用批量/传递/交付代码，真实 IDE 到位后按本地版本样例逐项收集证据。

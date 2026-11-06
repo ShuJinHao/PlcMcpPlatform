@@ -10,7 +10,7 @@ namespace PlcMcp.EngineeringService.Exchange;
 public sealed class ExchangeService(IExchangeArtifacts artifacts, ManagedEditingJobs edits)
 {
     public async Task<ExchangeArtifact> StageAsync(string format, string xml, CancellationToken token)
-    { _ = ExchangeXml.Inspect(format, xml); return await artifacts.PutAsync(format, xml, token); }
+    { _ = ExchangeXml.Parse(xml, ExchangeOperations.MaxInlineXmlBytes); _ = ExchangeXml.Inspect(format, xml); return await artifacts.PutAsync(format, xml, token); }
     public async Task<ExchangeInspection> InspectAsync(string id, CancellationToken token)
     { var d = await artifacts.GetAsync(id, token); return ExchangeXml.Inspect(d.Artifact.Format, d.Xml); }
     public async Task<ExchangeChunk> ReadAsync(string id, int offset, int maxChars, CancellationToken token)
@@ -42,7 +42,7 @@ public sealed class ExchangeService(IExchangeArtifacts artifacts, ManagedEditing
         {
             var document = await artifacts.GetAsync(id, token);
             var definition = graph ? PlcOpenGraphCodec.Decode(document.Xml) : null;
-            var change = new ExchangeChange(id, document.Artifact.Format, document.Xml, policy, warnings, expectedGraphSha256);
+            var change = new ExchangeChange(id, document.Artifact.Format, null, policy, warnings, expectedGraphSha256);
             return await edits.SubmitAsync(graph ? ExchangeOperations.WriteGraph : ExchangeOperations.Import,
                 new(workspace, ParentId: parentId, ObjectId: objectId, Name: definition?.Program.Name, Exchange: change), key, revision, timeout, token);
         }
