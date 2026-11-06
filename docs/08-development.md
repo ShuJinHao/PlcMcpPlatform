@@ -38,8 +38,12 @@ OpenCode 提示示例：“使用 plc MCP 查询平台状态和汇川能力，�
 
 ## 离线开发与真实执行准备
 
-P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编辑启动见 [第二批说明](13-managed-editing.md)，读取/调度背景见 [第一批说明](12-execution.md)。默认真实宿主仅注册两个查询工具；测试宿主提供 22 个工具，明确标注 fixture/simulated，不能将模拟结果视为汇川支持证据。
+P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编辑启动见 [第二批说明](13-managed-editing.md)，读取/调度背景见 [第一批说明](12-execution.md)。默认真实宿主仅注册两个查询工具；测试宿主提供 49 个工具，明确标注 fixture/simulated，不能将模拟结果视为汇川支持证据。
 
 真实环境后续确认 InoProShop 脚本入口、Profile、无 UI、进程归属和官方 API 兼容性。`IInovanceLaunchProfile` 隔离启动差异；当前首个策略仍为未验证。目标工程脚本由 IDE 内置环境执行，普通 CPython 只用于测试调用逻辑。
 
 用户当前没有 Windows/IDE 不阻塞后续工程能力开发。目标机器的安装路径、版本、模板和运行账户通过本地配置填写，不提交生产程序、凭据、IDE 安装包或商业库。当前仓库不是包含所有供应商依赖的离线安装包。
+
+## P3 组态与真实回归
+
+新增组态工具继续使用相同 MCP 端点。Mac 自动回归运行 `python eng/verify-configuration.py`。后续 Windows 真实回归使用独立 ValidationHost，要求本地版本/Profile/白名单和工程变量；完整步骤见 [第三批说明](14-engineering-configuration.md)。这不是生产宿主的自动降级或模拟模式。

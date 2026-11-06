@@ -2,7 +2,7 @@
 
 ## 状态规则
 
-本表是完整覆盖目标，不是支持声明。当前 P2 尚未连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
+本表是完整覆盖目标，不是支持声明。当前 P3 尚未连接真实 InoProShop，下面所有能力均为 **Unverified（未验证）**。
 
 | 状态 | 含义 |
 |---|---|
@@ -97,3 +97,7 @@ API 名称、重载及版本依据供应商提供的 `ScriptEngine.chm` 与 CODE
 - 图形语言的创建标识与网络编辑分别验证；通用 IO 变量映射与 EtherCAT PDO 配置分别验证，不相互替代。
 
 [CODESYS PLCopen XML 文档](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_cmd_import_plcopenxml.html)说明该格式存在表达限制，因此“可以导入”不等于所有对象、布局和语义无损。
+
+## P3 实现范围
+
+Task、Member、Object、Library、Device/Parameter/IO 已有完整工具和原创脚本实现；新增 27 个工具的映射与限制见 [第三批说明](14-engineering-configuration.md)。能力目录同时保留领域范围 ID 与实际操作 ID。生产查询仍为 Unverified；专用验证宿主可按明确白名单执行并收集真实证据，不自动改变支持状态。

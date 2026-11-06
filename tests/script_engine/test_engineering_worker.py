@@ -21,6 +21,7 @@ class Text:
 
 class Node:
     def __init__(self, name, children=(), application=False):
+        self.type = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
         self.guid, self.name, self.children = str(uuid.uuid4()), name, list(children)
         self.is_application = application
         self.has_textual_declaration = self.has_textual_implementation = False

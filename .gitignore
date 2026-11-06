@@ -19,3 +19,5 @@ appsettings.Local.json
 __pycache__/
 *.py[cod]
 .plcmcp/
+
+*.chm

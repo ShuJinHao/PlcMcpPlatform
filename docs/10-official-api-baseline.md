@@ -1,6 +1,6 @@
 # 官方接口对照与原创 ScriptEngine 探针
 
-核对日期：2026-11-06。适用阶段：P2。目标：由 OpenCode 调用自主实现的 .NET MCP 服务，通过官方 ScriptEngine 接口完成汇川工程编程。
+核对日期：2026-11-06。适用阶段：P3。目标：由 OpenCode 调用自主实现的 .NET MCP 服务，通过官方 ScriptEngine 接口完成汇川工程编程。
 
 ## 实现来源
 
@@ -22,7 +22,7 @@ PLC 工程用例、汇川适配器、脚本与工具契约由本项目自主编�
 
 ## CHM、官网与 MCP 能力对照
 
-表中包含已实现及后续规划的工具名称。生产 Host 当前只注册两个平台查询工具；独立测试宿主已有 22 个工具，包括读/编译、程序写入、保存和对账；真实能力仍未开放，见 [编辑实现](13-managed-editing.md)。
+表中包含已实现及后续规划的工具名称。生产 Host 当前只注册两个平台查询工具；独立测试宿主已有 49 个工具，包括读/编译、程序写入、保存和对账；生产工程能力仍未开放；专用真实回归入口见 [第三批实现](14-engineering-configuration.md)。
 
 | 工程能力 | CHM 证据 | 官网核对 | 实现目标与待验证项 |
 |---|---|---|---|
@@ -112,3 +112,18 @@ python -m unittest discover -s tests/script_engine -v
 [system]: https://content.helpme-codesys.com/en/ScriptingEngine/ScriptSystem.html
 [xml]: https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_cmd_import_plcopenxml.html
 [cli]: https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_commandline.html
+
+## P3 调用实现对照
+
+新增 `configuration_worker.py` 负责 Task、成员、对象、Library、Device 与参数映射；`engineering_worker.py` 保持统一自有会话与保存重开边界。没有复制供应商文档正文或第三方脚本到仓库。
+
+| 路径 | 采用的官方接口 | 不能据此宣称的内容 |
+|---|---|---|
+| Task | create_task_configuration、create_task、kind_of_task、watchdog、pous.add/remove | 3.5.9 CHM 没有完整对应接口；目标 IDE 集合形态和限制仍待验收 |
+| Member | create_method/create_property/create_action、textual_declaration/textual_implementation | 图形网络编辑；所有 IDE 共用 Action 类型标识 |
+| Object | create_folder、rename、move、remove、guid/type | 全文引用自动重构 |
+| Library | librarymanager 安装清单、references、add/remove、占位符解析与重定向 | 整个依赖环境已经安装、解析和编译正确 |
+| Device | device_repository 描述查询、add/plug、device_parameters、connectors.host_parameters | 所有设备插槽、EtherCAT PDO 或在线功能都可操作 |
+| Parameter/IO | 叶子 value、offline_access_rights、范围/枚举、io_mapping.variable | SDK 接收字符串即代表值有效；变量映射替代类型编译检查 |
+
+实际完成范围、明确限制及回归入口见 [第三批实现说明](14-engineering-configuration.md)。

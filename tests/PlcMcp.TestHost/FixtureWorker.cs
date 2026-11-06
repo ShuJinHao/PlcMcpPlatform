@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using PlcMcp.Services.Contracts.Configuration;
 using PlcMcp.Services.Contracts.Execution;
 using PlcMcp.Services.Contracts.Editing;
 using PlcMcp.Services.Contracts.Workers;
@@ -7,7 +9,7 @@ using PlcMcp.Services.Contracts.Workers;
 namespace PlcMcp.TestHost;
 
 public sealed record FixtureProject(string ApplicationId, string ProgramId, string Declaration = "PROGRAM PLC_PRG",
-    string Implementation = "counter := counter + 1;", bool CompileError = false, int DelayMilliseconds = 0, string? Fault = null, FixtureObject[]? Objects = null);
+    string Implementation = "counter := counter + 1;", bool CompileError = false, int DelayMilliseconds = 0, string? Fault = null, FixtureObject[]? Objects = null, JsonObject? Configuration = null);
 public sealed record FixtureObject(string Id, string Name, string Kind, string Declaration, string? Implementation, string? Language = null);
 
 /// <summary>Childless deterministic test process. It never interprets or compiles PLC code.</summary>
@@ -34,14 +36,41 @@ public static class FixtureWorker
             var payload = new Dictionary<string, object?> { ["revision"] = revision, ["revisionScope"] = "project_file_sha256", ["simulated"] = true };
             string? error = null;
             var nodes = fixture.Objects ?? [new(fixture.ProgramId, "PLC_PRG", "pou", fixture.Declaration, fixture.Implementation, "ST")];
+            try
+            {
             switch (request.Operation)
             {
+                case var op when ConfigurationOperations.IsRead(op):
+                    var configRead = new FixtureConfiguration(fixture);
+                    payload["configuration"] = new { operation = op, objectId = input.ObjectId, data = configRead.Read(op, input.ObjectId, input.Query, input.MaxObjects) }; break;
+                case var op when ConfigurationOperations.IsWrite(op):
+                    if (!input.Candidate || input.Edit is null) { error = "managed_candidate_required"; break; }
+                    var config = new FixtureConfiguration(fixture, input.Requirements);
+                    if (input.CurrentDependencies is not null && JsonSerializer.Serialize(config.Dependencies(), WorkerJson.Options) != JsonSerializer.Serialize(input.CurrentDependencies, WorkerJson.Options))
+                    { error = "dependency_snapshot_conflict"; break; }
+                    var mutation = config.Apply(op, input.Edit);
+                    if (fixture.Fault == "save_failure") { error = "save_failed"; break; }
+                    await File.WriteAllTextAsync(input.ProjectPath, JsonSerializer.Serialize(config.Save(), WorkerJson.Options));
+                    if (fixture.Fault == "after_save_exit") return 9;
+                    var readProject = JsonSerializer.Deserialize<FixtureProject>(await File.ReadAllTextAsync(input.ProjectPath), WorkerJson.Options)!;
+                    var reopenConfig = new FixtureConfiguration(readProject, input.Requirements);
+                    var actual = reopenConfig.Proof(op, mutation.Id, input.Edit, mutation.Data);
+                    if (fixture.Fault == "reopen_mismatch" || !JsonNode.DeepEquals(actual, mutation.Data)) { error = "reopen_readback_mismatch"; break; }
+                    payload["configuration"] = new { operation = op, objectId = mutation.Id, data = actual };
+                    payload["dependencySnapshot"] = reopenConfig.Dependencies();
+                    payload["baseRevision"] = revision;
+                    payload["revision"] = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(input.ProjectPath))).ToLowerInvariant();
+                    payload["dependencies"] = new { controllerMatched = true, libraryReferencesMatched = true, installedDependenciesVerified = false, simulated = true };
+                    payload["saved"] = fixture.Fault != "false_save"; payload["reopened"] = true; payload["readBackVerified"] = true; payload["sessionClosedAfterOperation"] = true;
+                    break;
                 case EngineeringOperations.Open:
                     payload["opened"] = true; payload["sessionClosedAfterOperation"] = true; break;
                 case EngineeringOperations.Structure:
-                    var objects = new List<object> { new { id = fixture.ApplicationId, name = "Application", parentId = (string?)null, kind = "application" } };
-                    objects.AddRange(nodes.Select(n => (object)new { id = n.Id, name = n.Name, parentId = fixture.ApplicationId, kind = n.Kind }));
-                    payload["objects"] = objects.Take(input.MaxObjects).ToArray(); payload["truncated"] = input.MaxObjects < objects.Count; break;
+                    var objects = fixture.Configuration is null
+                        ? new object[] { new { id = fixture.ApplicationId, name = "Application", parentId = (string?)null, kind = "application" } }
+                            .Concat(nodes.Select(n => (object)new { id = n.Id, name = n.Name, parentId = fixture.ApplicationId, kind = n.Kind })).ToArray()
+                        : new FixtureConfiguration(fixture).Structure().Cast<object>().ToArray();
+                    payload["objects"] = objects.Take(input.MaxObjects).ToArray(); payload["truncated"] = input.MaxObjects < objects.Length; break;
                 case EngineeringOperations.ReadProgram:
                     var node = nodes.SingleOrDefault(n => n.Id == input.ObjectId);
                     if (node is null) { error = "object_not_found"; break; }
@@ -89,7 +118,10 @@ public static class FixtureWorker
                         list[index] = edited;
                     }
                     if (fixture.Fault == "save_failure") { error = "save_failed"; break; }
-                    var saved = fixture with { Objects = list.ToArray() };
+                    var legacyState = new FixtureConfiguration(fixture, input.Requirements);
+                    if (input.CurrentDependencies is not null && JsonSerializer.Serialize(legacyState.Dependencies(), WorkerJson.Options) != JsonSerializer.Serialize(input.CurrentDependencies, WorkerJson.Options))
+                    { error = "dependency_snapshot_conflict"; break; }
+                    var saved = new FixtureConfiguration(fixture with { Objects = list.ToArray() }, input.Requirements).Save();
                     await File.WriteAllTextAsync(input.ProjectPath, JsonSerializer.Serialize(saved, WorkerJson.Options));
                     if (fixture.Fault == "after_save_exit") return 9;
                     var reopened = JsonSerializer.Deserialize<FixtureProject>(await File.ReadAllTextAsync(input.ProjectPath), WorkerJson.Options)!;
@@ -97,11 +129,14 @@ public static class FixtureWorker
                     payload["baseRevision"] = revision;
                     payload["revision"] = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(input.ProjectPath))).ToLowerInvariant();
                     payload["dependencies"] = new { controllerMatched = true, libraryReferencesMatched = true, installedDependenciesVerified = false, simulated = true };
+                    payload["dependencySnapshot"] = new FixtureConfiguration(reopened, input.Requirements).Dependencies();
                     payload["saved"] = fixture.Fault != "false_save"; payload["reopened"] = true; payload["readBackVerified"] = true; payload["sessionClosedAfterOperation"] = true;
                     if (edited is not null)
                     { payload["objectId"] = edited.Id; payload["name"] = edited.Name; payload["declaration"] = edited.Declaration; payload["implementation"] = edited.Implementation; }
                     break;
             }
+            }
+            catch (ProjectEditException failure) { error = failure.Code; }
             response = new(1, request.RequestId, request.JobId, error is null ? "succeeded" : "failed", error, "fixture", JsonSerializer.SerializeToElement(payload, WorkerJson.Options));
         }
         if (fixture.Fault == "wrong_id") response = response with { RequestId = Guid.NewGuid() };

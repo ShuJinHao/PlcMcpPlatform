@@ -13,6 +13,9 @@ import os
 import re
 import time
 import uuid
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from configuration_worker import ConfigurationEngine, READS as CONFIG_READS, WRITES as CONFIG_WRITES
 from collections import deque
 
 try:
@@ -20,8 +23,8 @@ try:
 except NameError:
     text_type = str
 
-EDIT_OPERATIONS = ("project.verify", "pou.create", "pou.update", "gvl.create", "gvl.update", "dut.create", "dut.update")
-OPERATIONS = ("project.open", "project.tree.read", "pou.read", "gvl.read", "dut.read", "project.compile") + EDIT_OPERATIONS
+EDIT_OPERATIONS = ("project.verify", "pou.create", "pou.update", "gvl.create", "gvl.update", "dut.create", "dut.update") + CONFIG_WRITES
+OPERATIONS = ("project.open", "project.tree.read", "pou.read", "gvl.read", "dut.read", "project.compile") + EDIT_OPERATIONS + CONFIG_READS
 MAX_REQUEST = 131072
 MAX_RESULT = 1048576
 
@@ -64,11 +67,11 @@ def validate(request):
             value = edit.get(key)
             if value is not None and (not isinstance(value, text_type) or len(value) > 65536 or "\0" in value):
                 raise WorkerError("invalid_source")
-        if request["operation"].endswith(".create"):
+        if request["operation"] in ("pou.create", "gvl.create", "dut.create"):
             uuid.UUID(edit["parentId"])
             if not re.match(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$", edit["name"]):
                 raise WorkerError("invalid_object_identity")
-        if request["operation"].endswith(".update"):
+        if request["operation"] in ("pou.update", "gvl.update", "dut.update"):
             uuid.UUID(edit["objectId"])
     deadline = request["deadlineUtc"]
     if not (deadline.endswith("Z") or deadline.endswith("+00:00")):
@@ -264,8 +267,20 @@ def execute(request, bindings):
         operation, payload = request["operation"], request["payload"]
         result = {"revision": before, "revisionScope": "project_file_sha256"}
         if editing:
-            dependency_check = verify_requirements(project, payload.get("requirements"))
-            before_save = apply_edit(project, operation, payload["edit"], bindings)
+            engine = ConfigurationEngine(project, bindings, WorkerError, tree, declaration_header)
+            current = engine.dependencies()
+            if payload.get("currentDependencies") is not None:
+                if current != payload["currentDependencies"]: raise WorkerError("dependency_snapshot_conflict")
+                # The template's initial library list does not prohibit deliberate later changes.
+                requirements = dict(payload["requirements"], requiredLibraries=[])
+            else: requirements = payload.get("requirements")
+            dependency_check = verify_requirements(project, requirements)
+            proof_edit, key = payload["edit"], None
+            if operation in CONFIG_WRITES:
+                key, before_save, proof_edit = engine.apply(operation, proof_edit, requirements)
+            else: before_save = apply_edit(project, operation, proof_edit, bindings)
+            engine.refresh()
+            dependencies = engine.dependencies()
             if revision(path) != before: raise WorkerError("workspace_revision_conflict")
             project.save()
             saved_revision = revision(path)
@@ -273,15 +288,26 @@ def execute(request, bindings):
             project = None
             project = projects.open(path, primary=True, update_flags=flags.NoUpdates, allow_readonly=True)
             if bool(project.dirty): raise WorkerError("workspace_session_dirty")
-            if verify_requirements(project, payload.get("requirements")) != dependency_check: raise WorkerError("dependency_readback_mismatch")
+            engine = ConfigurationEngine(project, bindings, WorkerError, tree, declaration_header)
+            if engine.dependencies() != dependencies: raise WorkerError("dependency_readback_mismatch")
+            if verify_requirements(project, dict(requirements, requiredLibraries=[])) != dependency_check: raise WorkerError("dependency_readback_mismatch")
             result["dependencies"] = dependency_check
-            if before_save is not None:
+            result["dependencySnapshot"] = dependencies
+            if operation in CONFIG_WRITES:
+                after_reopen = engine.proof(operation, key, proof_edit, before_save)
+                if after_reopen != before_save: raise WorkerError("reopen_readback_mismatch")
+                result["configuration"] = {"operation": operation, "objectId": key, "data": after_reopen}
+            elif before_save is not None:
                 after_reopen = object_text(get_object(project, before_save["objectId"]))
                 if after_reopen != before_save: raise WorkerError("reopen_readback_mismatch")
                 result.update(after_reopen)
             if revision(path) != saved_revision: raise WorkerError("workspace_revision_conflict")
             result.update({"baseRevision": before, "revision": saved_revision, "saved": True, "reopened": True,
                            "readBackVerified": True, "sessionClosedAfterOperation": True})
+        elif operation in CONFIG_READS:
+            engine = ConfigurationEngine(project, bindings, WorkerError, tree, declaration_header)
+            result["configuration"] = {"operation": operation, "objectId": payload.get("objectId"),
+                                       "data": engine.read(operation, payload.get("objectId"), payload.get("query"), payload.get("maxObjects", 256))}
         elif operation == "project.open":
             result.update({"opened": True, "sessionClosedAfterOperation": True})
         elif operation == "project.tree.read":
@@ -312,6 +338,8 @@ def execute(request, bindings):
         response["errorCode"] = str(error)
     except (KeyError, TypeError, ValueError):
         response["errorCode"] = "invalid_request_or_vendor_result"
+    except AttributeError:
+        response["errorCode"] = "scriptengine_api_unavailable"
     except Exception:
         response["errorCode"] = "script_execution_failed"
     finally:
@@ -336,7 +364,7 @@ def main(bindings):
     available = dict(bindings)
     try:
         import scriptengine
-        for name in ("projects", "system", "VersionUpdateFlags", "PouType", "DutType", "ImplementationLanguages"):
+        for name in ("projects", "system", "VersionUpdateFlags", "PouType", "DutType", "ImplementationLanguages", "KindOfTask", "librarymanager", "device_repository"):
             if available.get(name) is None:
                 available[name] = getattr(scriptengine, name, None)
     except ImportError:

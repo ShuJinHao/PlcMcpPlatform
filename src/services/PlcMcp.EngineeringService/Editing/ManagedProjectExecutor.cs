@@ -1,3 +1,4 @@
+using PlcMcp.Services.Contracts.Configuration;
 using System.Text.Json;
 using PlcMcp.Services.Contracts.Editing;
 using PlcMcp.Services.Contracts.Execution;
@@ -11,8 +12,11 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
 {
     public string ExecutionMode => worker.ExecutionMode;
     public OperationError? Unavailability => worker.Unavailability;
+    public OperationError? CheckAvailability(string operation) => worker.CheckAvailability(operation);
+    public ValidationEvidence? Validation => worker.Validation;
     public async Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
     {
+        if (CheckAvailability(request.Operation) is { } unavailable) return WorkerJson.Failed(request, unavailable.Code);
         if (!EditOperations.Contains(request.Operation)) return await worker.ExecuteAsync(request, token);
         var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!;
         var edit = input.Edit!; var creating = request.Operation == EditOperations.CreateProject;
@@ -40,7 +44,7 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
             {
                 Operation = creating || request.Operation == EditOperations.SaveProject ? EditOperations.VerifyProject : request.Operation,
                 ExpectedRevision = await files.ProjectFileRevisionAsync(candidate, token),
-                Payload = JsonSerializer.SerializeToElement(input with { ProjectPath = Path.Combine(candidate.Directory, candidate.ProjectFile), Candidate = true, IdeProfile = source.Template.IdeProfile, Requirements = source.Template }, WorkerJson.Options)
+                Payload = JsonSerializer.SerializeToElement(input with { ProjectPath = Path.Combine(candidate.Directory, candidate.ProjectFile), Candidate = true, IdeProfile = source.Template.IdeProfile, Requirements = source.Template, CurrentDependencies = source.Dependencies }, WorkerJson.Options)
             };
             evidence = evidence with { Stage = "executing", ExecutorStopped = false };
             await changes.RecordAsync(evidence, token);
@@ -67,13 +71,16 @@ public sealed class ManagedProjectExecutor(IEngineeringExecutor worker, IManaged
             await files.VerifyAsync(source, token);
             token.ThrowIfCancellationRequested();
             if (DateTimeOffset.UtcNow >= request.DeadlineUtc) throw new ProjectEditException("deadline_expired");
+            var dependencies = result.Payload!.Value.TryGetProperty("dependencySnapshot", out var observed)
+                ? observed.Deserialize<DependencySnapshot>(WorkerJson.Options) : source.Dependencies;
+            candidate = candidate with { Dependencies = dependencies };
             var sealedVersion = await files.SealAsync(input.ProjectPath, request.JobId, candidate, token);
             await files.VerifyAsync(sealedVersion, token); steps.Add("version_verified");
             evidence = evidence with { Stage = "verified", VersionPath = sealedVersion.Directory, ExecutorStopped = true, Steps = steps.ToArray() };
             await changes.RecordAsync(evidence, token);
             var payload = new EditResult(edit.WorkspaceName, request.ExpectedRevision, sealedVersion.Revision, "managed_project_manifest_v2",
                 Path.Combine(sealedVersion.Directory, sealedVersion.ProjectFile), evidence.BackupPath, sealedVersion.Directory,
-                true, request.Operation == EditOperations.SaveProject, [.. steps, "published"], result.Payload, Simulated: ExecutionMode == "fixture");
+                true, request.Operation == EditOperations.SaveProject, [.. steps, "published"], result.Payload, Simulated: ExecutionMode == "fixture", CurrentDependencies: dependencies);
             var response = new WorkerResponse(1, request.RequestId, request.JobId, "succeeded", null, ExecutionMode, JsonSerializer.SerializeToElement(payload, WorkerJson.Options));
             var published = evidence with { Stage = "published", Steps = payload.Steps, Response = response };
             // Once publication starts, cancellation cannot turn a committed version into a cancelled job.

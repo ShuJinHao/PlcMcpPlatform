@@ -8,15 +8,15 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
 
-## 当前阶段 P2 受控工程编辑
+## 当前阶段 P3 工程组态与回归入口
 
-已实现模板工程复制、POU/GVL/DUT 创建与读写、备份、修订检查、保存重开、新版本发布与证据对账，复用第一批持久化任务、串行调度和内部进程协议。工程操作与 ScriptEngine 脚本均自主实现。
+在受控工程编辑基础上，已补齐 Task 和 POU 调用绑定、Method/Property/Action、文件夹和对象管理、库引用与占位符、设备与离线参数、基础 IO 变量映射。新增操作复用备份、修订检查、保存重开和新版本发布；工程操作与厂商脚本均自主实现。
 
-独立的 `tests/PlcMcp.TestHost` 提供 **22 个工具**，可在 Mac、Windows、Linux 执行“创建—修改—模拟诊断—修复—保存”流程。测试 JSON 不是真实工程，模拟诊断不解释或编译 PLC 代码。
+独立 `tests/PlcMcp.TestHost` 提供 **49 个工具**，支持 Mac、Windows、Linux 自动开发检查。新增 42 步 HTTP 场景覆盖第三批组态操作。测试 JSON 不是真实工程，模拟诊断不编译 PLC 代码。
 
-默认生产宿主仍只注册 `plc_capabilities_list` 与 `plc_runtime_get_status`，汇川能力全部为 `Unverified`，`engineeringReady=false`。没有生产模式自动模拟回退。**真实 InoProShop/IronPython 与实际 OpenCode 客户端尚未联调**；本批不能宣称已生成、保存或编译真实汇川工程。
+`src/hosts/PlcMcp.ValidationHost` 为后续 Windows 集中回归提供真实执行入口：显式版本、Profile 与操作白名单，输出脚本指纹和回归报告。默认生产宿主仍只开放两个查询工具；所有汇川能力仍为 `Unverified`，`engineeringReady=false`。**真实 InoProShop/IronPython 与实际 OpenCode 客户端尚未联调**。
 
-Mac 使用入口是 [第二批编辑与启动说明](docs/13-managed-editing.md)，附 [OpenCode 操作提示](config/opencode-editing-scenario.md)。CI 对 Windows、Ubuntu、macOS 运行锁定还原、Release 构建、标准 .NET/Python 测试及三组 HTTP 验证。下一批是有官方依据的 Task、POU 成员、Library 和工程交换等能力，见 [开发路线](docs/11-offline-development-plan.md)。
+详情见 [第三批实现与回归说明](docs/14-engineering-configuration.md)。Mac 的初始模板和编辑启动继续使用 [第二批说明](docs/13-managed-editing.md)。CI 对 Windows、Ubuntu、macOS 运行锁定还原、Release 构建、标准 .NET/Python 测试及四组 HTTP 检查。第四批继续 XML 交换与图形内容编辑，不增加没有实现的工具。
 
 ## 文档入口
 
@@ -37,6 +37,8 @@ Mac 使用入口是 [第二批编辑与启动说明](docs/13-managed-editing.md)
 | [第一批执行实现与使用说明](docs/12-execution.md) | 读取/编译、调度与进程边界 |
 | [第二批受控工程编辑](docs/13-managed-editing.md) | Mac 编辑启动、模板、备份、修订、保存与对账 |
 
+| [第三批工程组态与真实回归](docs/14-engineering-configuration.md) | 任务、成员、对象、库、设备/IO、Windows 验证入口和自动报告 |
+
 ## 核心工程
 
 | 位置 | 项目 |
@@ -46,7 +48,7 @@ Mac 使用入口是 [第二批编辑与启动说明](docs/13-managed-editing.md)
 | `src/services` | `PlcMcp.Services.Contracts`、`PlcMcp.EngineeringService` |
 | `src/infrastructure` | `PlcMcp.EntityFrameworkCore`、`PlcMcp.Execution` |
 | `src/adapters` | `PlcMcp.Inovance` |
-| `src/hosts` | `PlcMcp.McpHost` |
+| `src/hosts` | `PlcMcp.McpHost`、独立 `PlcMcp.ValidationHost` |
 | `tests` | `PlcMcp.Tests`、独立 `PlcMcp.TestHost` |
 
 按 `Core / Services / Contracts / Infrastructure / Host` 分层，领域对象通过行为维护状态，应用层通过接口访问外部依赖，Host 作为组合根。

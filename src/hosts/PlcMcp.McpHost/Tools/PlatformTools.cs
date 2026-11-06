@@ -11,7 +11,7 @@ namespace PlcMcp.McpHost.Tools;
 public sealed class PlatformTools(IQueryHandler<ListCapabilitiesQuery, CapabilityCatalog> handler, IEngineeringExecutor executor, IJobStore store)
 {
     [McpServerTool(Name = "plc_capabilities_list", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true)]
-    [Description("List planned PLC engineering capabilities and their verification status. Unverified capabilities cannot be executed.")]
+    [Description("List planned PLC engineering capabilities and their verification status. Production blocks unverified capabilities. The separate validation host can execute explicitly allowlisted operations as unverified.")]
     public Task<CapabilityCatalog> ListCapabilities(CancellationToken cancellationToken)
         => handler.Handle(new(), cancellationToken);
 
@@ -20,11 +20,11 @@ public sealed class PlatformTools(IQueryHandler<ListCapabilitiesQuery, Capabilit
     public async Task<RuntimeStatus> GetRuntimeStatus(CancellationToken cancellationToken)
     {
         var slot = await store.GetSlotAsync(cancellationToken);
-        return new("1.0", "P2-managed-editing", false, false, executor.ExecutionMode,
+        return new("1.2", "P3-engineering-configuration", false, false, executor.ExecutionMode,
             executor.ExecutionMode == "fixture" ? "simulated" : "unverified", slot.Blocked,
-            slot.Reason ?? executor.Unavailability?.Message ?? "Test-only execution; no IDE is connected.");
+            slot.Reason ?? (executor.Validation is not null ? "Explicit real validation session. Only allowlisted operations can run; compatibility remains unverified." : executor.Unavailability?.Message) ?? "Test-only execution; no IDE is connected.", executor.Validation);
     }
 }
 
 public sealed record RuntimeStatus(string ContractVersion, string Stage, bool IdeConnected,
-    bool EngineeringReady, string ExecutionMode, string EvidenceKind, bool SchedulerBlocked, string Reason);
+    bool EngineeringReady, string ExecutionMode, string EvidenceKind, bool SchedulerBlocked, string Reason, ValidationEvidence? Validation = null);

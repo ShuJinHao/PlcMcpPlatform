@@ -1,0 +1,23 @@
+{
+  "templateId": "sample",
+  "applicationId": "1b20c5b9-29cc-4f8f-8c19-21bb6a708f01",
+  "programId": "2b20c5b9-29cc-4f8f-8c19-21bb6a708f02",
+  "programName": "PLC_PRG",
+  "controllerId": "33333333-3333-3333-3333-333333333333",
+  "libraryManagerId": "44444444-4444-4444-4444-444444444444",
+  "libraryName": "Extra, 1.0 (Fixture)",
+  "deviceSettings": {
+    "identification": {
+      "type": 5,
+      "id": "fixture-io",
+      "version": "1.0"
+    }
+  },
+  "parameterAddress": {
+    "parameterId": 1
+  },
+  "parameterValue": "12",
+  "mappingAddress": {
+    "parameterId": 1
+  }
+}

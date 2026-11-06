@@ -2,7 +2,7 @@
 
 本批把“读取工程—生成程序—修改—取得诊断—修复—保存版本”接到同一个 MCP 服务中。应用用例、文件管理、SQLite 记录、子进程协议和原创 ScriptEngine 调用均已有实现；在独立测试宿主中可以跨平台执行。真实 InoProShop / IronPython 兼容性与实际 OpenCode 客户端联调仍未验收。
 
-生产宿主仍只开放两个状态/能力工具，`engineeringReady=false`。测试宿主共 **22 个工具**，本批新增 13 个；返回 `executionMode=fixture`、`evidenceKind=simulated`。测试数据是 JSON，不是汇川工程，模拟诊断不代表 PLC 编译。
+生产宿主仍只开放两个状态/能力工具，`engineeringReady=false`。第二批时测试宿主共 **22 个工具**，该批新增 13 个；P3 扩为 49 个，见 [当前说明](14-engineering-configuration.md)。返回 `executionMode=fixture`、`evidenceKind=simulated`。测试数据是 JSON，不是汇川工程，模拟诊断不代表 PLC 编译。
 
 ## 本批交付
 
@@ -117,12 +117,13 @@ OpenCode 每次提交先取得 jobId，轮询 `plc_job_get`，再用 `plc_job_ge
 - `Inovance/Scripts/engineering_worker.py` 使用供应商 CHM 与官网对照的原创调用；不引入第三方 PLC MCP。
 - `McpHost/Tools/EditingTools` 提供协议入口，生产组合根仍不注册未验证工程工具。
 
-执行 `eng/verify.ps1`，或依次运行锁定还原、Release 构建、标准 .NET 测试、三组 HTTP 检查和 Python 测试。HTTP 检查都使用 5088 端口，需依次运行：
+执行 `eng/verify.ps1`，或依次运行锁定还原、Release 构建、标准 .NET 测试、四组 HTTP 检查和 Python 测试。HTTP 检查都使用 5088 端口，需依次运行：
 
 ```bash
 python eng/verify-mcp.py
 python eng/verify-execution.py
 python eng/verify-editing.py
+python eng/verify-configuration.py
 python -m unittest discover -s tests/script_engine -v
 ```
 

@@ -1,0 +1,598 @@
+{
+  "schemaVersion": 1,
+  "description": "Offline candidate regression. Prepare an application without a Task Configuration; edit variables for the installed IDE and template.",
+  "cases": [
+    {
+      "id": "create",
+      "tool": "plc_project_create",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "templateId": "${templateId}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "tree",
+      "tool": "plc_project_get_structure",
+      "arguments": {
+        "projectPath": "${projectPath}"
+      }
+    },
+    {
+      "id": "task-config",
+      "tool": "plc_task_configuration_create",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "applicationId": "${applicationId}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "taskConfigurationId": "/result/engineeringResult/configuration/objectId"
+      }
+    },
+    {
+      "id": "task-create",
+      "tool": "plc_task_create",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "taskConfigurationId": "${taskConfigurationId}",
+        "name": "McpCycle",
+        "settings": {
+          "kind": "Cyclic",
+          "priority": "2",
+          "interval": "10",
+          "intervalUnit": "ms",
+          "watchdog": {
+            "enabled": true,
+            "time": "20",
+            "timeUnit": "ms",
+            "sensitivity": "1"
+          }
+        }
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "taskId": "/result/engineeringResult/configuration/objectId"
+      }
+    },
+    {
+      "id": "task-list",
+      "tool": "plc_task_list",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "applicationId": "${applicationId}"
+      }
+    },
+    {
+      "id": "task-read",
+      "tool": "plc_task_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "taskId": "${taskId}"
+      }
+    },
+    {
+      "id": "task-update",
+      "tool": "plc_task_update",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "taskId": "${taskId}",
+        "settings": {
+          "kind": "Cyclic",
+          "priority": "3",
+          "interval": "20",
+          "intervalUnit": "ms"
+        }
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "task-bind",
+      "tool": "plc_task_set_calls",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "taskId": "${taskId}",
+        "calls": [
+          {
+            "pouId": "${programId}",
+            "pouName": "${programName}",
+            "comment": "MCP regression"
+          }
+        ]
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "task-unbind",
+      "tool": "plc_task_set_calls",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "taskId": "${taskId}",
+        "calls": []
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "method-create",
+      "tool": "plc_pou_member_create",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${programId}",
+        "name": "McpCalc",
+        "settings": {
+          "kind": "Method",
+          "returnType": "INT"
+        },
+        "declaration": null,
+        "implementation": "McpCalc := 1;"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "methodId": "/result/engineeringResult/configuration/objectId"
+      }
+    },
+    {
+      "id": "method-update",
+      "tool": "plc_pou_member_update",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "objectId": "${methodId}",
+        "settings": {
+          "kind": "Method"
+        },
+        "declaration": null,
+        "implementation": "McpCalc := 2;"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "method-read",
+      "tool": "plc_pou_member_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${methodId}",
+        "memberKind": "Method"
+      }
+    },
+    {
+      "id": "property-create",
+      "tool": "plc_pou_member_create",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${programId}",
+        "name": "McpValue",
+        "settings": {
+          "kind": "Property",
+          "returnType": "INT",
+          "getter": {
+            "implementation": "McpValue := 1;"
+          },
+          "setter": {
+            "implementation": ""
+          }
+        },
+        "declaration": null,
+        "implementation": null
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "propertyId": "/result/engineeringResult/configuration/objectId"
+      }
+    },
+    {
+      "id": "property-read",
+      "tool": "plc_pou_member_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${propertyId}",
+        "memberKind": "Property"
+      }
+    },
+    {
+      "id": "action-create",
+      "tool": "plc_pou_member_create",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${programId}",
+        "name": "McpReset",
+        "settings": {
+          "kind": "Action"
+        },
+        "declaration": null,
+        "implementation": ""
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "actionId": "/result/engineeringResult/configuration/objectId",
+        "actionTypeId": "/result/engineeringResult/configuration/data/typeId"
+      }
+    },
+    {
+      "id": "action-update",
+      "tool": "plc_pou_member_update",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "objectId": "${actionId}",
+        "settings": {
+          "kind": "Action",
+          "expectedTypeId": "${actionTypeId}"
+        },
+        "declaration": null,
+        "implementation": "(* regression *)"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "action-read",
+      "tool": "plc_pou_member_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${actionId}",
+        "memberKind": "Action",
+        "expectedTypeId": "${actionTypeId}"
+      }
+    },
+    {
+      "id": "folder-create",
+      "tool": "plc_folder_create",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "name": "McpGroup"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "folderId": "/result/engineeringResult/configuration/objectId"
+      }
+    },
+    {
+      "id": "folder-other",
+      "tool": "plc_folder_create",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${applicationId}",
+        "name": "McpOther"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "otherId": "/result/engineeringResult/configuration/objectId"
+      }
+    },
+    {
+      "id": "folder-rename",
+      "tool": "plc_object_rename",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "objectId": "${folderId}",
+        "expectedName": "McpGroup",
+        "name": "McpRenamed"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "folder-move",
+      "tool": "plc_object_move",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "objectId": "${folderId}",
+        "expectedName": "McpRenamed",
+        "parentId": "${otherId}",
+        "index": -1
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "inspect",
+      "tool": "plc_object_inspect",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${otherId}"
+      }
+    },
+    {
+      "id": "installed",
+      "tool": "plc_library_list_installed",
+      "arguments": {
+        "projectPath": "${projectPath}"
+      }
+    },
+    {
+      "id": "library-add",
+      "tool": "plc_library_add",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "libraryManagerId": "${libraryManagerId}",
+        "displayName": "${libraryName}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "placeholder",
+      "tool": "plc_library_set_placeholder",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "libraryManagerId": "${libraryManagerId}",
+        "name": "McpCommon",
+        "defaultResolution": "${libraryName}",
+        "redirection": "${libraryName}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "library-list",
+      "tool": "plc_library_list",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "libraryManagerId": "${libraryManagerId}"
+      }
+    },
+    {
+      "id": "placeholder-remove",
+      "tool": "plc_library_remove",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "libraryManagerId": "${libraryManagerId}",
+        "referenceName": "#McpCommon"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "library-remove",
+      "tool": "plc_library_remove",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "libraryManagerId": "${libraryManagerId}",
+        "referenceName": "${libraryName}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "devices",
+      "tool": "plc_device_get_tree",
+      "arguments": {
+        "projectPath": "${projectPath}"
+      }
+    },
+    {
+      "id": "device-add",
+      "tool": "plc_device_add",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "parentId": "${controllerId}",
+        "name": "McpInput",
+        "settings": "${deviceSettings}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "deviceId": "/result/engineeringResult/configuration/objectId"
+      }
+    },
+    {
+      "id": "parameters",
+      "tool": "plc_device_get_parameters",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "deviceId": "${deviceId}"
+      }
+    },
+    {
+      "id": "parameter-write",
+      "tool": "plc_device_set_parameter",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "deviceId": "${deviceId}",
+        "address": "${parameterAddress}",
+        "value": "${parameterValue}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "mappings",
+      "tool": "plc_device_get_io_mappings",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "deviceId": "${deviceId}"
+      }
+    },
+    {
+      "id": "io-map",
+      "tool": "plc_device_set_io_mapping",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "deviceId": "${deviceId}",
+        "address": "${mappingAddress}",
+        "variable": "McpInputVariable",
+        "createVariable": true
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "io-clear",
+      "tool": "plc_device_set_io_mapping",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "deviceId": "${deviceId}",
+        "address": "${mappingAddress}",
+        "variable": "",
+        "createVariable": false
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "device-remove",
+      "tool": "plc_device_remove",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "deviceId": "${deviceId}",
+        "expectedName": "McpInput",
+        "recursive": true
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "method-delete",
+      "tool": "plc_object_delete",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "objectId": "${methodId}",
+        "expectedName": "McpCalc",
+        "recursive": false
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "property-delete",
+      "tool": "plc_object_delete",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "objectId": "${propertyId}",
+        "expectedName": "McpValue",
+        "recursive": true
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "action-delete",
+      "tool": "plc_object_delete",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "objectId": "${actionId}",
+        "expectedName": "McpReset",
+        "recursive": false
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "folder-delete",
+      "tool": "plc_object_delete",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "objectId": "${otherId}",
+        "expectedName": "McpOther",
+        "recursive": true
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "task-delete",
+      "tool": "plc_task_delete",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}",
+        "taskId": "${taskId}",
+        "expectedName": "McpCycle"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    },
+    {
+      "id": "save",
+      "tool": "plc_project_save",
+      "arguments": {
+        "workspaceName": "p3-${runId}",
+        "expectedRevision": "${revision}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath"
+      }
+    }
+  ]
+}

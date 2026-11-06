@@ -1,3 +1,5 @@
+using PlcMcp.EngineeringService.Configuration;
+using PlcMcp.Services.Contracts.Configuration;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -18,6 +20,8 @@ public sealed class EngineeringJobs(IJobStore store, IWorkspaceFiles files, IEng
             || submission.Operation is EngineeringOperations.ReadProgram or EngineeringOperations.ReadGvl or EngineeringOperations.ReadDut && !Guid.TryParse(submission.Input.ObjectId, out _)
             || submission.Operation == EngineeringOperations.Compile && !Guid.TryParse(submission.Input.ApplicationId, out _))
             return Result<JobView>.Failure("invalid_request", "Invalid operation, identity or limits.");
+        if (ConfigurationOperations.IsRead(submission.Operation) && ConfigurationValidation.Read(submission.Operation, submission.Input.ObjectId, submission.Input.Query) is { } validation)
+            return Result<JobView>.Failure(validation, "Invalid configuration query.");
         var path = files.NormalizePath(submission.Input.ProjectPath);
         if (!path.IsSuccess) return Result<JobView>.Failure(path.Error!.Code, path.Error.Message);
         var normalized = submission with { Input = submission.Input with { ProjectPath = path.Value!,
@@ -29,7 +33,7 @@ public sealed class EngineeringJobs(IJobStore store, IWorkspaceFiles files, IEng
         var fingerprint = Convert.ToHexString(SHA256.HashData(bytes));
         var existing = await store.FindSubmissionAsync(path.Value!, normalized.Operation, normalized.IdempotencyKey, fingerprint, cancellationToken);
         if (existing is not null) return existing;
-        if (executor.Unavailability is { } error)
+        if (executor.CheckAvailability(submission.Operation) is { } error)
             return Result<JobView>.Failure(error.Code, error.Message);
         var resolved = await files.ResolveAsync(path.Value!, cancellationToken);
         if (!resolved.IsSuccess) return Result<JobView>.Failure(resolved.Error!.Code, resolved.Error.Message);
