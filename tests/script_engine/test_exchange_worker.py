@@ -23,6 +23,7 @@ class ExchangeWorkerTests(unittest.TestCase):
         self.exports, self.imports = [], []
         self.export_error = self.export_warning = self.native_cancel = self.native_skip = self.partial_error = self.import_warning = False
         self.corrupt = False
+        self.vendor_exception = False
         self.h.program.exchange_xml = XML.replace('name="Graph"','name="PLC_PRG"')
         def export_xml(**kwargs):
             self.exports.append(kwargs)
@@ -50,6 +51,7 @@ class ExchangeWorkerTests(unittest.TestCase):
                 else: reporter.added(n)
             if self.partial_error: reporter.error('Second object failed after the first was added')
             if self.import_warning: reporter.warning('Vendor extension was normalized')
+            if self.vendor_exception: raise RuntimeError('SDK failed after reporting an imported object')
         self.h.app.import_xml=lambda **kw:perform_import(kw['dataOrPath'],kw['reporter'])
         def export_native(**kw):
             xml=export_xml(objects=kw['objects'],reporter=kw['reporter'])
@@ -135,6 +137,12 @@ class ExchangeWorkerTests(unittest.TestCase):
         self.corrupt=True; r=self.run_request()
         self.assertEqual('exchange_reopen_mismatch',r['errorCode'])
         self.assertEqual(1,self.harness.save_count)
+        self.assertTrue(any('Imported object' in x['message'] for x in r['payload']['exchange']['report']))
+    def test_unexpected_sdk_exception_retains_partial_import_evidence(self):
+        self.vendor_exception=True; r=self.run_request()
+        self.assertEqual('script_execution_failed',r['errorCode']); self.assertEqual(0,self.harness.save_count)
+        self.assertFalse(r['payload']['published'])
+        self.assertTrue(any('Imported object' in x['message'] for x in r['payload']['exchange']['report']))
     def test_graph_create_uses_same_lifecycle(self):
         r=self.run_request('pou.graph.write',name='Graph')
         self.assertEqual('succeeded',r['outcome'],r)

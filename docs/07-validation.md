@@ -75,7 +75,7 @@ P2 历史的 35 项 Python 测试包含 10 项探针、12 项读取/编译与 13
 
 ## P4 交换与图形验证
 
-本批标准检查为 69 个 .NET 用例、67 个 Python 测试和五组 HTTP 检查；最新提交的通过情况以 [PR #5 检查记录](https://github.com/ShuJinHao/PlcMcpPlatform/pull/5/checks) 为准。HTTP 契约明确比对 58 个工具及独立 graph-v1 结构，P4 场景包含 38 步。CI 不自动改写契约快照来通过检查。
+本批标准检查为 69 个 .NET 用例、68 个 Python 测试和五组 HTTP 检查；最新提交的通过情况以 [PR #5 检查记录](https://github.com/ShuJinHao/PlcMcpPlatform/pull/5/checks) 为准。HTTP 契约明确比对 58 个工具及独立 graph-v1 结构，P4 场景包含 38 步。CI 不自动改写契约快照来通过检查。
 
 新增断言覆盖 LD/FBD/SFC 往返、几何与语义区别、重复/悬空连接、执行顺序、未知扩展、不可应用字段、DTD/实体、制品损坏、图形失真不能发布、幂等重试；脚本测试覆盖官方重载、冲突/替换身份、跳过/警告/部分失败、原生取消/丢失成员、保存重开失真。标准 .NET 检查在三系统 CI 执行；当前本地托管运行环境的进程信息限制导致 dotnet CLI/MSBuild 无法完整启动，本地 Roslyn 核心编译、图形往返和 Python 检查仅作开发证据。
 

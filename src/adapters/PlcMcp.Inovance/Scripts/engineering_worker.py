@@ -250,6 +250,7 @@ def execute(request, bindings):
                 "executionMode": "real", "outcome": "failed", "errorCode": None, "payload": None}
     project = None
     exchange = None
+    exchange_history = []
     try:
         validate(request)
         projects, system = bindings.get("projects"), bindings.get("system")
@@ -299,6 +300,7 @@ def execute(request, bindings):
             result["dependencies"] = dependency_check
             result["dependencySnapshot"] = dependencies
             if operation in EXCHANGE_WRITES:
+                exchange_history = list(exchange.report)
                 exchange = ExchangeEngine(project, bindings, WorkerError, engine)
                 result["exchange"] = exchange.proof(before_save)
             elif operation in CONFIG_WRITES:
@@ -365,6 +367,11 @@ def execute(request, bindings):
                 project.close()  # Only owned sessions are closed; no online PLC action is performed.
             except Exception:
                 response.update({"outcome": "unknown", "errorCode": "project_close_unconfirmed", "payload": None})
+        # Preserve observed import evidence even if the SDK throws, reopening fails,
+        # or the owned session cannot be closed. Evidence does not make a failure successful.
+        if response["outcome"] != "succeeded" and exchange is not None:
+            report = exchange_history + exchange.report
+            response["payload"] = {"exchange": {"report": report[:256], "reportTruncated": len(report) > 256}, "published": False}
     return response
 
 
