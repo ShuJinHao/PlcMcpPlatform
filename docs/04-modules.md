@@ -73,3 +73,7 @@ P1 已新增实际承载进程执行的 Execution 基础设施工程。当前采
 ## P6 模块扩展
 
 Core 的 TextPatchRules 管理精确文本替换；IncrementalService 负责接入预览、版本查询和任务提交；IncrementalReadExecutor 负责上下文/差异，IncrementalEditExecutor 负责候选中的补丁/恢复验证。IProjectHistoryStore 只暴露历史发布元数据，不泄漏 EF 到服务层。ManagedProjectFiles 增加 imports 声明文件和历史清单校验，ManagedProjectExecutor 仍是唯一工程发布入口。新增 6 个 MCP 工具，合计 73 个；模块位置与输入输出见 docs/17。
+
+## P7 模块补充
+
+`EngineeringQueryReader` / `EngineeringCursor` 提供版本一致的工程读取；`IncrementalEditExecutor` 通过既有 member 端口修改访问器；`BatchScope` 在每步修改后用实际对象树重建作用范围，共享资源修改由 `BatchExecutor` 编译全部 Application。未新增 Agent、模型或通用 MCP 平台模块。见 [P7](18-members-batch.md)。

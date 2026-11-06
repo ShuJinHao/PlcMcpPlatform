@@ -124,3 +124,7 @@ Worker 仍为主版本 1。新增 batch/package 属于应用协调操作，不�
 Worker 输入新增 adoption/restoreRevision/patch/incremental 可选字段。project.adopt/restore/context/diff/text.patch 是应用协调操作，仅 object.source.read 是新增原始脚本端口。MCP 工具、batch 与 Worker Schema 已同步。graph diff 的 toObjectId 用于显式配对 XML 替换后改变的对象 GUID。
 
 新增错误包括 adoption_preview_required、invalid_source_name、source_hash_conflict、patch_ambiguous、patch_old_text_missing、patch_object_kind_not_supported、context_scope_incomplete、object_application_scope_mismatch、version_not_found、restore_application_scope_invalid、task_binding_unresolved。失败候选不会推进头，未知结果不可自动重试。完整协议语义见 docs/17。
+
+## P7 契约 1.6
+
+新增 `plc_project_objects_read` / `project.objects.read`，返回 objects/members/tasks/libraries 分页工程数据与绑定查询条件的 nextCursor。TextPatch 增加 memberKind、expectedTypeId、accessor；BatchPlan 增加 deviceScopeIds、libraryManagerIds。批量结果增加 checks、affectedApplicationIds、compileScope。兼容既有工具，Worker 主协议不变。主要新增错误包括 engineering_cursor_query_mismatch、invalid_engineering_cursor、batch_device_scope_mismatch、batch_library_scope_mismatch、batch_declared_scope_mismatch、property_accessor_ambiguous；具体范围见 [P7](18-members-batch.md)。

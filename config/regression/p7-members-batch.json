@@ -1,0 +1,1342 @@
+{
+  "schemaVersion": 1,
+  "description": "Original motor engineering scenario: member/accessor source, exact patches, folder/task/library/device batch, revision-bound pages and delivery. Uses a clean template without pre-existing task configuration. Synthetic tests do not establish IDE compatibility.",
+  "cases": [
+    {
+      "id": "create",
+      "tool": "plc_project_create",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "templateId": "${templateId}"
+      },
+      "bind": {
+        "baseRevision": "/result/revision"
+      }
+    },
+    {
+      "id": "preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "group",
+              "operation": "folder.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Motors",
+                "configuration": {
+                  "object": {}
+                }
+              }
+            },
+            {
+              "id": "target",
+              "operation": "folder.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Equipment",
+                "configuration": {
+                  "object": {}
+                }
+              }
+            },
+            {
+              "id": "motor",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "@group",
+                "name": "FB_Motor",
+                "pouType": "FunctionBlock",
+                "language": "ST",
+                "declaration": "FUNCTION_BLOCK FB_Motor\nVAR\n runningState : BOOL;\n alarmState : BOOL;\nEND_VAR",
+                "implementation": "// Motor instance"
+              }
+            },
+            {
+              "id": "start",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Start",
+                "implementation": "runningState := TRUE;",
+                "configuration": {
+                  "member": {
+                    "kind": "Method"
+                  }
+                }
+              }
+            },
+            {
+              "id": "stop",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Stop",
+                "implementation": "runningState := FALSE;",
+                "configuration": {
+                  "member": {
+                    "kind": "Method"
+                  }
+                }
+              }
+            },
+            {
+              "id": "reset",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Reset",
+                "implementation": "alarmState := FALSE;",
+                "configuration": {
+                  "member": {
+                    "kind": "Method"
+                  }
+                }
+              }
+            },
+            {
+              "id": "running",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Running",
+                "configuration": {
+                  "member": {
+                    "kind": "Property",
+                    "returnType": "BOOL",
+                    "getter": {
+                      "implementation": "Running := runningState;"
+                    },
+                    "setter": {
+                      "implementation": "runningState := Running;"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "alarm",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Alarm",
+                "configuration": {
+                  "member": {
+                    "kind": "Property",
+                    "returnType": "BOOL",
+                    "getter": {
+                      "implementation": "Alarm := alarmState;"
+                    },
+                    "setter": {
+                      "implementation": "alarmState := Alarm;"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "action",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Clear",
+                "implementation": "alarmState := FALSE;",
+                "configuration": {
+                  "member": {
+                    "kind": "Action"
+                  }
+                }
+              }
+            },
+            {
+              "id": "state",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorState",
+                "dutType": "Enumeration",
+                "declaration": "TYPE MotorState : (Idle, Running); END_TYPE"
+              }
+            },
+            {
+              "id": "globals",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "GVL_Motor",
+                "declaration": "VAR_GLOBAL\n Enable : BOOL;\nEND_VAR"
+              }
+            },
+            {
+              "id": "main",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MAIN",
+                "pouType": "Program",
+                "language": "ST",
+                "declaration": "PROGRAM MAIN\nVAR\n motor : FB_Motor;\nEND_VAR",
+                "implementation": "motor();"
+              }
+            },
+            {
+              "id": "configuration",
+              "operation": "task.configuration.create",
+              "change": {
+                "parentId": "${applicationId}"
+              }
+            },
+            {
+              "id": "task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "Cycle",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "1",
+                    "interval": "20",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calls",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "@task",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "@main",
+                      "pouName": "MAIN"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "library",
+              "operation": "library.add",
+              "change": {
+                "objectId": "${libraryManagerId}",
+                "configuration": {
+                  "library": {
+                    "name": "${libraryName}"
+                  }
+                }
+              }
+            },
+            {
+              "id": "placeholder",
+              "operation": "library.placeholder.set",
+              "change": {
+                "objectId": "${libraryManagerId}",
+                "configuration": {
+                  "library": {
+                    "name": "MotorLibrary",
+                    "defaultResolution": "${libraryName}"
+                  }
+                }
+              }
+            },
+            {
+              "id": "rename",
+              "operation": "object.rename",
+              "change": {
+                "objectId": "@group",
+                "name": "Retired",
+                "configuration": {
+                  "object": {
+                    "expectedName": "Motors"
+                  }
+                }
+              }
+            },
+            {
+              "id": "move",
+              "operation": "object.move",
+              "change": {
+                "objectId": "@motor",
+                "parentId": "@target",
+                "configuration": {
+                  "object": {
+                    "expectedName": "FB_Motor"
+                  }
+                }
+              }
+            },
+            {
+              "id": "remove_group",
+              "operation": "object.delete",
+              "change": {
+                "objectId": "@group",
+                "configuration": {
+                  "object": {
+                    "expectedName": "Retired"
+                  }
+                }
+              }
+            },
+            {
+              "id": "temporary_task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "Unused",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "2",
+                    "interval": "50",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "remove_task",
+              "operation": "task.delete",
+              "change": {
+                "objectId": "@temporary_task",
+                "configuration": {
+                  "object": {
+                    "expectedName": "Unused"
+                  }
+                }
+              }
+            },
+            {
+              "id": "io",
+              "operation": "device.add",
+              "change": {
+                "parentId": "${controllerId}",
+                "name": "MotorIO",
+                "configuration": {
+                  "device": "${deviceSettings}"
+                }
+              }
+            },
+            {
+              "id": "parameter",
+              "operation": "device.parameter.write",
+              "change": {
+                "objectId": "@io",
+                "configuration": {
+                  "parameter": {
+                    "address": "${parameterAddress}",
+                    "value": "${parameterValue}"
+                  }
+                }
+              }
+            },
+            {
+              "id": "mapping",
+              "operation": "device.io.map",
+              "change": {
+                "objectId": "@io",
+                "configuration": {
+                  "mapping": {
+                    "address": "${mappingAddress}",
+                    "variable": "GVL_Motor.Enable"
+                  }
+                }
+              }
+            },
+            {
+              "id": "temporary_device",
+              "operation": "device.add",
+              "change": {
+                "parentId": "${controllerId}",
+                "name": "UnusedIO",
+                "configuration": {
+                  "device": "${deviceSettings}"
+                }
+              }
+            },
+            {
+              "id": "remove_device",
+              "operation": "device.remove",
+              "change": {
+                "objectId": "@temporary_device",
+                "configuration": {
+                  "object": {
+                    "expectedName": "UnusedIO",
+                    "recursive": true
+                  }
+                }
+              }
+            },
+            {
+              "id": "remove_library",
+              "operation": "library.remove",
+              "change": {
+                "objectId": "${libraryManagerId}",
+                "configuration": {
+                  "library": {
+                    "name": "${libraryName}"
+                  }
+                }
+              }
+            }
+          ],
+          "deviceScopeIds": [
+            "${controllerId}"
+          ],
+          "libraryManagerIds": [
+            "${libraryManagerId}"
+          ]
+        }
+      },
+      "bind": {
+        "planHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "group",
+              "operation": "folder.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Motors",
+                "configuration": {
+                  "object": {}
+                }
+              }
+            },
+            {
+              "id": "target",
+              "operation": "folder.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "Equipment",
+                "configuration": {
+                  "object": {}
+                }
+              }
+            },
+            {
+              "id": "motor",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "@group",
+                "name": "FB_Motor",
+                "pouType": "FunctionBlock",
+                "language": "ST",
+                "declaration": "FUNCTION_BLOCK FB_Motor\nVAR\n runningState : BOOL;\n alarmState : BOOL;\nEND_VAR",
+                "implementation": "// Motor instance"
+              }
+            },
+            {
+              "id": "start",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Start",
+                "implementation": "runningState := TRUE;",
+                "configuration": {
+                  "member": {
+                    "kind": "Method"
+                  }
+                }
+              }
+            },
+            {
+              "id": "stop",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Stop",
+                "implementation": "runningState := FALSE;",
+                "configuration": {
+                  "member": {
+                    "kind": "Method"
+                  }
+                }
+              }
+            },
+            {
+              "id": "reset",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Reset",
+                "implementation": "alarmState := FALSE;",
+                "configuration": {
+                  "member": {
+                    "kind": "Method"
+                  }
+                }
+              }
+            },
+            {
+              "id": "running",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Running",
+                "configuration": {
+                  "member": {
+                    "kind": "Property",
+                    "returnType": "BOOL",
+                    "getter": {
+                      "implementation": "Running := runningState;"
+                    },
+                    "setter": {
+                      "implementation": "runningState := Running;"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "alarm",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Alarm",
+                "configuration": {
+                  "member": {
+                    "kind": "Property",
+                    "returnType": "BOOL",
+                    "getter": {
+                      "implementation": "Alarm := alarmState;"
+                    },
+                    "setter": {
+                      "implementation": "alarmState := Alarm;"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "action",
+              "operation": "member.create",
+              "change": {
+                "parentId": "@motor",
+                "name": "Clear",
+                "implementation": "alarmState := FALSE;",
+                "configuration": {
+                  "member": {
+                    "kind": "Action"
+                  }
+                }
+              }
+            },
+            {
+              "id": "state",
+              "operation": "dut.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MotorState",
+                "dutType": "Enumeration",
+                "declaration": "TYPE MotorState : (Idle, Running); END_TYPE"
+              }
+            },
+            {
+              "id": "globals",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "GVL_Motor",
+                "declaration": "VAR_GLOBAL\n Enable : BOOL;\nEND_VAR"
+              }
+            },
+            {
+              "id": "main",
+              "operation": "pou.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "MAIN",
+                "pouType": "Program",
+                "language": "ST",
+                "declaration": "PROGRAM MAIN\nVAR\n motor : FB_Motor;\nEND_VAR",
+                "implementation": "motor();"
+              }
+            },
+            {
+              "id": "configuration",
+              "operation": "task.configuration.create",
+              "change": {
+                "parentId": "${applicationId}"
+              }
+            },
+            {
+              "id": "task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "Cycle",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "1",
+                    "interval": "20",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "calls",
+              "operation": "task.calls.set",
+              "change": {
+                "objectId": "@task",
+                "configuration": {
+                  "calls": [
+                    {
+                      "pouId": "@main",
+                      "pouName": "MAIN"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "library",
+              "operation": "library.add",
+              "change": {
+                "objectId": "${libraryManagerId}",
+                "configuration": {
+                  "library": {
+                    "name": "${libraryName}"
+                  }
+                }
+              }
+            },
+            {
+              "id": "placeholder",
+              "operation": "library.placeholder.set",
+              "change": {
+                "objectId": "${libraryManagerId}",
+                "configuration": {
+                  "library": {
+                    "name": "MotorLibrary",
+                    "defaultResolution": "${libraryName}"
+                  }
+                }
+              }
+            },
+            {
+              "id": "rename",
+              "operation": "object.rename",
+              "change": {
+                "objectId": "@group",
+                "name": "Retired",
+                "configuration": {
+                  "object": {
+                    "expectedName": "Motors"
+                  }
+                }
+              }
+            },
+            {
+              "id": "move",
+              "operation": "object.move",
+              "change": {
+                "objectId": "@motor",
+                "parentId": "@target",
+                "configuration": {
+                  "object": {
+                    "expectedName": "FB_Motor"
+                  }
+                }
+              }
+            },
+            {
+              "id": "remove_group",
+              "operation": "object.delete",
+              "change": {
+                "objectId": "@group",
+                "configuration": {
+                  "object": {
+                    "expectedName": "Retired"
+                  }
+                }
+              }
+            },
+            {
+              "id": "temporary_task",
+              "operation": "task.create",
+              "change": {
+                "parentId": "@configuration",
+                "name": "Unused",
+                "configuration": {
+                  "task": {
+                    "kind": "Cyclic",
+                    "priority": "2",
+                    "interval": "50",
+                    "intervalUnit": "ms"
+                  }
+                }
+              }
+            },
+            {
+              "id": "remove_task",
+              "operation": "task.delete",
+              "change": {
+                "objectId": "@temporary_task",
+                "configuration": {
+                  "object": {
+                    "expectedName": "Unused"
+                  }
+                }
+              }
+            },
+            {
+              "id": "io",
+              "operation": "device.add",
+              "change": {
+                "parentId": "${controllerId}",
+                "name": "MotorIO",
+                "configuration": {
+                  "device": "${deviceSettings}"
+                }
+              }
+            },
+            {
+              "id": "parameter",
+              "operation": "device.parameter.write",
+              "change": {
+                "objectId": "@io",
+                "configuration": {
+                  "parameter": {
+                    "address": "${parameterAddress}",
+                    "value": "${parameterValue}"
+                  }
+                }
+              }
+            },
+            {
+              "id": "mapping",
+              "operation": "device.io.map",
+              "change": {
+                "objectId": "@io",
+                "configuration": {
+                  "mapping": {
+                    "address": "${mappingAddress}",
+                    "variable": "GVL_Motor.Enable"
+                  }
+                }
+              }
+            },
+            {
+              "id": "temporary_device",
+              "operation": "device.add",
+              "change": {
+                "parentId": "${controllerId}",
+                "name": "UnusedIO",
+                "configuration": {
+                  "device": "${deviceSettings}"
+                }
+              }
+            },
+            {
+              "id": "remove_device",
+              "operation": "device.remove",
+              "change": {
+                "objectId": "@temporary_device",
+                "configuration": {
+                  "object": {
+                    "expectedName": "UnusedIO",
+                    "recursive": true
+                  }
+                }
+              }
+            },
+            {
+              "id": "remove_library",
+              "operation": "library.remove",
+              "change": {
+                "objectId": "${libraryManagerId}",
+                "configuration": {
+                  "library": {
+                    "name": "${libraryName}"
+                  }
+                }
+              }
+            }
+          ],
+          "deviceScopeIds": [
+            "${controllerId}"
+          ],
+          "libraryManagerIds": [
+            "${libraryManagerId}"
+          ]
+        },
+        "expectedPlanSha256": "${planHash}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "motorId": "/result/engineeringResult/batch/aliases/motor",
+        "propertyId": "/result/engineeringResult/batch/aliases/running",
+        "resetId": "/result/engineeringResult/batch/aliases/reset",
+        "actionId": "/result/engineeringResult/batch/aliases/action"
+      },
+      "expect": [
+        {
+          "path": "/result/published",
+          "equals": true
+        },
+        {
+          "path": "/result/engineeringResult/batch/compileScope",
+          "equals": "all_applications"
+        }
+      ]
+    },
+    {
+      "id": "members",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "collection": "members",
+        "parentId": "${motorId}",
+        "pageSize": 2
+      },
+      "bind": {
+        "memberCursor": "/result/nextCursor"
+      },
+      "expect": [
+        {
+          "path": "/result/totalItems",
+          "equals": 6
+        }
+      ]
+    },
+    {
+      "id": "members-next",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "collection": "members",
+        "parentId": "${motorId}",
+        "pageSize": 2,
+        "cursor": "${memberCursor}"
+      },
+      "expect": [
+        {
+          "path": "/result/totalItems",
+          "equals": 6
+        }
+      ]
+    },
+    {
+      "id": "cursor-mismatch",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "collection": "members",
+        "parentId": "${motorId}",
+        "pageSize": 1,
+        "cursor": "${memberCursor}"
+      },
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "engineering_cursor_query_mismatch"
+        }
+      ],
+      "expectToolError": true
+    },
+    {
+      "id": "accessor",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "collection": "members",
+        "parentId": "${propertyId}",
+        "pageSize": 1,
+        "maxTextChars": 8192
+      },
+      "bind": {
+        "accessorCursor": "/result/nextCursor",
+        "accessorId": "/result/items/0/objectId",
+        "accessorName": "/result/items/0/accessor",
+        "accessorSha": "/result/items/0/implementation/sha256",
+        "accessorText": "/result/items/0/implementation/text"
+      },
+      "expect": [
+        {
+          "path": "/result/totalItems",
+          "equals": 2
+        },
+        {
+          "path": "/result/items/0/ownerId",
+          "equals": "${propertyId}"
+        }
+      ]
+    },
+    {
+      "id": "accessor-next",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "collection": "members",
+        "parentId": "${propertyId}",
+        "pageSize": 1,
+        "maxTextChars": 8192,
+        "cursor": "${accessorCursor}"
+      },
+      "expect": [
+        {
+          "path": "/result/nextCursor",
+          "equals": null
+        }
+      ]
+    },
+    {
+      "id": "method",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${resetId}",
+        "maxTextChars": 8192
+      },
+      "bind": {
+        "methodSha": "/result/items/0/implementation/sha256"
+      },
+      "expect": [
+        {
+          "path": "/result/items/0/kind",
+          "equals": "Method"
+        }
+      ]
+    },
+    {
+      "id": "action-unclassified",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${actionId}"
+      },
+      "bind": {
+        "actionType": "/result/items/0/typeId"
+      },
+      "expect": [
+        {
+          "path": "/result/items/0/kind",
+          "equals": "object"
+        }
+      ]
+    },
+    {
+      "id": "action-pinned",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${actionId}",
+        "sourceQuery": {
+          "memberKind": "Action",
+          "expectedTypeId": "${actionType}"
+        }
+      },
+      "bind": {
+        "actionSha": "/result/items/0/implementation/sha256"
+      },
+      "expect": [
+        {
+          "path": "/result/items/0/kind",
+          "equals": "Action"
+        }
+      ]
+    },
+    {
+      "id": "tasks",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "collection": "tasks"
+      },
+      "expect": [
+        {
+          "path": "/result/totalItems",
+          "equals": 1
+        },
+        {
+          "path": "/result/items/0/calls/0/resolved",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "libraries",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "revision": "${revision}",
+        "applicationId": "${applicationId}",
+        "collection": "libraries",
+        "pageSize": 8
+      }
+    },
+    {
+      "id": "patch-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "method",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${resetId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${methodSha}",
+                  "oldText": "alarmState := FALSE;",
+                  "newText": "(* Reset alarm *)\nalarmState := FALSE;",
+                  "memberKind": "Method"
+                }
+              }
+            },
+            {
+              "id": "accessor",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${propertyId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${accessorSha}",
+                  "oldText": "${accessorText}",
+                  "newText": "(* Property access *)\n${accessorText}",
+                  "memberKind": "Property",
+                  "accessor": "${accessorName}"
+                }
+              }
+            },
+            {
+              "id": "action",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${actionId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${actionSha}",
+                  "oldText": "alarmState := FALSE;",
+                  "newText": "(* Clear alarm *)\nalarmState := FALSE;",
+                  "memberKind": "Action",
+                  "expectedTypeId": "${actionType}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "patchHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "patch-apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "method",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${resetId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${methodSha}",
+                  "oldText": "alarmState := FALSE;",
+                  "newText": "(* Reset alarm *)\nalarmState := FALSE;",
+                  "memberKind": "Method"
+                }
+              }
+            },
+            {
+              "id": "accessor",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${propertyId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${accessorSha}",
+                  "oldText": "${accessorText}",
+                  "newText": "(* Property access *)\n${accessorText}",
+                  "memberKind": "Property",
+                  "accessor": "${accessorName}"
+                }
+              }
+            },
+            {
+              "id": "action",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${actionId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${actionSha}",
+                  "oldText": "alarmState := FALSE;",
+                  "newText": "(* Clear alarm *)\nalarmState := FALSE;",
+                  "memberKind": "Action",
+                  "expectedTypeId": "${actionType}"
+                }
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${patchHash}"
+      },
+      "bind": {
+        "patchedRevision": "/result/revision"
+      },
+      "expect": [
+        {
+          "path": "/result/published",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "accessor-readback",
+      "tool": "plc_project_objects_read",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${patchedRevision}",
+        "revision": "${patchedRevision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${accessorId}",
+        "maxTextChars": 8192
+      },
+      "expect": [
+        {
+          "path": "/result/items/0/implementation/text",
+          "equals": "(* Property access *)\n${accessorText}"
+        },
+        {
+          "path": "/result/items/0/objectId",
+          "equals": "${accessorId}"
+        }
+      ]
+    },
+    {
+      "id": "diff",
+      "tool": "plc_project_diff",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedHeadRevision": "${patchedRevision}",
+        "fromRevision": "${revision}",
+        "toRevision": "${patchedRevision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${resetId}"
+      },
+      "expect": [
+        {
+          "path": "/result/objectDifference/implementationChanged",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "stale-patch-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "method",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${resetId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${methodSha}",
+                  "oldText": "alarmState := FALSE;",
+                  "newText": "(* Reset alarm *)\nalarmState := FALSE;",
+                  "memberKind": "Method"
+                }
+              }
+            },
+            {
+              "id": "accessor",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${propertyId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${accessorSha}",
+                  "oldText": "${accessorText}",
+                  "newText": "(* Property access *)\n${accessorText}",
+                  "memberKind": "Property",
+                  "accessor": "${accessorName}"
+                }
+              }
+            },
+            {
+              "id": "action",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${actionId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${actionSha}",
+                  "oldText": "alarmState := FALSE;",
+                  "newText": "(* Clear alarm *)\nalarmState := FALSE;",
+                  "memberKind": "Action",
+                  "expectedTypeId": "${actionType}"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "stalePlanHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "stale-patch",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "method",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${resetId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${methodSha}",
+                  "oldText": "alarmState := FALSE;",
+                  "newText": "(* Reset alarm *)\nalarmState := FALSE;",
+                  "memberKind": "Method"
+                }
+              }
+            },
+            {
+              "id": "accessor",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${propertyId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${accessorSha}",
+                  "oldText": "${accessorText}",
+                  "newText": "(* Property access *)\n${accessorText}",
+                  "memberKind": "Property",
+                  "accessor": "${accessorName}"
+                }
+              }
+            },
+            {
+              "id": "action",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${actionId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${actionSha}",
+                  "oldText": "alarmState := FALSE;",
+                  "newText": "(* Clear alarm *)\nalarmState := FALSE;",
+                  "memberKind": "Action",
+                  "expectedTypeId": "${actionType}"
+                }
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${stalePlanHash}"
+      },
+      "expect": [
+        {
+          "path": "/status",
+          "equals": "Failed"
+        },
+        {
+          "path": "/errorCode",
+          "equals": "source_hash_conflict"
+        }
+      ]
+    },
+    {
+      "id": "head-preserved",
+      "tool": "plc_workspace_get",
+      "arguments": {
+        "workspaceName": "p7-${runId}"
+      },
+      "expect": [
+        {
+          "path": "/value/revision",
+          "equals": "${patchedRevision}"
+        }
+      ]
+    },
+    {
+      "id": "package",
+      "tool": "plc_delivery_create",
+      "arguments": {
+        "workspaceName": "p7-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "applicationId": "${applicationId}"
+      },
+      "bind": {
+        "packageId": "/result/artifact/artifactId",
+        "packageSha": "/result/artifact/sha256"
+      },
+      "expect": [
+        {
+          "path": "/result/packaged",
+          "equals": true
+        }
+      ]
+    }
+  ]
+}

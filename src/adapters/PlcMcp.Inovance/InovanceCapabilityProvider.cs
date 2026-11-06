@@ -10,6 +10,7 @@ public sealed class InovanceCapabilityProvider : IPlcCapabilityProvider
     {
         Describe("project.adopt", OperationRisk.ModifyProject),
         Describe("project.restore", OperationRisk.ModifyProject),
+        Describe("project.objects.read", OperationRisk.Read),
         Describe("project.context", OperationRisk.Read),
         Describe("project.diff", OperationRisk.Read),
         Describe("object.source.read", OperationRisk.Read),

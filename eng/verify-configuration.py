@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-config-check-') as tmp, tempfile
             except OSError: time.sleep(0.1)
         else: raise TimeoutError('Fixture host startup timed out.')
         client=McpClient('http://127.0.0.1:5088/mcp',key)
-        tools=client.rpc('tools/list')['tools']; assert len(tools)==73,len(tools)
+        tools=client.rpc('tools/list')['tools']; assert len(tools)==74,len(tools)
         for tool in tools:
             assert tool['inputSchema']['type']=='object'; assert tool['outputSchema']['type']=='object'
         variables=json.loads((root/'config/regression/fixture-variables.json').read_text()); variables['runId']=secrets.token_hex(8)
@@ -43,7 +43,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-config-check-') as tmp, tempfile
         assert not mismatch['succeeded'] and not mismatch['cases']
         rejected=client.call('plc_device_set_io_mapping',dict(workspaceName='p3-'+variables['runId'],expectedRevision=variables['revision'],deviceId=variables['controllerId'],address=dict(parameterId=1),variable='Unqualified',createVariable=False,idempotencyKey='invalid-mapping'),allow_error=True)
         assert rejected['error']['code']=='invalid_io_expression',rejected
-        print('P3 HTTP regression: 73 tools, '+str(len(report['cases']))+' completed cases; wrong-mode and invalid-mapping checks passed. Simulated only.')
+        print('P3 HTTP regression: 74 tools, '+str(len(report['cases']))+' completed cases; wrong-mode and invalid-mapping checks passed. Simulated only.')
     except Exception:
         log.seek(0); print(log.read()[-6000:]); raise
     finally:

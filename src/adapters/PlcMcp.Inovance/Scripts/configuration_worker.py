@@ -183,19 +183,27 @@ class ConfigurationEngine(object):
     def member(self, key, kind, expected_type=None):
         node = self.node(key); result = self.info(key); result.update(self.sources(node))
         declaration = result['declaration']
+        if expected_type is not None and str(uuid.UUID(expected_type)) != str(uuid.UUID(text_type(node.type))): self.fail('member_type_evidence_required')
         if kind in ('Method', 'Property'):
-            if declaration is None or not re.match(r'^' + kind.upper() + r'\b', self.header(declaration), re.I): self.fail('object_kind_mismatch')
+            if declaration is None or not re.match(r'^' + kind.upper() + r'\s+(?:(?:PUBLIC|PRIVATE|PROTECTED|INTERNAL|FINAL|ABSTRACT)\s+)*' + re.escape(text_type(node.get_name())) + r'\b', self.header(declaration), re.I): self.fail('object_kind_mismatch')
         elif kind == 'Action':
             # Action has no declaration marker. Caller must pin the observed vendor type GUID.
             if expected_type is None or str(uuid.UUID(expected_type)) != str(uuid.UUID(text_type(node.type))): self.fail('member_type_evidence_required')
             if declaration is not None: self.fail('object_kind_mismatch')
+            parent = self.rows[key]['parentId']
+            if parent not in self.nodes or not re.match(r'^(PROGRAM|FUNCTION_BLOCK)\b', self.header(self.declaration(self.node(parent)) or ''), re.I):
+                self.fail('member_parent_not_supported')
         else: self.fail('invalid_member_kind')
         result['kind'] = kind
         if kind == 'Property':
             for name, field in (('Get', 'getter'), ('Set', 'setter')):
                 children = [n for n in node.get_children(False) if text_type(n.get_name()) == name]
-                if len(children) != 1: self.fail('property_accessor_unavailable')
-                value = self.sources(children[0]); value['objectId'] = identity(children[0]); result[field] = value
+                if len(children) > 1: self.fail('property_accessor_ambiguous')
+                value = None
+                if children:
+                    value = self.sources(children[0])
+                    value.update(objectId=identity(children[0]), parentId=key, ownerId=key, accessor=name, typeId=text_type(children[0].type))
+                result[field] = value
         return result
 
     def reference(self, manager_id, ref):
@@ -416,8 +424,9 @@ class ConfigurationEngine(object):
             if kind == 'Property':
                 for accessor, field in (('Get', 'getter'), ('Set', 'setter')):
                     if m.get(field) is not None:
-                        child = [n for n in node.get_children(False) if text_type(n.get_name()) == accessor][0]
-                        self.source_write(child, m[field])
+                        children = [n for n in node.get_children(False) if text_type(n.get_name()) == accessor]
+                        if len(children) != 1: self.fail('property_accessor_unavailable')
+                        self.source_write(children[0], m[field])
             edit = dict(edit); edit['configuration'] = dict(change, member=dict(m, expectedTypeId=observed_type))
         elif operation in ('object.rename', 'object.move', 'object.delete', 'task.delete', 'device.remove'):
             if text_type(node.get_name()) != settings['expectedName']: self.fail('object_name_conflict')

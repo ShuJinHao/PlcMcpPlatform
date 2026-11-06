@@ -112,3 +112,7 @@ P6 把已发布 ProjectSnapshot 元数据与头和证据放在同一 SQLite 事�
 已有运行中宿主可使用 `eng/run-regressions.py --suite p6 --variables <本地变量文件> --expect-mode fixture|real --report <本地报告>`。P6 需要先放好 imports/sourceName 文件并填写 adoptionSource；`--suite all` 现在顺序包含 P3/P4/P5/P6。真实样例要求指定 POU 实现可在 8192 单元窗口内完整读取；更大的程序应使用分页上下文和针对性局部补丁。真实变量、工程和报告不提交公共仓库。
 
 代码与契约结果见 [PR #7 checks](https://github.com/ShuJinHao/PlcMcpPlatform/pull/7/checks)。官方 API 依据见 [docs/10](10-official-api-baseline.md)，OpenCode 操作顺序见 [增量场景](../config/opencode-incremental-scenario.md)。本阶段不要求用户现在提供 Windows/实机；实际模型生成、具体 IDE/内核/Profile、安装依赖及 PLC 运行待后续统一验收。复杂 SFC、图形 POU 子成员、CFC 结构化编辑、PDO 仍保留原能力边界。
+
+## P7 后续扩展
+
+本文记录 P6 的交付范围。后续 [P7](18-members-batch.md) 扩展了成员/访问器精确修改，并增加名称明确的 `plc_project_objects_read`。本文“上下文”均指工程数据读取，不指 OpenCode 会话或模型上下文管理。

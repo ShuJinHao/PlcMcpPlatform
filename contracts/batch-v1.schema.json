@@ -512,6 +512,27 @@
                   },
                   "newText": {
                     "type": "string"
+                  },
+                  "memberKind": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "expectedTypeId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "accessor": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
                   }
                 },
                 "required": [
@@ -531,6 +552,26 @@
           "change"
         ]
       }
+    },
+    "deviceScopeIds": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "default": null
+    },
+    "libraryManagerIds": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "default": null
     }
   },
   "required": [

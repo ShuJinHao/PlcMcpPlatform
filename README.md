@@ -8,15 +8,17 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
 
-## 当前阶段 P6 已有工程接入与增量编程
+## 当前阶段 P7 工程成员与批量修改
 
-已补齐已保存工程的受控接入、带修订的 Application/POU 上下文、精确文本补丁、版本历史、文件/源码/graph-v1 差异和历史恢复。补丁沿用批量计划，在一个候选中保存重开、核对任务绑定并编译后发布；恢复历史内容会生成新版本，保留全部历史。
+新增标准工程对象查询，按修订分页读取成员、Get/Set、任务及库引用；精确文本修改扩展到 Method/Property/Action 和实际存在的访问器。原 `plc_project_context` 保留兼容，其职责是读取工程数据，不管理 Agent 对话。
 
-延续 P5 的大文件交换、准确版本 ZIP、发布启动、集中回归与 OpenCode 连接检查。独立 TestHost / ValidationHost 共 **73 个工具**，服务保持 .NET 8，PLC 业务和厂商脚本自主实现。
+批量计划纳入已有成员、对象、任务删除、库和设备操作。设备及外部库管理器使用显式作用范围，操作后刷新对象树；涉及设备或库时检查全部 Application 的任务绑定并编译，最后只发布一个新版本。
 
-默认生产宿主仍只有两个查询工具，所有汇川能力保持 `Unverified`、`engineeringReady=false`。**OpenCode 1.19.5 CLI 已通过连接检查；模型生成闭环、真实 InoProShop/IronPython 和 PLC 运行尚未验证。** 测试 JSON 不是汇川工程，fixture 不编译 PLC 代码。Mac 可以继续开发与回归准备，无需安装汇川 IDE。
+沿用 P6 工程接入、版本历史、差异与恢复能力，以及原有图形交换和交付机制。独立 TestHost / ValidationHost 共 **74 个工具**，服务保持 .NET 8，PLC 业务和厂商脚本自主实现。OpenCode 侧只有标准连接配置与连接验证。
 
-详情见 [第六批交付说明](docs/17-incremental-engineering.md) 和 [OpenCode 增量场景](config/opencode-incremental-scenario.md)。`python eng/verify.py` 执行统一回归：Windows、Ubuntu、macOS 标准构建、.NET/Python 测试、七组 HTTP 检查和发布检查，Linux 额外核对 OpenCode CLI 连接。最新精确提交的检查见 [PR #7 checks](https://github.com/ShuJinHao/PlcMcpPlatform/pull/7/checks)。
+默认生产宿主仍只有两个查询工具，所有汇川能力保持 `Unverified`、`engineeringReady=false`。自动回归使用原创测试数据；模型生成、真实 InoProShop/IronPython 和 PLC 运行尚未验证。Mac 可继续开发与回归准备。
+
+详情见 [第七批说明](docs/18-members-batch.md)。统一代码检查入口 `python eng/verify.py`，集中场景入口 `eng/run-regressions.py --suite all` 包含 P3～P7。精确提交的三系统检查见 [PR #8 checks](https://github.com/ShuJinHao/PlcMcpPlatform/pull/8/checks)。
 
 ## 文档入口
 
@@ -40,6 +42,7 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 | [第四批交换与图形内容](docs/15-engineering-exchange.md) | XML 制品、LD/FBD/SFC 模型、导入报告、语义核对和 OpenCode 场景 |
 | [第五批批量与交付](docs/16-engineering-delivery.md) | 批量计划、大文件传递、ZIP、发布启动、OpenCode 与集中回归 |
 | [第六批已有工程与增量编程](docs/17-incremental-engineering.md) | 工程接入、上下文、精确补丁、历史、差异和恢复 |
+| [第七批成员与批量修改](docs/18-members-batch.md) | 工程对象查询、访问器修改、设备/库作用范围和多应用检查 |
 
 ## 核心工程
 

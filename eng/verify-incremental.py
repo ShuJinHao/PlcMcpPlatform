@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-incremental-check-') as tmp, tem
             except OSError: time.sleep(0.1)
         else: raise TimeoutError('Fixture host startup timed out.')
         client = McpClient('http://127.0.0.1:5088/mcp', key)
-        assert len(client.rpc('tools/list')['tools']) == 73
+        assert len(client.rpc('tools/list')['tools']) == 74
         variables = json.loads((root/'config/regression/fixture-variables.json').read_text(encoding='utf-8'))
         variables['runId'] = secrets.token_hex(8)
         def job(tool, arguments, status='Succeeded'):
@@ -89,7 +89,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-incremental-check-') as tmp, tem
         unknown = job('plc_project_adopt', dict(workspaceName='uncertain-source', source=source_definition, expectedSourceRevision=preview['sourceRevision']), 'OutcomeUnknown')
         assert client.call('plc_job_reconcile', dict(jobId=unknown['jobId']), allow_error=True)['error']['code'] == 'reconciliation_unproven'
         assert client.call('plc_runtime_get_status', {})['schedulerBlocked']
-        print('P6 HTTP regression: 73 tools, 14 scenario cases, existing task binding, exact ZIP, compile failure, stale source and unknown-outcome quarantine passed. Fixture only.')
+        print('P6 HTTP regression: 74 tools, 14 scenario cases, existing task binding, exact ZIP, compile failure, stale source and unknown-outcome quarantine passed. Fixture only.')
     except Exception:
         log.seek(0); print(log.read()[-6000:]); raise
     finally:

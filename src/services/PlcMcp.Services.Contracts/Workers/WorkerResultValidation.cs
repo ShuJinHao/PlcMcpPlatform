@@ -19,10 +19,14 @@ public static class WorkerResultValidation
         try
         {
             var input = request.Payload.Deserialize<EngineeringInput>(WorkerJson.Options)!;
-            if (request.Operation is IncrementalOperations.Context or IncrementalOperations.Diff)
+            if (request.Operation is IncrementalOperations.Context or IncrementalOperations.Diff or IncrementalOperations.Query)
             {
                 var q = input.Incremental!;
                 if (payload.GetProperty("headRevision").GetString() != request.ExpectedRevision || payload.GetProperty("workspaceName").GetString() != q.WorkspaceName) return false;
+                if (request.Operation == IncrementalOperations.Query)
+                    return payload.GetProperty("revision").GetString() == q.Revision && payload.GetProperty("applicationId").GetString() == q.ApplicationId
+                        && payload.GetProperty("collection").GetString() == q.Collection && payload.GetProperty("items").GetArrayLength() <= q.PageSize
+                        && payload.GetProperty("totalItems").GetInt32() >= payload.GetProperty("items").GetArrayLength();
                 return request.Operation == IncrementalOperations.Context
                     ? payload.GetProperty("revision").GetString() == q.Revision && payload.GetProperty("applicationId").GetString() == q.ApplicationId
                         && payload.GetProperty("objects").GetArrayLength() <= q.PageSize
@@ -96,9 +100,17 @@ public static class WorkerResultValidation
         if (request.Operation == IncrementalOperations.Patch)
         {
             var section = edit.Patch!.Section;
+            var source = payload;
+            if (edit.Patch.MemberKind is not null)
+            {
+                source = payload.GetProperty("configuration").GetProperty("data");
+                if (source.GetProperty("kind").GetString() != edit.Patch.MemberKind) return false;
+                if (edit.Patch.Accessor is not null) source = source.GetProperty(edit.Patch.Accessor == "Get" ? "getter" : "setter");
+                if (payload.GetProperty("patch").GetProperty("targetObjectId").GetString() != source.GetProperty("objectId").GetString()) return false;
+            }
             return payload.GetProperty("objectId").GetString() == edit.ObjectId
                 && payload.GetProperty("patch").GetProperty("beforeSha256").GetString() == edit.Patch.ExpectedSha256
-                && payload.GetProperty("patch").GetProperty("afterSha256").GetString() == TextPatchRules.Hash(payload.GetProperty(section).GetString()!);
+                && payload.GetProperty("patch").GetProperty("afterSha256").GetString() == TextPatchRules.Hash(source.GetProperty(section).GetString()!);
         }
         if (request.Operation == IncrementalOperations.Restore)
         {
@@ -114,6 +126,17 @@ public static class WorkerResultValidation
         if (request.Operation == BatchOperations.Apply)
         {
             var batch = payload.GetProperty("batch");
+            var checks = batch.GetProperty("checks").EnumerateArray().ToArray();
+            var applicationIds = batch.GetProperty("affectedApplicationIds").EnumerateArray().Select(x => x.GetString()!).ToArray();
+            if (applicationIds.Length is < 1 or > 16 || applicationIds.Distinct().Count() != applicationIds.Length
+                || !applicationIds.Contains(edit.Batch!.ApplicationId) || checks.Length != applicationIds.Length
+                || !checks.Select(x => x.GetProperty("applicationId").GetString()).SequenceEqual(applicationIds)
+                || !BatchOperations.SharedWrite(edit.Batch) && applicationIds.Length != 1
+                || batch.GetProperty("compileScope").GetString() != (BatchOperations.SharedWrite(edit.Batch) ? "all_applications" : "selected_application")
+                || checks.Any(x => x.GetProperty("compile").GetProperty("revision").GetString() != revision
+                    || x.GetProperty("compile").GetProperty("applicationId").GetString() != x.GetProperty("applicationId").GetString()
+                    || !x.GetProperty("compile").GetProperty("succeeded").GetBoolean() || !ValidDiagnostics(x.GetProperty("compile").GetProperty("diagnostics"), true)
+                    || x.GetProperty("tasks").GetProperty("revision").GetString() != revision || !ConfigurationResultValidation.CompleteTaskBindings(x.GetProperty("tasks")))) return false;
             return batch.GetProperty("state").GetString() == "verified" && batch.GetProperty("planSha256").GetString() == edit.PlanSha256
                 && batch.GetProperty("steps").GetArrayLength() == edit.Batch!.Steps.Length
                 && batch.GetProperty("steps").EnumerateArray().All(s => s.GetProperty("status").GetString() == "succeeded")

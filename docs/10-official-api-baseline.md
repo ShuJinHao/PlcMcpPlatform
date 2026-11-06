@@ -153,3 +153,7 @@ python -m unittest discover -s tests/script_engine -v
 新增原创 object.source.read 复用 [ScriptTextualObject 官方接口](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptTextualObject.html) 的 has_textual_declaration、has_textual_implementation、get_text 和已有 replace 路径。官方说明文本行结束符规范化为 LF；应用层据此计算完整段落摘要并执行唯一精确替换。保留真实对象 GUID/type，无法识别的声明类别返回 object，不把 ST/IL/LD 等枚举当成可编辑证明。
 
 工程接入、历史清单、源码/graph-v1 比较和新修订恢复由本项目实现，不调用较新版本的工程 compare API。每个厂商读取/修改仍经既有 Profile 与 ScriptEngine Worker；文档存在与真实 SP11/InoProShop 验收仍分开。来源核对与实现范围见 docs/17，供应商原始 CHM 未提交公共仓库。
+
+## P7 官网复核
+
+2026-11-06 核对官方 ScriptTextualObject 的独立声明/实现标志、get_text 参数，ScriptObject 的 guid/type/parent 以及原有 IEC 创建接口。读取现在保留无声明对象的实际实现；Method/Property 以实际声明和名称核对，Get/Set 结合父属性及唯一直接子对象识别，Action 仍依赖调用方固定实际类型 GUID。复用已实现的 member、device、library API，没有将供应商 CHM 的既有版本基线升级为新版运行证据。详见 [P7](18-members-batch.md)。

@@ -33,9 +33,23 @@ public sealed class FixtureConfiguration
             n["declaration"] = pou.Declaration; n["implementation"] = pou.Implementation;
         }
     }
-    public FixtureProject Save() => fixture with { Configuration = nodes.DeepClone().AsObject(), Objects =
-        (fixture.Objects ?? [new(fixture.ProgramId, "PLC_PRG", "pou", fixture.Declaration, fixture.Implementation, "ST")])
-            .Where(x => nodes.ContainsKey(x.Id)).Select(x => x with { Name = S(Node(x.Id), "name") }).ToArray() };
+    public FixtureProject Save()
+    {
+        foreach (var node in nodes.Select(x => x.Value!.AsObject()).Where(n => S(n, "kind") == "Property").ToArray())
+            foreach (var (name, field) in new[] { ("Get", "getter"), ("Set", "setter") })
+                node[field] = Children(S(node, "objectId")).Select(Node).SingleOrDefault(n => S(n, "name") == name)?.DeepClone();
+        return fixture with { Configuration = nodes.DeepClone().AsObject(), Objects =
+            (fixture.Objects ?? [new(fixture.ProgramId, "PLC_PRG", "pou", fixture.Declaration, fixture.Implementation, "ST")])
+                .Where(x => nodes.ContainsKey(x.Id)).Select(x => x with { Name = S(Node(x.Id), "name") }).ToArray() };
+    }
+    private JsonObject MemberView(string id)
+    {
+        var result = Node(id).DeepClone().AsObject();
+        if (S(result, "kind") == "Property")
+            foreach (var (name, field) in new[] { ("Get", "getter"), ("Set", "setter") })
+                result[field] = Children(id).Select(Node).SingleOrDefault(n => S(n, "name") == name)?.DeepClone();
+        return result;
+    }
     public JsonObject Node(string id) => nodes[id]?.AsObject() ?? throw new ProjectEditException("object_not_found");
     private static JsonNode? J<T>(T value) => JsonSerializer.SerializeToNode(value, WorkerJson.Options);
     private static string S(JsonObject node, string key) => node[key]!.GetValue<string>();
@@ -77,7 +91,9 @@ public sealed class FixtureConfiguration
         foreach (var item in result["calls"]!.AsArray())
         {
             var call = item!.AsObject(); var name = call["pouName"]!.GetValue<string>();
-            var matches = Descendants(fixture.ApplicationId).Where(key => Node(key)["name"]?.GetValue<string>() == name
+            var application = id;
+            while (S(Node(application), "kind") != "application") application = S(Node(application), "parentId");
+            var matches = Descendants(application).Where(key => Node(key)["name"]?.GetValue<string>() == name
                 && Node(key)["declaration"]?.GetValue<string>().StartsWith("PROGRAM ", StringComparison.OrdinalIgnoreCase) == true).ToArray();
             call["resolved"] = matches.Length == 1; call["pouId"] = matches.Length == 1 ? matches[0] : null;
         }
@@ -96,8 +112,8 @@ public sealed class FixtureConfiguration
             case C.TaskRead: Kind(id!, "task"); return TaskView(id!);
             case C.MemberRead:
                 Kind(id!, query!.MemberKind!);
-                if (query.MemberKind == "Action" && query.ExpectedTypeId != TypeId) throw new ProjectEditException("member_type_evidence_required");
-                return Node(id!).DeepClone().AsObject();
+                if (query.ExpectedTypeId is not null && query.ExpectedTypeId != TypeId || query.MemberKind == "Action" && query.ExpectedTypeId is null) throw new ProjectEditException("member_type_evidence_required");
+                return MemberView(id!);
             case C.ObjectInspect:
                 var result = id == "project" ? new JsonObject { ["name"] = "Project", ["kind"] = "project", ["objectId"] = "project" } : Node(id!).DeepClone().AsObject();
                 var children = Children(id!).ToArray(); result["children"] = new JsonArray(children.Take(limit).Select(x => (JsonNode?)Node(x).DeepClone()).ToArray()); result["truncated"] = children.Length > limit; return result;
@@ -129,7 +145,13 @@ public sealed class FixtureConfiguration
                 var m = change!.Member!;
                 n["declaration"] = m.Kind == "Action" ? null : m.Kind.ToUpperInvariant() + " " + edit.Name + (m.ReturnType is null ? "" : " : " + m.ReturnType);
                 n["implementation"] = m.Kind == "Property" || m.Language is not (null or "ST" or "IL") ? null : "";
-                if (m.Kind == "Property") foreach (var a in new[] { "getter", "setter" }) n[a] = new JsonObject { ["objectId"] = Guid.NewGuid().ToString(), ["declaration"] = "VAR\nEND_VAR", ["implementation"] = "" };
+                if (m.Kind == "Property") foreach (var (name, field) in new[] { ("Get", "getter"), ("Set", "setter") })
+                {
+                    var accessorId = Create(name, "accessor", id); var accessor = Node(accessorId);
+                    accessor["ownerId"] = id; accessor["accessor"] = name;
+                    accessor["declaration"] = "VAR\nEND_VAR"; accessor["implementation"] = m.Language is null or "ST" or "IL" ? "" : null;
+                    n[field] = accessor.DeepClone();
+                }
             }
             if (op == C.DeviceAdd)
             {
@@ -153,7 +175,7 @@ public sealed class FixtureConfiguration
             case C.MemberCreate:
             case C.MemberUpdate:
                 Kind(id, change!.Member!.Kind);
-                if (op == C.MemberUpdate && change.Member.Kind == "Action" && change.Member.ExpectedTypeId != TypeId) throw new ProjectEditException("member_type_evidence_required");
+                if (change.Member.ExpectedTypeId is not null && change.Member.ExpectedTypeId != TypeId || op == C.MemberUpdate && change.Member.Kind == "Action" && change.Member.ExpectedTypeId is null) throw new ProjectEditException("member_type_evidence_required");
                 if (edit.Declaration is not null) node["declaration"] = Normalize(edit.Declaration);
                 if (edit.Implementation is not null)
                 {
@@ -163,9 +185,15 @@ public sealed class FixtureConfiguration
                 foreach (var (field, source) in new[] { ("getter", change.Member.Getter), ("setter", change.Member.Setter) })
                 {
                     if (source is null) continue;
-                    var accessor = node[field]?.AsObject() ?? throw new ProjectEditException("property_accessor_unavailable");
+                    var accessorId = Children(id).SingleOrDefault(x => S(Node(x), "name") == (field == "getter" ? "Get" : "Set"))
+                        ?? throw new ProjectEditException("property_accessor_unavailable");
+                    var accessor = Node(accessorId);
                     if (source.Declaration is not null) accessor["declaration"] = Normalize(source.Declaration);
-                    if (source.Implementation is not null) accessor["implementation"] = Normalize(source.Implementation);
+                    if (source.Implementation is not null)
+                    {
+                        if (accessor["implementation"] is null) throw new ProjectEditException("textual_source_unavailable");
+                        accessor["implementation"] = Normalize(source.Implementation);
+                    }
                 }
                 break;
             case C.ObjectRename:
@@ -258,7 +286,7 @@ public sealed class FixtureConfiguration
             if (op == C.PlaceholderSet) name = "#" + name;
             return new() { ["reference"] = refs.Single(r => r!["name"]!.GetValue<string>() == name)!.DeepClone(), ["references"] = refs.DeepClone() };
         }
-        return Node(id).DeepClone().AsObject();
+        return op is C.MemberCreate or C.MemberUpdate ? MemberView(id) : Node(id).DeepClone().AsObject();
     }
     public JsonNode[] Structure() => nodes.Select(x => (JsonNode)new JsonObject { ["id"] = x.Key, ["name"] = x.Value!["name"]!.DeepClone(), ["kind"] = x.Value["kind"]!.DeepClone(), ["parentId"] = x.Value["parentId"]?.DeepClone() }).ToArray();
     private static string Normalize(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');

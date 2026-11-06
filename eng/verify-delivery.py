@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-delivery-check-') as tmp, tempfi
             except OSError: time.sleep(0.1)
         else: raise TimeoutError('Fixture host startup timed out.')
         client = McpClient('http://127.0.0.1:5088/mcp', key)
-        assert len(client.rpc('tools/list')['tools']) == 73
+        assert len(client.rpc('tools/list')['tools']) == 74
         subprocess.run([sys.executable, str(root/'eng/doctor.py'), '--mode', 'fixture'], env=dict(env, PLCMCP_API_KEY=key), check=True)
         if os.environ.get('PLCMCP_OPENCODE'):
             subprocess.run([sys.executable, str(root/'eng/verify-opencode.py'), '--opencode', os.environ['PLCMCP_OPENCODE']],
@@ -80,7 +80,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-delivery-check-') as tmp, tempfi
         assert imports[0]['payload']['edit']['exchange']['file']['name']=='exchange-input.xml'
         assert all(p.stat().st_size <= 131072 for p in (directory/'data/invocations').rglob('request.json'))
         assert list((directory/'data/invocations').rglob('exchange-output.xml'))
-        print('P5 HTTP regression: 73 tools, 18 scenario cases, large UTF-8 file transport and complete ZIP integrity passed. Fixture only.')
+        print('P5 HTTP regression: 74 tools, 18 scenario cases, large UTF-8 file transport and complete ZIP integrity passed. Fixture only.')
     except Exception:
         log.seek(0); print(log.read()[-6000:]); raise
     finally:
