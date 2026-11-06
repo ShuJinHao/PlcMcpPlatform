@@ -57,7 +57,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-semantics-check-') as tmp, tempf
                 assert hashlib.sha256(raw).hexdigest() == stamp['sha256'] and len(raw) == stamp['length']
         # A later failure in the same candidate must not publish the declaration modification.
         name = 'p12-'+variables['runId']; current = variables['patchedRevision']
-        changed = json.loads((root/'tests/fixtures/graphs/fbd-v2-declarations.json').read_text())
+        changed = json.loads((root/'tests/fixtures/graphs/fbd-v2-declarations.json').read_text(encoding='utf-8'))
         changed['variables'][0]['documentation'] = 'must not publish after failed compilation'
         artifact = client.call('plc_graph_generate', dict(program=changed))['value']['artifact']['artifactId']
         invalid = dict(applicationId=variables['applicationId'], steps=[

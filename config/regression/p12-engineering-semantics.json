@@ -25,28 +25,28 @@
             {
               "name": "Start",
               "type": "BOOL",
-              "scope": "input",
+              "scope": "local",
               "address": "%IX0.0",
               "documentation": "样例输入 Start；真实地址必须按目标设备重新确认。"
             },
             {
               "name": "Stop",
               "type": "BOOL",
-              "scope": "input",
+              "scope": "local",
               "address": "%IX0.1",
               "documentation": "样例输入 Stop；真实地址必须按目标设备重新确认。"
             },
             {
               "name": "Fault",
               "type": "BOOL",
-              "scope": "input",
+              "scope": "local",
               "address": "%IX0.2",
               "documentation": "样例输入 Fault；真实地址必须按目标设备重新确认。"
             },
             {
               "name": "Reset",
               "type": "BOOL",
-              "scope": "input",
+              "scope": "local",
               "address": "%IX0.3",
               "documentation": "样例输入 Reset；真实地址必须按目标设备重新确认。"
             },
@@ -299,7 +299,7 @@
           "profile": "graph-v2",
           "variableGroups": [
             {
-              "scope": "input",
+              "scope": "local",
               "variables": [
                 "Start",
                 "Stop",

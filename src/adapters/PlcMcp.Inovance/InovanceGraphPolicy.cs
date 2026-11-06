@@ -26,7 +26,7 @@ public sealed class InovanceGraphPolicy : IPlcGraphPolicy
                     return "inovance_external_declaration_invalid";
                 if (variable.Address is null) continue;
                 if (group.Retention == "retain") return "inovance_retain_address_conflict";
-                if (group.Constant || group.Scope is "temp" or "inOut" || program.PouType == "function")
+                if (group.Constant || group.Scope != "local" || program.PouType == "function")
                     return "inovance_address_scope_invalid";
             }
         }

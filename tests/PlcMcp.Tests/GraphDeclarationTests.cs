@@ -12,14 +12,14 @@ namespace PlcMcp.Tests;
 public sealed class GraphDeclarationTests
 {
     public static GraphicalProgram Sample() => new("DeclaredProgram", "program", "FBD",
-        [new("Request", "BOOL", "input", Address: "%IX0.0", Documentation: "启动 & 停止\n输入 <A> 🟢"),
+        [new("Request", "BOOL", Address: "%IX0.0", Documentation: "启动 & 停止\n输入 <A> 🟢"),
          new("Limit", "INT", InitialValue: "12"), new("Count", "DINT", InitialValue: "0"), new("Result", "BOOL"),
-         new("Scratch", "INT", "temp", "0"), new("RemoteEnable", "BOOL", "external"), new("Flags", "BOOL", Dimensions: [new(0, 3)])],
+         new("Scratch", "INT", "temp", "0"), new("RemoteEnable", "BOOL", "external"), new("Flags", "BOOL", Dimensions: [new(0, 3)]), new("Enable", "BOOL", "input")],
         [new(1, "inVariable", Expression: "Request", Outputs: [new("")]),
          new(2, "outVariable", Expression: "Result", Inputs: [new("", [new(1)])], ExecutionOrder: 1)], Profile: "graph-v2",
-        VariableGroups: [new("input", ["Request"]), new("local", ["Limit"], Constant: true, Name: "Limits"),
+        VariableGroups: [new("local", ["Request"], Name: "AddressedInputs"), new("local", ["Limit"], Constant: true, Name: "Limits"),
             new("local", ["Count"], Retention: "retain", Documentation: "运行统计\n由实际控制器决定保持行为"),
-            new("local", ["Result"]), new("temp", ["Scratch"]), new("external", ["RemoteEnable"]), new("local", ["Flags"], Retention: "nonRetain")]);
+            new("local", ["Result"]), new("temp", ["Scratch"]), new("external", ["RemoteEnable"]), new("local", ["Flags"], Retention: "nonRetain"), new("input", ["Enable"])]);
     private static string Json<T>(T value) => JsonSerializer.Serialize(value, WorkerJson.Options);
     [Fact] public void Declaration_groups_addresses_and_unicode_documentation_roundtrip()
     {
@@ -116,5 +116,13 @@ public sealed class GraphDeclarationTests
         var p = Sample(); var xml = PlcOpenGraphCodec.Encode(p).Replace("constant=\"true\"", "constant=\"1\"")
             .Replace("retain=\"true\"", "retain=\"1\"").Replace("nonretain=\"true\"", "nonretain=\"1\"");
         Assert.Equal(PlcOpenGraphCodec.SemanticHash(p), PlcOpenGraphCodec.Decode(xml).SemanticSha256);
+    }
+    [Theory][InlineData("input")][InlineData("output")][InlineData("inOut")][InlineData("temp")]
+    public void Addressed_interface_and_temporary_variables_are_portable_but_not_in_the_target_subset(string scope)
+    {
+        var p = Sample();
+        p = p with { Variables = p.Variables.Select(v => v.Name == "Request" ? v with { Scope = scope } : v).ToArray(),
+            VariableGroups = p.VariableGroups!.Select(g => g.Variables.Contains("Request") ? g with { Scope = scope } : g).ToArray() };
+        Assert.Null(GraphRules.Validate(p)); Assert.Equal("inovance_address_scope_invalid", new InovanceGraphPolicy().Validate(p));
     }
 }

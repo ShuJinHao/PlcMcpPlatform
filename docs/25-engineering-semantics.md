@@ -12,12 +12,12 @@
   "variables": [
     { "name": "Limit", "type": "INT", "initialValue": "12" },
     { "name": "Count", "type": "DINT", "initialValue": "0", "documentation": "累计次数\n保持效果需要目标验证。" },
-    { "name": "Start", "type": "BOOL", "scope": "input", "address": "%IX0.0" }
+    { "name": "Start", "type": "BOOL", "scope": "local", "address": "%IX0.0" }
   ],
   "variableGroups": [
     { "scope": "local", "variables": ["Limit"], "constant": true, "name": "Parameters" },
     { "scope": "local", "variables": ["Count"], "retention": "retain" },
-    { "scope": "input", "variables": ["Start"] }
+    { "scope": "local", "variables": ["Start"] }
   ]
 }
 ```
@@ -43,7 +43,7 @@
 - EXTERNAL 不在本地初始化或分配地址；本轮不开放其 constant/保持修饰，实际全局定义交由 IDE 检查。
 - CONSTANT 本轮只开放 local/input，并要求初值；不解析 ST 常量表达式。
 - 保持修饰不用于 function、temp、external；RETAIN 与绝对地址组合拒绝。
-- 地址不用于 constant、temp、inOut 或 function。合法语法不代表地址适合该数据类型、硬件布局正确或没有地址重叠。
+- 图形 POU 的地址声明仅开放 local，不能用于 constant 或 function；input/output/inOut/temp/external 均拒绝。合法语法不代表地址适合该数据类型、硬件布局正确或没有地址重叠。
 
 这些是当前适配器的执行子集，不是对其他厂商的通用限制，也不是对汇川所有版本作 Unsupported 结论。实际保持内存、外部变量关联、地址类型、结构成员及初值表达式需要目标 IDE/控制器证据。
 
@@ -98,6 +98,7 @@ OpenCode 可直接读取三个样例以及回归场景中的需求与步骤，�
 
 - [PLCopen 官方下载](https://www.plcopen.org/downloads/)中的 TC6 XML 2.01：varList/varListPlain、formattedText、actionBlock/action 的公开结构。开发时对生成 XML 使用官方 XSD 检查，未复制该文件到公有仓库。
 - [CODESYS RETAIN](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_var_retain.html)、[VAR_TEMP](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_vartypes_var_temp.html)、[VAR_EXTERNAL](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_vartypes_var_external.html)、[变量修饰与常量](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_struct_reference_operands.html)。
+- [CODESYS I/O 映射与 AT 声明限制](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_configuring_devices_mapping_ios.html)：AT 用于 local/global，不能据此给 POU 形参分配地址；本图形 POU 模型只开放 local。
 - [SFC Action](https://content.helpme-codesys.com/en/CODESYS%20SFC/_cds_sfc_element_action.html)、[SFC 处理顺序](https://content.helpme-codesys.com/en/CODESYS%20SFC/_cds_sfc_sequence_of_processing.html)。
 - 原创 ScriptEngine 导入导出仍沿用 [供应商接口基线](10-official-api-baseline.md)，本轮没有新增猜测的供应商 API。
 
