@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using PlcMcp.Services.Contracts.Configuration;
 using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -27,11 +28,20 @@ public sealed class IncrementalTools(IncrementalService incremental, ManagedEdit
         => Submit(edits.SubmitAsync(IncrementalOperations.Adopt, new(workspaceName, Adoption: source), idempotencyKey, expectedSourceRevision, timeoutSeconds, cancellationToken));
 
     [McpServerTool(Name = "plc_project_context", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
-    [Description("Queue revision-bound Application context from a private copy: object IDs, source windows and full normalized SHA-256, task bindings and library references. Optional objectId is returned first; remaining Application objects, including GVL/DUT, follow across pages. Offset/pageSize select objects; textOffset/maxTextChars select UTF-16 source windows. Follow nextOffset and truncation flags. Explicit references are not a complete call graph. Read completion through plc_job_get.")]
+    [Description("Read revision-bound Application engineering data (legacy query name; no AI session management) from a private copy: object IDs, source windows and full normalized SHA-256, task bindings and library references. Optional objectId is returned first; remaining Application objects, including GVL/DUT, follow across pages. Offset/pageSize select objects; textOffset/maxTextChars select UTF-16 source windows. Follow nextOffset and truncation flags. Explicit references are not a complete call graph. Read completion through plc_job_get.")]
     public Task<CallToolResult> Context(string workspaceName, string expectedHeadRevision, string revision, string applicationId, string idempotencyKey,
         CancellationToken cancellationToken, string? objectId = null, int offset = 0, int pageSize = 8, int textOffset = 0, int maxTextChars = 4096, int timeoutSeconds = 600)
         => Submit(incremental.ReadAsync(IncrementalOperations.Context, expectedHeadRevision,
             new(workspaceName, revision, applicationId, objectId, offset, pageSize, textOffset, maxTextChars), idempotencyKey, timeoutSeconds, cancellationToken));
+
+    [McpServerTool(Name = "plc_project_objects_read", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
+    [Description("Read actual engineering data at an immutable revision, not AI conversation context. collection: objects (subtree/one object), members (direct children of parentId), tasks (explicit task bindings), libraries (selected Application and shared references). Returns source windows with full hashes and actual member/accessor identities. For Action classification use objectId plus sourceQuery with observed type GUID. Follow nextCursor with the same query/head/revision; cursor cannot be mixed with a different scope. Read the result with plc_job_get.")]
+    public Task<CallToolResult> Objects(string workspaceName, string expectedHeadRevision, string revision, string applicationId, string idempotencyKey,
+        CancellationToken cancellationToken, string collection = "objects", string? parentId = null, string? objectId = null,
+        ConfigurationQuery? sourceQuery = null, string? cursor = null, int pageSize = 8, int textOffset = 0, int maxTextChars = 4096, int timeoutSeconds = 600)
+        => Submit(incremental.ReadAsync(IncrementalOperations.Query, expectedHeadRevision,
+            new(workspaceName, revision, applicationId, objectId, PageSize: pageSize, TextOffset: textOffset, MaxTextChars: maxTextChars,
+                Collection: collection, ParentId: parentId, SourceQuery: sourceQuery, Cursor: cursor), idempotencyKey, timeoutSeconds, cancellationToken));
 
     [McpServerTool(Name = "plc_project_history", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<HistoryPage>))]
     [Description("List published immutable revisions in chronological order, bound to an exact current head so concurrent publication cannot silently change pagination. Includes pre-P6 history. Failed candidates are job evidence, not historical published versions.")]
@@ -58,12 +68,12 @@ public sealed class IncrementalTools(IncrementalService incremental, ManagedEdit
         catch (ProjectEditException e) { result = Result<T>.Failure(e.Code, "Managed engineering query could not be completed."); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
         { result = Result<T>.Failure("project_unavailable", "Project data is unavailable or invalid."); }
-        return Serialize(new EditingQueryReply<T>("1.5", executor.ExecutionMode, executor.ExecutionMode == "fixture" ? "simulated" : "unverified", false, result.Value, result.Error), result.Error is not null);
+        return Serialize(new EditingQueryReply<T>("1.6", executor.ExecutionMode, executor.ExecutionMode == "fixture" ? "simulated" : "unverified", false, result.Value, result.Error), result.Error is not null);
     }
     private async Task<CallToolResult> Submit(Task<Result<JobView>> task)
     {
         var result = await task; if (result.IsSuccess) signal.Pulse();
-        return Serialize(new JobToolReply("1.5", executor.ExecutionMode, executor.ExecutionMode == "fixture" ? "simulated" : "unverified", false, result.Value, result.Error), result.Error is not null);
+        return Serialize(new JobToolReply("1.6", executor.ExecutionMode, executor.ExecutionMode == "fixture" ? "simulated" : "unverified", false, result.Value, result.Error), result.Error is not null);
     }
     private static CallToolResult Serialize<T>(T value, bool error)
     {

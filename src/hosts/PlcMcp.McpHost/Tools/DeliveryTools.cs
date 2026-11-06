@@ -20,12 +20,12 @@ public sealed class DeliveryTools(BatchService batches, DeliveryService delivery
     IDeliveryArtifacts packages, IBatchJournal journals, IJobStore jobs, IEngineeringExecutor executor, ExecutionSignal signal)
 {
     [McpServerTool(Name = "plc_project_batch_preview", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<BatchPreview>))]
-    [Description("Preview up to 32 ordered steps for one Application. Allowed operations: text.patch, dut.create, dut.update, gvl.create, gvl.update, pou.create, pou.update, pou.graph.write, task.configuration.create, task.create, task.update, task.calls.set. Parent/object IDs and task-call pouId can reference prior identities as @stepId; source text is never interpolated. text.patch requires objectId and patch (section, expectedSha256, oldText, newText); SHA-256 covers the complete LF-normalized UTF-8 section, and oldText must match uniquely. Returns a plan hash bound to the exact workspace revision; this does not validate or modify an IDE.")]
+    [Description("Preview up to 32 explicit engineering steps: POU/GVL/DUT, graph-v1, text.patch, member.create/update, folder.create, object.rename/move/delete, task configuration/create/update/delete/calls, library.add/remove/placeholder.set, device.add/remove/parameter.write/io.map. Program operations stay in applicationId; devices require deviceScopeIds, external library managers require libraryManagerIds. Parent/object IDs and task-call pouId may use @stepId; source text is never interpolated. Member patches specify memberKind, Action also pins expectedTypeId, property accessors use Get/Set. Hashes cover full normalized source; oldText must match uniquely. Preview is static and does not open or validate the IDE.")]
     public Task<CallToolResult> Preview(string workspaceName, string expectedRevision, BatchPlan plan, CancellationToken cancellationToken)
         => Query(() => batches.PreviewAsync(workspaceName, expectedRevision, plan, cancellationToken));
 
     [McpServerTool(Name = "plc_project_batch_apply", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
-    [Description("Execute a previewed plan in one managed candidate. Resolve prior-step identities, verify each save/reopen, compile the chosen Application, then publish once. Failure preserves the old head; unknown outcomes are never automatically resumed.")]
+    [Description("Execute a previewed plan in one managed candidate. Resolve prior-step identities and refresh the object tree after each save/reopen. Shared device/library writes require task checks and compilation of every Application; other plans compile the chosen Application. Publish once. Failure preserves the old head; unknown outcomes are never automatically resumed.")]
     public Task<CallToolResult> Apply(string workspaceName, string expectedRevision, BatchPlan plan, string expectedPlanSha256, string idempotencyKey, CancellationToken cancellationToken, int timeoutSeconds = 600)
         => Submit(batches.ApplyAsync(workspaceName, expectedRevision, plan, expectedPlanSha256, idempotencyKey, timeoutSeconds, cancellationToken));
 
@@ -74,12 +74,12 @@ public sealed class DeliveryTools(BatchService batches, DeliveryService delivery
         catch (ProjectEditException e) { result = Result<T>.Failure(e.Code, "Engineering request could not be completed."); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException)
         { result = Result<T>.Failure("engineering_data_unavailable", "Engineering data is unavailable or invalid."); }
-        return Serialize(new EditingQueryReply<T>("1.4", executor.ExecutionMode, executor.ExecutionMode == "fixture" ? "simulated" : "unverified", false, result.Value, result.Error), result.Error is not null);
+        return Serialize(new EditingQueryReply<T>("1.6", executor.ExecutionMode, executor.ExecutionMode == "fixture" ? "simulated" : "unverified", false, result.Value, result.Error), result.Error is not null);
     }
     private async Task<CallToolResult> Submit(Task<Result<JobView>> task)
     {
         var result = await task; if (result.IsSuccess) signal.Pulse();
-        return Serialize(new JobToolReply("1.4", executor.ExecutionMode, executor.ExecutionMode == "fixture" ? "simulated" : "unverified", false, result.Value, result.Error), result.Error is not null);
+        return Serialize(new JobToolReply("1.6", executor.ExecutionMode, executor.ExecutionMode == "fixture" ? "simulated" : "unverified", false, result.Value, result.Error), result.Error is not null);
     }
     private static CallToolResult Serialize<T>(T value, bool error)
     {

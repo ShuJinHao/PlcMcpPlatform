@@ -96,7 +96,7 @@ def tree(project, limit):
         objects[identity] = node
         rows.append({"id": identity, "parentId": parent,
                      "name": "Project" if node is project else text_type(node.get_name()),
-                     "kind": "application" if getattr(node, "is_application", False) else "library_manager" if getattr(node, "is_libman", False) else "object"})
+                     "kind": "application" if getattr(node, "is_application", False) else "library_manager" if getattr(node, "is_libman", False) else "device" if getattr(node, "is_device", False) else "object"})
         for child in node.get_children(False):
             if depth >= 64 or len(rows) + len(queue) >= limit:
                 truncated = True
@@ -183,10 +183,17 @@ def object_text(node):
             "implementation": text_type(implementation.get_text(0, implementation.length)) if implementation else None}
 
 
-def source_view(node):
+def source_view(node, engine=None, query=None):
     # The documented textual markers determine editability; do not guess an IDE language GUID.
-    source = object_text(node) if getattr(node, "has_textual_declaration", False) else {
-        "objectId": str(uuid.UUID(text_type(node.guid))), "name": text_type(node.get_name()), "declaration": None, "implementation": None}
+    source = {"objectId": str(uuid.UUID(text_type(node.guid))), "name": text_type(node.get_name()), "declaration": None, "implementation": None}
+    length = 0
+    for field in ("declaration", "implementation"):
+        if getattr(node, "has_textual_" + field, False):
+            document = getattr(node, "textual_" + field)
+            length += document.length
+            if length > 400000: raise WorkerError("result_too_large")
+            source[field] = text_type(document.get_text(offset=0, length=document.length))
+    owner, accessor, evidence = None, None, "unclassified"
     kind = "object"
     for marker, label in (("is_application", "application"), ("is_task", "task"), ("is_task_configuration", "task_configuration"),
                           ("is_libman", "library_manager"), ("is_device", "device"), ("is_folder", "folder")):
@@ -194,13 +201,30 @@ def source_view(node):
     if source["declaration"] is not None:
         try:
             header = declaration_header(source["declaration"])
-            if re.match(r"^VAR_GLOBAL\b", header, re.I): kind = "gvl"
+            if re.match(r"^METHOD\s+(?:(?:PUBLIC|PRIVATE|PROTECTED|INTERNAL|FINAL|ABSTRACT)\s+)*" + re.escape(source["name"]) + r"\b", header, re.I): kind = "Method"
+            elif re.match(r"^PROPERTY\s+(?:(?:PUBLIC|PRIVATE|PROTECTED|INTERNAL|FINAL|ABSTRACT)\s+)*" + re.escape(source["name"]) + r"\b", header, re.I): kind = "Property"
+            elif re.match(r"^VAR_GLOBAL\b", header, re.I): kind = "gvl"
             elif re.match(r"^TYPE\s+" + re.escape(source["name"]) + r"\b", header, re.I): kind = "dut"
             elif re.match(r"^(PROGRAM|FUNCTION_BLOCK|FUNCTION)\s+" + re.escape(source["name"]) + r"\b", header, re.I): kind = "pou"
         except WorkerError:
             pass
-    source.update(kind=kind, typeId=text_type(node.type) if hasattr(node, "type") else None,
-                  implementationKind="textual" if source["implementation"] is not None else "graphical_or_unavailable" if kind == "pou" else "none")
+    if kind in ("pou", "gvl", "dut", "Method", "Property"): evidence = "declaration"
+    if engine is not None:
+        key = source["objectId"]; parent = engine.rows[key]["parentId"]
+        if parent in engine.nodes and parent != "project":
+            parent_source = engine.declaration(engine.node(parent)) or ""
+            if kind in ("Method", "Property"): owner = parent
+            if source["name"] in ("Get", "Set") and re.match(r"^PROPERTY\b", declaration_header(parent_source), re.I):
+                property_data = engine.member(parent, "Property")
+                selected = property_data['getter' if source['name'] == 'Get' else 'setter']
+                if selected is None or selected['objectId'] != key: raise WorkerError('property_accessor_unavailable')
+                kind, owner, accessor, evidence = "accessor", parent, source["name"], "property_child"
+        if query and query.get("memberKind"):
+            engine.member(key, query["memberKind"], query.get("expectedTypeId"))
+            kind, owner = query["memberKind"], parent
+            if kind == "Action": evidence = "caller_pinned_action_type"
+    source.update(kind=kind, ownerId=owner, accessor=accessor, typeEvidence=evidence, typeId=text_type(node.type) if hasattr(node, "type") else None,
+                  implementationKind="textual" if source["implementation"] is not None else "graphical_or_unavailable" if kind in ("pou", "Method", "Action", "accessor") else "none")
     return source
 
 
@@ -352,7 +376,8 @@ def execute(request, bindings):
             rows, unused, truncated = tree(project, payload.get("maxObjects", 256))
             result.update({"objects": rows, "truncated": truncated})
         elif operation == "object.source.read":
-            result.update(source_view(get_object(project, payload["objectId"])))
+            engine = ConfigurationEngine(project, bindings, WorkerError, tree, declaration_header)
+            result.update(source_view(engine.node(payload["objectId"]), engine, payload.get("query")))
         elif operation == "pou.read":
             node = get_object(project, payload["objectId"])
             declaration, implementation = read_source(node)

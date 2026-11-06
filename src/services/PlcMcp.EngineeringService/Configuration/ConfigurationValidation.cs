@@ -15,6 +15,7 @@ public static class ConfigurationValidation
     public static string? Read(string op, string? id, ConfigurationQuery? query)
     {
         if (op is not (C.LibraryInstalled or C.DeviceTree) && !(op == C.ObjectInspect && id == "project") && !GuidId(id)) return "invalid_object_identity";
+        if (op == C.MemberRead && query?.ExpectedTypeId is not null && !GuidId(query.ExpectedTypeId)) return "invalid_member_type_identity";
         if (op == C.MemberRead && query?.MemberKind is not ("Method" or "Property" or "Action")) return "invalid_member_kind";
         if (op == C.MemberRead && query?.MemberKind == "Action" && !GuidId(query.ExpectedTypeId)) return "member_type_evidence_required";
         return null;
@@ -51,6 +52,7 @@ public static class ConfigurationValidation
             var m = config.Member;
             if (m is null || m.Kind is not ("Method" or "Property" or "Action") || m.Language is not (null or "ST" or "IL" or "LD" or "FBD" or "SFC" or "CFC")
                 || m.ReturnType is not null && !Text(m.ReturnType)) return "invalid_member_settings";
+            if (m.ExpectedTypeId is not null && !GuidId(m.ExpectedTypeId)) return "invalid_member_type_identity";
             if (op == C.MemberUpdate && (m.Language is not null || m.ReturnType is not null)) return "member_signature_changes_require_source";
             if (op == C.MemberUpdate && m.Kind == "Action" && !GuidId(m.ExpectedTypeId)) return "member_type_evidence_required";
             if (op == C.MemberCreate && m.Kind == "Property" && !Text(m.ReturnType)) return "return_type_required";

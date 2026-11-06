@@ -20,7 +20,7 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
     public ValidationEvidence? Validation => worker.Validation;
     public async Task<WorkerResponse> ExecuteAsync(WorkerRequest request, CancellationToken token)
     {
-        if (request.Operation is not (IncrementalOperations.Context or IncrementalOperations.Diff)) return await worker.ExecuteAsync(request, token);
+        if (request.Operation is not (IncrementalOperations.Context or IncrementalOperations.Diff or IncrementalOperations.Query)) return await worker.ExecuteAsync(request, token);
         var session = new WorkerSession(worker, request, request.ExpectedRevision);
         try
         {
@@ -62,7 +62,12 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
             }
             var before = await Version(query.Revision);
             object result;
-            if (request.Operation == IncrementalOperations.Context)
+            if (request.Operation == IncrementalOperations.Query)
+            {
+                var read = await Copy(before); var rows = await Scope(read);
+                result = await EngineeringQueryReader.Read(session, read, rows, query, request.ExpectedRevision, token);
+            }
+            else if (request.Operation == IncrementalOperations.Context)
             {
                 var read = await Copy(before); var rows = await Scope(read); var scope = Descendants(rows, query.ApplicationId!);
                 if (query.ObjectId is not null && !scope.Contains(query.ObjectId)) throw new ProjectEditException("object_application_scope_mismatch");
@@ -74,8 +79,7 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
                 {
                     var id = row.GetProperty("id").GetString()!;
                     var source = await session.Invoke(IncrementalOperations.Source, read with { ObjectId = id }, token);
-                    objects.Add(new(id, row.GetProperty("parentId").GetString(), source.GetProperty("name").GetString()!, source.GetProperty("kind").GetString()!,
-                        source.GetProperty("typeId").GetString(), source.GetProperty("implementationKind").GetString()!, Window(source, "declaration", query), Window(source, "implementation", query)));
+                    objects.Add(SourceObject(row, source, query));
                 }
                 var tasks = await session.Invoke(ConfigurationOperations.TaskList, read with { ObjectId = query.ApplicationId, MaxObjects = 128 }, token);
                 var managers = rows.Where(x => x.GetProperty("kind").GetString() == "library_manager").ToArray();
@@ -119,7 +123,7 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
         }
         catch (Exception error) { return session.Failure(error); }
     }
-    private static HashSet<string> Descendants(JsonElement[] rows, string application)
+    internal static HashSet<string> Descendants(JsonElement[] rows, string application)
     {
         var ids = new HashSet<string>(StringComparer.Ordinal) { application };
         for (var i = 0; i < rows.Length; i++)
@@ -130,6 +134,13 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
             if (ids.Count == count) break;
         }
         return ids;
+    }
+    internal static ContextObject SourceObject(JsonElement row, JsonElement source, IncrementalQuery query)
+    {
+        string? Optional(string field) => source.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+        return new(row.GetProperty("id").GetString()!, row.GetProperty("parentId").GetString(), source.GetProperty("name").GetString()!,
+            source.GetProperty("kind").GetString()!, Optional("typeId"), source.GetProperty("implementationKind").GetString()!,
+            Window(source, "declaration", query), Window(source, "implementation", query), Optional("ownerId"), Optional("accessor"), Optional("typeEvidence"));
     }
     private static string? SourceHash(JsonElement? value, string field) => value?.GetProperty(field).GetString() is { } text ? TextPatchRules.Hash(text) : null;
     private static object? TextObject(JsonElement? value, IncrementalQuery query) => value is { } item ? new { kind = item.GetProperty("kind"),

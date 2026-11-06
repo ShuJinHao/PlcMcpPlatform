@@ -53,6 +53,7 @@
     "project.package",
     "project.adopt",
     "project.context",
+    "project.objects.read",
     "project.diff",
     "project.restore",
     "object.source.read",

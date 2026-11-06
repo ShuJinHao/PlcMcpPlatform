@@ -33,15 +33,26 @@ public sealed class IncrementalService(IJobStore jobs, IManagedProjectFiles file
     {
         try
         {
-            if (operation is not (IncrementalOperations.Context or IncrementalOperations.Diff) || !IncrementalValidation.Revision(headRevision)
+            if (operation is not (IncrementalOperations.Context or IncrementalOperations.Diff or IncrementalOperations.Query) || !IncrementalValidation.Revision(headRevision)
                 || !IncrementalValidation.Revision(query.Revision) || operation == IncrementalOperations.Diff && !IncrementalValidation.Revision(query.CompareRevision)
-                || (operation == IncrementalOperations.Context || query.ObjectId is not null) && !IncrementalValidation.Id(query.ApplicationId)
+                || (operation is IncrementalOperations.Context or IncrementalOperations.Query || query.ObjectId is not null) && !IncrementalValidation.Id(query.ApplicationId)
                 || query.CompareObjectId is not null && (query.ObjectId is null || !IncrementalValidation.Id(query.CompareObjectId))
                 || query.ObjectId is not null && !IncrementalValidation.Id(query.ObjectId) || query.Graph && query.ObjectId is null
                 || query.Offset is < 0 or > 1000000 || query.PageSize is < 1 or > 8 || query.TextOffset is < 0 or > 400000
                 || query.MaxTextChars is < 1 or > 8192 || string.IsNullOrWhiteSpace(key) || key.Length > 128 || timeout is < 1 or > 600)
                 throw new ProjectEditException("invalid_incremental_query");
             query = query with { ApplicationId = query.ApplicationId is null ? null : Guid.Parse(query.ApplicationId).ToString(), CompareObjectId = query.CompareObjectId is null ? null : Guid.Parse(query.CompareObjectId).ToString(), ObjectId = query.ObjectId is null ? null : Guid.Parse(query.ObjectId).ToString() };
+            if (query.Collection is not ("objects" or "members" or "tasks" or "libraries")
+                || operation != IncrementalOperations.Query && (query.Collection != "objects" || query.ParentId is not null || query.SourceQuery is not null || query.Cursor is not null)
+                || query.ParentId is not null && !IncrementalValidation.Id(query.ParentId)
+                || query.Collection == "members" && query.ParentId is null
+                || query.Collection is "tasks" or "libraries" && (query.ParentId is not null || query.ObjectId is not null)
+                || query.SourceQuery is not null && (query.ObjectId is null || Configuration.ConfigurationValidation.Read(
+                    PlcMcp.Services.Contracts.Configuration.ConfigurationOperations.MemberRead, query.ObjectId, query.SourceQuery) is not null))
+                throw new ProjectEditException("invalid_engineering_query");
+            query = query with { ParentId = query.ParentId is null ? null : Guid.Parse(query.ParentId).ToString(),
+                SourceQuery = query.SourceQuery is null ? null : query.SourceQuery with { ExpectedTypeId = query.SourceQuery.ExpectedTypeId is null ? null : Guid.Parse(query.SourceQuery.ExpectedTypeId).ToString() } };
+            query = EngineeringCursor.Resume(headRevision, query);
             var path = files.WorkspacePath(query.WorkspaceName);
             var submission = new Submission(operation, new(path, Incremental: query), key, headRevision, timeout);
             var fingerprint = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(submission, WorkerJson.Options)));

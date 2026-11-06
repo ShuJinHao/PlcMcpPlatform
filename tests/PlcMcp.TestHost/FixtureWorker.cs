@@ -104,9 +104,15 @@ public static class FixtureWorker
                     var sourceNode = nodes.SingleOrDefault(n => n.Id == input.ObjectId);
                     var info = new FixtureConfiguration(fixture).Read(ConfigurationOperations.ObjectInspect, input.ObjectId, null, 1);
                     payload["objectId"] = input.ObjectId; payload["name"] = info["name"]!.GetValue<string>();
-                    payload["kind"] = sourceNode?.Kind ?? info["kind"]!.GetValue<string>(); payload["typeId"] = FixtureConfiguration.TypeId;
-                    payload["declaration"] = sourceNode?.Declaration; payload["implementation"] = sourceNode?.Implementation;
-                    payload["implementationKind"] = sourceNode?.Implementation is not null ? "textual" : sourceNode?.Kind == "pou" ? "graphical_or_unavailable" : "none";
+                    var sourceKind = sourceNode?.Kind ?? info["kind"]!.GetValue<string>();
+                    if (input.Query is not null) _ = new FixtureConfiguration(fixture).Read(ConfigurationOperations.MemberRead, input.ObjectId, input.Query, 1);
+                    if (sourceKind == "Action" && input.Query?.MemberKind != "Action") sourceKind = "object";
+                    payload["kind"] = sourceKind; payload["typeId"] = FixtureConfiguration.TypeId;
+                    payload["declaration"] = info["declaration"]?.GetValue<string>(); payload["implementation"] = info["implementation"]?.GetValue<string>();
+                    payload["ownerId"] = sourceKind is "Method" or "Property" or "Action" or "accessor" ? info["parentId"]?.GetValue<string>() : null;
+                    payload["accessor"] = info["accessor"]?.GetValue<string>();
+                    payload["typeEvidence"] = sourceKind == "Action" ? "caller_pinned_action_type" : sourceKind == "accessor" ? "property_child" : sourceKind is "Method" or "Property" or "pou" or "gvl" or "dut" ? "declaration" : "unclassified";
+                    payload["implementationKind"] = payload["implementation"] is not null ? "textual" : sourceKind is "pou" or "Method" or "Action" or "accessor" ? "graphical_or_unavailable" : "none";
                     break;
                 case EngineeringOperations.ReadProgram:
                     var node = nodes.SingleOrDefault(n => n.Id == input.ObjectId);
@@ -121,10 +127,13 @@ public static class FixtureWorker
                     if (declarationNode.Kind != request.Operation.Split('.')[0]) { error = "object_kind_mismatch"; break; }
                     payload["objectId"] = declarationNode.Id; payload["kind"] = declarationNode.Kind; payload["declaration"] = declarationNode.Declaration; break;
                 case EngineeringOperations.Compile:
-                    if (input.ApplicationId != fixture.ApplicationId) { error = "object_not_found"; break; }
+                    var compileState = new FixtureConfiguration(fixture);
+                    if (compileState.Node(input.ApplicationId!)["kind"]?.GetValue<string>() != "application") { error = "application_required"; break; }
                     var errorNode = nodes.FirstOrDefault(n => n.Implementation?.Contains("FIXTURE_ERROR", StringComparison.Ordinal) == true);
-                    var compileError = fixture.CompileError || errorNode is not null;
-                    payload["applicationId"] = fixture.ApplicationId; payload["succeeded"] = !compileError;
+                    var compileError = fixture.CompileError || errorNode is not null
+                        || fixture.Configuration?.Any(x => x.Value?["implementation"]?.GetValue<string>()?.Contains("FIXTURE_ERROR", StringComparison.Ordinal) == true) == true
+                        || compileState.Node(input.ApplicationId!)["compileError"]?.GetValue<bool>() == true;
+                    payload["applicationId"] = input.ApplicationId; payload["succeeded"] = !compileError;
                     payload["diagnostics"] = compileError
                         ? new object[] { new { severity = "error", code = "FIXTURE0001", message = "Simulated compilation error; no PLC compiler ran.", objectId = errorNode?.Id ?? fixture.ProgramId, line = (int?)null, column = (int?)null } } : [];
                     if (compileError) error = "compile_failed";
@@ -136,7 +145,8 @@ public static class FixtureWorker
                     var list = nodes.ToList();
                     if (EditOperations.CreatesObject(request.Operation))
                     {
-                        if (edit.ParentId != fixture.ApplicationId) { error = "object_not_found"; break; }
+                        var parent = new FixtureConfiguration(fixture).Node(edit.ParentId!);
+                        if (parent["kind"]?.GetValue<string>() is not ("application" or "folder")) { error = "object_kind_mismatch"; break; }
                         if (list.Any(n => string.Equals(n.Name, edit.Name, StringComparison.OrdinalIgnoreCase))) { error = "object_name_conflict"; break; }
                         var kind = request.Operation.Split('.')[0];
                         edited = new(Guid.NewGuid().ToString(), edit.Name!, kind, Normalize(edit.Declaration!),
@@ -159,7 +169,9 @@ public static class FixtureWorker
                     var legacyState = new FixtureConfiguration(fixture, input.Requirements);
                     if (input.CurrentDependencies is not null && JsonSerializer.Serialize(legacyState.Dependencies(), WorkerJson.Options) != JsonSerializer.Serialize(input.CurrentDependencies, WorkerJson.Options))
                     { error = "dependency_snapshot_conflict"; break; }
-                    var saved = new FixtureConfiguration(fixture with { Objects = list.ToArray() }, input.Requirements).Save();
+                    var saveState = new FixtureConfiguration(fixture with { Objects = list.ToArray() }, input.Requirements);
+                    if (edited is not null && EditOperations.CreatesObject(request.Operation)) saveState.Node(edited.Id)["parentId"] = edit.ParentId;
+                    var saved = saveState.Save();
                     await File.WriteAllTextAsync(input.ProjectPath, JsonSerializer.Serialize(saved, WorkerJson.Options));
                     if (fixture.Fault == "after_save_exit") return 9;
                     var reopened = JsonSerializer.Deserialize<FixtureProject>(await File.ReadAllTextAsync(input.ProjectPath), WorkerJson.Options)!;

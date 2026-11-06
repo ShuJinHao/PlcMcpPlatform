@@ -32,6 +32,9 @@ public static class BatchValidation
     public static string? Validate(string workspace, BatchPlan? plan)
     {
         if (plan is null || !Guid.TryParse(plan.ApplicationId, out var app) || app == Guid.Empty || plan.Steps is not { Length: > 0 and <= 32 }) return "invalid_batch_plan";
+        foreach (var scope in new[] { plan.DeviceScopeIds, plan.LibraryManagerIds })
+            if (scope is not null && (scope.Length > 32 || scope.Any(x => !Guid.TryParse(x, out var id) || id == Guid.Empty)
+                || scope.Select(Guid.Parse).Distinct().Count() != scope.Length)) return "invalid_batch_scope";
         var aliases = new Dictionary<string, string>(StringComparer.Ordinal);
         try
         {
@@ -51,13 +54,17 @@ public static class BatchValidation
         catch (ProjectEditException e) { return e.Code; }
         return null;
     }
-    public static BatchPlan Normalize(BatchPlan plan) => plan with { ApplicationId = Canonical(plan.ApplicationId), Steps = plan.Steps.Select(s => s with
+    public static BatchPlan Normalize(BatchPlan plan) => plan with { ApplicationId = Canonical(plan.ApplicationId),
+        DeviceScopeIds = plan.DeviceScopeIds?.Select(Canonical).Order(StringComparer.Ordinal).ToArray(),
+        LibraryManagerIds = plan.LibraryManagerIds?.Select(Canonical).Order(StringComparer.Ordinal).ToArray(), Steps = plan.Steps.Select(s => s with
     { Change = s.Change with { ParentId = s.Change.ParentId is { } p ? Canonical(p) : null, ObjectId = s.Change.ObjectId is { } o ? Canonical(o) : null,
         Configuration = s.Change.Configuration is { } c ? c with { Calls = c.Calls?.Select(x => x with { PouId = Canonical(x.PouId) }).ToArray() } : null } }).ToArray() };
     public static string Hash(string workspace, string revision, BatchPlan plan) => Convert.ToHexString(SHA256.HashData(
         JsonSerializer.SerializeToUtf8Bytes(new { workspace, revision, plan }, WorkerJson.Options))).ToLowerInvariant();
     public static string[] Required(BatchPlan plan) => new[] { BatchOperations.Apply, EditOperations.VerifyProject, EngineeringOperations.Structure, EngineeringOperations.Compile, ConfigurationOperations.TaskList }
-        .Concat(plan.Steps.Select(s => s.Operation)).Concat(plan.Steps.Any(s => s.Operation == IncrementalOperations.Patch) ? [IncrementalOperations.Source, EditOperations.UpdatePou, EditOperations.UpdateGvl, EditOperations.UpdateDut] : []).Concat(plan.Steps.Any(s => s.Operation == ExchangeOperations.WriteGraph && s.Change.ObjectId is not null) ? [ExchangeOperations.ReadGraph] : [])
+        .Concat(plan.Steps.Select(s => s.Operation)).Concat(plan.Steps.Where(s => s.Operation == IncrementalOperations.Patch).SelectMany(s => s.Change.Patch?.MemberKind is not null
+            ? new[] { ConfigurationOperations.MemberRead, ConfigurationOperations.MemberUpdate }
+            : new[] { IncrementalOperations.Source, EditOperations.UpdatePou, EditOperations.UpdateGvl, EditOperations.UpdateDut })).Concat(plan.Steps.Any(s => s.Operation == ExchangeOperations.WriteGraph && s.Change.ObjectId is not null) ? [ExchangeOperations.ReadGraph] : [])
         .Distinct(StringComparer.Ordinal).ToArray();
 }
 
@@ -83,7 +90,9 @@ public sealed class BatchService(ManagedEditingJobs edits, IExchangeArtifacts ar
         return new(workspace, revision, BatchValidation.Hash(workspace, revision, normalized), normalized.ApplicationId, normalized.Steps, BatchValidation.Required(normalized),
             ["Static preview is not IDE validation. Steps execute in the supplied dependency order.",
              "One candidate and one publication; each step uses the existing save/reopen lifecycle.",
-             "Compilation must succeed. Unknown execution blocks the slot and is never automatically replayed."]);
+             "Shared device/library changes compile every Application; other steps remain in the selected Application.",
+             "Renames/moves/deletions do not rewrite source references. Submit explicit dependent edits.",
+             "Compilation must succeed. Unknown execution blocks the slot and is never automatically replayed."], normalized.DeviceScopeIds, normalized.LibraryManagerIds);
     }
     public async Task<Result<JobView>> ApplyAsync(string workspace, string revision, BatchPlan plan, string expectedPlanSha256, string key, int timeout, CancellationToken token)
     {

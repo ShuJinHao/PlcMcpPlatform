@@ -21,7 +21,7 @@ using Xunit;
 
 namespace PlcMcp.Tests;
 
-public sealed class IncrementalTests
+public sealed partial class IncrementalTests
 {
     private sealed record Services(ManagedEditingJobs Edits, IncrementalService Reads, BatchService Batches, JobDispatcher Dispatcher);
     private static Services Compose(ManagedEditingTests.Harness h, IEngineeringExecutor? raw = null)

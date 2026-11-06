@@ -31,6 +31,11 @@ public sealed class IncrementalEditExecutor(IEngineeringExecutor worker) : IEngi
             if (request.Operation == IncrementalOperations.Patch)
             {
                 if (IncrementalValidation.Patch(edit) is { } invalid) throw new ProjectEditException(invalid);
+                if (edit.Patch!.MemberKind is not null)
+                {
+                    result = await PatchMember(session, input, edit, token);
+                    return new(1, request.RequestId, request.JobId, "succeeded", null, ExecutionMode, result);
+                }
                 var source = await session.Invoke(IncrementalOperations.Source, new(input.ProjectPath, ObjectId: edit.ObjectId, IdeProfile: input.IdeProfile), token);
                 var kind = source.GetProperty("kind").GetString();
                 if (kind is not ("pou" or "gvl" or "dut")) throw new ProjectEditException("patch_object_kind_not_supported");
@@ -72,5 +77,35 @@ public sealed class IncrementalEditExecutor(IEngineeringExecutor worker) : IEngi
             return new(1, request.RequestId, request.JobId, "succeeded", null, ExecutionMode, result);
         }
         catch (Exception error) { return session.Failure(error); }
+    }
+    private static async Task<JsonElement> PatchMember(WorkerSession session, EngineeringInput input, EditInput edit, CancellationToken token)
+    {
+        var patch = edit.Patch!;
+        var read = await session.Invoke(ConfigurationOperations.MemberRead, new(input.ProjectPath, ObjectId: edit.ObjectId,
+            IdeProfile: input.IdeProfile, Query: new(patch.MemberKind, patch.ExpectedTypeId)), token);
+        var member = read.GetProperty("configuration").GetProperty("data");
+        var field = patch.Accessor == "Get" ? "getter" : "setter";
+        var source = patch.Accessor is null ? member : member.GetProperty(field);
+        if (source.ValueKind != JsonValueKind.Object) throw new ProjectEditException("property_accessor_unavailable");
+        var text = source.GetProperty(patch.Section).GetString() ?? throw new ProjectEditException("textual_source_unavailable");
+        var applied = TextPatchRules.Apply(text, patch.ExpectedSha256, patch.OldText, patch.NewText);
+        if (applied.Error is { } conflict) throw new ProjectEditException(conflict);
+        var replacement = new AccessorSource(patch.Section == "declaration" ? applied.Source : null, patch.Section == "implementation" ? applied.Source : null);
+        var settings = new MemberSettings(patch.MemberKind!, ExpectedTypeId: member.GetProperty("typeId").GetString(),
+            Getter: patch.Accessor == "Get" ? replacement : null, Setter: patch.Accessor == "Set" ? replacement : null);
+        var change = new EditInput(edit.WorkspaceName, ObjectId: edit.ObjectId, Configuration: new(Member: settings),
+            Declaration: patch.Accessor is null ? replacement.Declaration : null, Implementation: patch.Accessor is null ? replacement.Implementation : null);
+        var result = await session.Invoke(ConfigurationOperations.MemberUpdate, input with { Edit = change }, token);
+        var actualMember = result.GetProperty("configuration").GetProperty("data");
+        var actual = patch.Accessor is null ? actualMember : actualMember.GetProperty(field);
+        if (actual.GetProperty("objectId").GetString() != source.GetProperty("objectId").GetString()
+            || TextPatchRules.Hash(actual.GetProperty(patch.Section).GetString()!) != TextPatchRules.Hash(applied.Source!))
+            throw new ProjectEditException("readback_mismatch");
+        var enriched = JsonNode.Parse(result.GetRawText())!.AsObject();
+        enriched["objectId"] = edit.ObjectId;
+        enriched["patch"] = JsonSerializer.SerializeToNode(new { section = patch.Section, memberKind = patch.MemberKind,
+            accessor = patch.Accessor, targetObjectId = source.GetProperty("objectId").GetString(),
+            beforeSha256 = TextPatchRules.Hash(text), afterSha256 = TextPatchRules.Hash(applied.Source!) }, WorkerJson.Options);
+        return JsonSerializer.SerializeToElement(enriched, WorkerJson.Options);
     }
 }

@@ -214,6 +214,7 @@
             "project.adopt",
             "project.restore",
             "project.context",
+        "project.objects.read",
             "project.diff",
             "text.patch",
             "object.source.read"

@@ -51,21 +51,13 @@ public sealed class BatchExecutor(IEngineeringExecutor worker, IBatchJournal jou
             if (structure.GetProperty("truncated").GetBoolean()) throw new ProjectEditException("batch_scope_incomplete");
             var rows = structure.GetProperty("objects").EnumerateArray().ToArray();
             if (!rows.Any(r => r.GetProperty("id").GetString() == plan.ApplicationId && r.GetProperty("kind").GetString() == "application")) throw new ProjectEditException("application_required");
-            var allowed = new HashSet<string>(StringComparer.Ordinal) { plan.ApplicationId };
-            for (var round = 0; round < rows.Length; round++)
-            {
-                var before = allowed.Count;
-                foreach (var row in rows)
-                    if (row.TryGetProperty("parentId", out var parent) && parent.ValueKind == JsonValueKind.String && allowed.Contains(parent.GetString()!))
-                        allowed.Add(row.GetProperty("id").GetString()!);
-                if (before == allowed.Count) break;
-            }
+            var scope = new BatchScope(plan, rows);
+            scope.ValidateDeclaredScopes();
             foreach (var step in plan.Steps)
             {
                 active = step.Id;
                 var edit = BatchValidation.Resolve(input.Edit.WorkspaceName, step, aliases);
-                if (edit.ParentId is { } parent && !allowed.Contains(parent) || edit.ObjectId is { } target && !allowed.Contains(target)
-                    || edit.Configuration?.Calls?.Any(c => !allowed.Contains(c.PouId)) == true) throw new ProjectEditException("batch_application_scope_mismatch");
+                scope.ValidateStep(step.Operation, edit);
                 var response = await Invoke(step.Operation, input with { Edit = edit, Exchange = null });
                 if (response.Outcome != "succeeded")
                 {
@@ -81,28 +73,42 @@ public sealed class BatchExecutor(IEngineeringExecutor worker, IBatchJournal jou
                 if (!Guid.TryParse(id, out var identity) || identity == Guid.Empty)
                 { await Record("unknown", "batch_object_identity_unconfirmed"); return Failure("unknown", "batch_object_identity_unconfirmed"); }
                 aliases.Add(step.Id, identity.ToString());
-                allowed.Add(identity.ToString());
                 JsonElement? detail = result.TryGetProperty("configuration", out var config) ? config : result.TryGetProperty("exchange", out var exchange)
-                    ? JsonSerializer.SerializeToElement(new { artifact = exchange.GetProperty("artifact"), semanticSha256 = exchange.GetProperty("graph").GetProperty("semanticSha256"), report = exchange.GetProperty("report") }, WorkerJson.Options) : null;
+                    ? JsonSerializer.SerializeToElement(new { artifact = exchange.GetProperty("artifact"), semanticSha256 = exchange.GetProperty("graph").GetProperty("semanticSha256"), report = exchange.GetProperty("report") }, WorkerJson.Options)
+                    : result.TryGetProperty("patch", out var patch) ? patch : null;
                 steps.Add(new(step.Id, step.Operation, "succeeded", id, null, revision, detail)); await Record("step_completed");
+                // Rebuild scope after every write: moved/deleted descendants and vendor-created children must not use stale identities.
+                var updated = await Invoke(EngineeringOperations.Structure, new(input.ProjectPath, MaxObjects: 2000, IdeProfile: input.IdeProfile));
+                if (updated.Outcome != "succeeded") { await Record(updated.Outcome, updated.ErrorCode); return Failure(updated.Outcome, updated.ErrorCode!, updated.Payload); }
+                if (updated.Payload!.Value.GetProperty("truncated").GetBoolean()) throw new ProjectEditException("batch_scope_incomplete");
+                scope = new BatchScope(plan, updated.Payload.Value.GetProperty("objects").EnumerateArray().ToArray());
             }
             active = "$verify";
             var verified = await Invoke(EditOperations.VerifyProject, input with { Edit = new(input.Edit.WorkspaceName) });
             if (verified.Outcome != "succeeded") { await Record(verified.Outcome, verified.ErrorCode); return Failure(verified.Outcome, verified.ErrorCode!, verified.Payload); }
             revision = verified.Payload!.Value.GetProperty("revision").GetString()!;
             dependencies = verified.Payload.Value.GetProperty("dependencySnapshot").Deserialize<DependencySnapshot>(WorkerJson.Options);
-            active = "$tasks";
-            var tasks = await Invoke(ConfigurationOperations.TaskList, new(input.ProjectPath, ObjectId: plan.ApplicationId, IdeProfile: input.IdeProfile, MaxObjects: 2000));
-            if (tasks.Outcome != "succeeded") { await Record(tasks.Outcome, tasks.ErrorCode); return Failure(tasks.Outcome, tasks.ErrorCode!, tasks.Payload); }
-            if (tasks.Payload!.Value.GetProperty("configuration").GetProperty("data").GetProperty("truncated").GetBoolean()) throw new ProjectEditException("task_inventory_incomplete");
-            if (!ConfigurationResultValidation.CompleteTaskBindings(tasks.Payload!.Value)) throw new ProjectEditException("task_binding_unresolved");
-            active = "$compile";
-            var compiled = await Invoke(EngineeringOperations.Compile, new(input.ProjectPath, ApplicationId: plan.ApplicationId, IdeProfile: input.IdeProfile));
-            if (compiled.Outcome != "succeeded") { await Record(compiled.Outcome, compiled.ErrorCode); return Failure(compiled.Outcome, compiled.ErrorCode!, compiled.Payload); }
+            var applicationIds = scope.Applications(BatchOperations.SharedWrite(plan));
+            var checks = new List<object>();
+            WorkerResponse? selectedTasks = null, selectedCompile = null;
+            foreach (var applicationId in applicationIds)
+            {
+                active = "$tasks:" + applicationId;
+                var tasks = await Invoke(ConfigurationOperations.TaskList, new(input.ProjectPath, ObjectId: applicationId, IdeProfile: input.IdeProfile, MaxObjects: 2000));
+                if (tasks.Outcome != "succeeded") { await Record(tasks.Outcome, tasks.ErrorCode); return Failure(tasks.Outcome, tasks.ErrorCode!, tasks.Payload); }
+                if (tasks.Payload!.Value.GetProperty("configuration").GetProperty("data").GetProperty("truncated").GetBoolean()) throw new ProjectEditException("task_inventory_incomplete");
+                if (!ConfigurationResultValidation.CompleteTaskBindings(tasks.Payload.Value)) throw new ProjectEditException("task_binding_unresolved");
+                active = "$compile:" + applicationId;
+                var compiled = await Invoke(EngineeringOperations.Compile, new(input.ProjectPath, ApplicationId: applicationId, IdeProfile: input.IdeProfile));
+                if (compiled.Outcome != "succeeded") { await Record(compiled.Outcome, compiled.ErrorCode); return Failure(compiled.Outcome, compiled.ErrorCode!, compiled.Payload); }
+                checks.Add(new { applicationId, tasks = tasks.Payload, compile = compiled.Payload });
+                if (applicationId == plan.ApplicationId) { selectedTasks = tasks; selectedCompile = compiled; }
+            }
             var payload = JsonNode.Parse(verified.Payload.Value.GetRawText())!.AsObject();
             payload["baseRevision"] = request.ExpectedRevision;
             payload["batch"] = JsonSerializer.SerializeToNode(new { state = "verified", steps, aliases, applicationId = plan.ApplicationId, planSha256 = input.Edit.PlanSha256,
-                compile = compiled.Payload, tasks = tasks.Payload, verifiedProjectSha256 = revision }, WorkerJson.Options);
+                compile = selectedCompile!.Payload, tasks = selectedTasks!.Payload, checks, affectedApplicationIds = applicationIds,
+                compileScope = BatchOperations.SharedWrite(plan) ? "all_applications" : "selected_application", verifiedProjectSha256 = revision }, WorkerJson.Options);
             await Record("verified");
             return new(1, request.RequestId, request.JobId, "succeeded", null, request.ExecutionMode, JsonSerializer.SerializeToElement(payload, WorkerJson.Options));
         }
