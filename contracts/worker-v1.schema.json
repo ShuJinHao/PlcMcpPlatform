@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ShuJinHao/PlcMcpPlatform/contracts/worker-v1.schema.json",
   "title": "PLC MCP internal worker protocol v1",
-  "description": "Internal JSON envelope v1 with additive managed editing and engineering configuration. Runtime validation checks operation-specific rules, identities, revision scope, bounded values and save/reopen proofs. Schema validity is not vendor compatibility evidence. P4 adds bounded exchange queries, content-addressed XML import and graph operations. Validation scopes and warnings never imply vendor compatibility.",
+  "description": "Internal JSON envelope v1 with additive managed editing and engineering configuration. Runtime validation checks operation-specific rules, identities, revision scope, bounded values and save/reopen proofs. Schema validity is not vendor compatibility evidence. P4 adds bounded exchange queries, content-addressed XML import and graph operations. Validation scopes and warnings never imply vendor compatibility. P5 batch and package are application-coordinator operations, not vendor SDK methods. Exchange private-file integrity and graph semantic limits are validated separately at runtime.",
   "$defs": {
     "input": {
       "type": "object",
@@ -105,6 +105,16 @@
               "type": "null"
             }
           ]
+        },
+        "delivery": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/deliveryRequest"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -188,7 +198,9 @@
             "project.export",
             "project.import",
             "pou.graph.read",
-            "pou.graph.write"
+            "pou.graph.write",
+            "project.batch",
+            "project.package"
           ]
         },
         "expectedRevision": {
@@ -516,6 +528,9 @@
                   },
                   {
                     "$ref": "#/$defs/configurationReadResult"
+                  },
+                  {
+                    "$ref": "#/$defs/deliveryResult"
                   }
                 ]
               }
@@ -683,6 +698,27 @@
               "type": "null"
             }
           ]
+        },
+        "batch": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/batchPlan"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "planSha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -844,6 +880,9 @@
         },
         "exchange": {
           "$ref": "#/$defs/exchangeEnvelope"
+        },
+        "batch": {
+          "$ref": "#/$defs/batchResult"
         }
       },
       "required": [
@@ -1748,9 +1787,12 @@
           ]
         },
         "xml": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 65536
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 67108864,
+          "description": "UTF-8 byte limit checked at runtime. Wire JSON keeps <=64 KiB inline; larger XML uses the fixed private file. Application imports hydrate artifactId immediately before execution."
         },
         "conflictPolicy": {
           "enum": [
@@ -1774,12 +1816,21 @@
               "type": "null"
             }
           ]
+        },
+        "file": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/exchangeFile"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
         "artifactId",
-        "format",
-        "xml"
+        "format"
       ],
       "additionalProperties": false
     },
@@ -1803,7 +1854,7 @@
         "byteLength": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 65536
+          "maximum": 67108864
         }
       },
       "required": [
@@ -1823,8 +1874,12 @@
           ]
         },
         "xml": {
-          "type": "string",
-          "maxLength": 65536
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 67108864,
+          "description": "UTF-8 byte limit checked at runtime. Wire JSON keeps <=64 KiB inline; larger XML uses the fixed private file. Application imports hydrate artifactId immediately before execution."
         },
         "artifact": {
           "$ref": "#/$defs/exchangeArtifact"
@@ -1888,6 +1943,16 @@
         },
         "graph": {
           "type": "object"
+        },
+        "file": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/exchangeFile"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -1899,7 +1964,22 @@
         {
           "required": [
             "xml"
-          ]
+          ],
+          "properties": {
+            "xml": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "required": [
+            "file"
+          ],
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/exchangeFile"
+            }
+          }
         },
         {
           "required": [
@@ -1926,6 +2006,712 @@
         "revision",
         "revisionScope",
         "exchange"
+      ]
+    },
+    "batchPlan": {
+      "title": "Batch-v1 transport shape",
+      "description": "Runtime validation additionally enforces 32 steps, operation fields, supplied dependency order, @stepId references and Application scope.",
+      "type": "object",
+      "properties": {
+        "applicationId": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string"
+              },
+              "change": {
+                "type": "object",
+                "properties": {
+                  "parentId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "objectId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "declaration": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "implementation": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "pouType": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "language": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "dutType": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "baseType": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "configuration": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "task": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "type": "string"
+                          },
+                          "priority": {
+                            "type": "string"
+                          },
+                          "interval": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "intervalUnit": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "event": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "externalEvent": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "parentSynchronTask": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "coreBinding": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "watchdog": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "enabled": {
+                                "type": "boolean"
+                              },
+                              "time": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
+                              },
+                              "timeUnit": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
+                              },
+                              "sensitivity": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "default": null
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "priority"
+                        ],
+                        "default": null
+                      },
+                      "calls": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "pouId": {
+                              "type": "string"
+                            },
+                            "pouName": {
+                              "type": "string"
+                            },
+                            "comment": {
+                              "type": "string",
+                              "default": ""
+                            }
+                          },
+                          "required": [
+                            "pouId",
+                            "pouName"
+                          ]
+                        },
+                        "default": null
+                      },
+                      "member": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "type": "string"
+                          },
+                          "language": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "returnType": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "getter": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "declaration": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
+                              },
+                              "implementation": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
+                              }
+                            },
+                            "default": null
+                          },
+                          "setter": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "declaration": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
+                              },
+                              "implementation": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "default": null
+                              }
+                            },
+                            "default": null
+                          },
+                          "expectedTypeId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "default": null
+                      },
+                      "object": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "expectedName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "recursive": {
+                            "type": "boolean",
+                            "default": false
+                          },
+                          "index": {
+                            "type": "integer",
+                            "default": -1
+                          }
+                        },
+                        "default": null
+                      },
+                      "library": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "defaultResolution": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "redirection": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "default": null
+                      },
+                      "device": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "identification": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "integer"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id",
+                              "version"
+                            ]
+                          },
+                          "module": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "plug": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "required": [
+                          "identification"
+                        ],
+                        "default": null
+                      },
+                      "parameter": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "address": {
+                            "type": "object",
+                            "properties": {
+                              "parameterId": {
+                                "type": "integer"
+                              },
+                              "connectorId": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "default": null
+                              },
+                              "elements": {
+                                "type": [
+                                  "array",
+                                  "null"
+                                ],
+                                "items": {
+                                  "type": "string"
+                                },
+                                "default": null
+                              }
+                            },
+                            "required": [
+                              "parameterId"
+                            ]
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "address",
+                          "value"
+                        ],
+                        "default": null
+                      },
+                      "mapping": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "address": {
+                            "type": "object",
+                            "properties": {
+                              "parameterId": {
+                                "type": "integer"
+                              },
+                              "connectorId": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "default": null
+                              },
+                              "elements": {
+                                "$ref": "#/$defs/batchPlan/properties/steps/items/properties/change/properties/configuration/properties/parameter/properties/address/properties/elements",
+                                "default": null,
+                                "items": {}
+                              }
+                            },
+                            "required": [
+                              "parameterId"
+                            ]
+                          },
+                          "variable": {
+                            "type": "string"
+                          },
+                          "createVariable": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "required": [
+                          "address",
+                          "variable"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "default": null
+                  },
+                  "artifactId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "expectedGraphSha256": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  }
+                }
+              }
+            },
+            "required": [
+              "id",
+              "operation",
+              "change"
+            ]
+          }
+        }
+      },
+      "required": [
+        "applicationId",
+        "steps"
+      ]
+    },
+    "exchangeFile": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "enum": [
+            "exchange-input.xml",
+            "exchange-output.xml"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 67108864
+        }
+      },
+      "required": [
+        "name",
+        "sha256",
+        "byteLength"
+      ],
+      "additionalProperties": false
+    },
+    "deliveryRequest": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,47}$"
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^m2:[a-f0-9]{32}:[a-f0-9]{64}$"
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "workspaceName",
+        "revision",
+        "applicationId"
+      ]
+    },
+    "deliveryArtifact": {
+      "type": "object",
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 285212672
+        },
+        "workspaceName": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^m2:[a-f0-9]{32}:[a-f0-9]{64}$"
+        },
+        "projectSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "executionMode": {
+          "enum": [
+            "real",
+            "fixture"
+          ]
+        },
+        "evidenceKind": {
+          "enum": [
+            "unverified",
+            "simulated"
+          ]
+        },
+        "engineeringReady": {
+          "const": false
+        },
+        "fileCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2000
+        }
+      },
+      "required": [
+        "artifactId",
+        "sha256",
+        "byteLength",
+        "workspaceName",
+        "revision",
+        "projectSha256",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "fileCount"
+      ]
+    },
+    "batchResult": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "const": "verified"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "aliases": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "planSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "compile": {
+          "$ref": "#/$defs/compileResult"
+        },
+        "tasks": {
+          "$ref": "#/$defs/configurationReadResult"
+        },
+        "verifiedProjectSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "state",
+        "steps",
+        "aliases",
+        "applicationId",
+        "planSha256",
+        "compile",
+        "tasks",
+        "verifiedProjectSha256"
+      ]
+    },
+    "deliveryResult": {
+      "type": "object",
+      "properties": {
+        "packaged": {
+          "const": true
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^m2:[a-f0-9]{32}:[a-f0-9]{64}$"
+        },
+        "artifact": {
+          "$ref": "#/$defs/deliveryArtifact"
+        },
+        "compile": {
+          "$ref": "#/$defs/compileResult"
+        },
+        "tasks": {
+          "$ref": "#/$defs/configurationReadResult"
+        },
+        "validation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/validationEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "packaged",
+        "revision",
+        "artifact",
+        "compile",
+        "tasks"
       ]
     }
   },

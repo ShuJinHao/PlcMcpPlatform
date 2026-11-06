@@ -9,6 +9,7 @@ from pathlib import Path
 import secrets
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.request
@@ -38,6 +39,10 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-delivery-check-') as tmp, tempfi
         else: raise TimeoutError('Fixture host startup timed out.')
         client = McpClient('http://127.0.0.1:5088/mcp', key)
         assert len(client.rpc('tools/list')['tools']) == 67
+        subprocess.run([sys.executable, str(root/'eng/doctor.py'), '--mode', 'fixture'], env=dict(env, PLCMCP_API_KEY=key), check=True)
+        if os.environ.get('PLCMCP_OPENCODE'):
+            subprocess.run([sys.executable, str(root/'eng/verify-opencode.py'), '--opencode', os.environ['PLCMCP_OPENCODE']],
+                           env=dict(env, PLCMCP_API_KEY=key), check=True, timeout=150)
         variables = json.loads((root/'config/regression/fixture-variables.json').read_text()); variables['runId'] = secrets.token_hex(8)
         scenario = json.loads((root/'config/regression/p5-engineering.json').read_text())
         report = regression.run(client, scenario, variables, 'fixture', 120)

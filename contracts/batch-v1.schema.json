@@ -1,0 +1,513 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:plcmcp:batch-v1",
+  "title": "Batch-v1 transport shape",
+  "description": "Runtime validation additionally enforces 32 steps, operation fields, supplied dependency order, @stepId references and Application scope.",
+  "type": "object",
+  "properties": {
+    "applicationId": {
+      "type": "string"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string"
+          },
+          "change": {
+            "type": "object",
+            "properties": {
+              "parentId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "objectId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "declaration": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "implementation": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "pouType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "language": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "dutType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "baseType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "configuration": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "task": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string"
+                      },
+                      "priority": {
+                        "type": "string"
+                      },
+                      "interval": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "intervalUnit": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "event": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "externalEvent": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "parentSynchronTask": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "coreBinding": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "watchdog": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "time": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "timeUnit": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "sensitivity": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "priority"
+                    ],
+                    "default": null
+                  },
+                  "calls": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "pouId": {
+                          "type": "string"
+                        },
+                        "pouName": {
+                          "type": "string"
+                        },
+                        "comment": {
+                          "type": "string",
+                          "default": ""
+                        }
+                      },
+                      "required": [
+                        "pouId",
+                        "pouName"
+                      ]
+                    },
+                    "default": null
+                  },
+                  "member": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string"
+                      },
+                      "language": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "returnType": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "getter": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "declaration": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "implementation": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          }
+                        },
+                        "default": null
+                      },
+                      "setter": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "declaration": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "implementation": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          }
+                        },
+                        "default": null
+                      },
+                      "expectedTypeId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "default": null
+                  },
+                  "object": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "expectedName": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "recursive": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "index": {
+                        "type": "integer",
+                        "default": -1
+                      }
+                    },
+                    "default": null
+                  },
+                  "library": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "defaultResolution": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "redirection": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "default": null
+                  },
+                  "device": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "identification": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "id",
+                          "version"
+                        ]
+                      },
+                      "module": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "plug": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    },
+                    "required": [
+                      "identification"
+                    ],
+                    "default": null
+                  },
+                  "parameter": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "address": {
+                        "type": "object",
+                        "properties": {
+                          "parameterId": {
+                            "type": "integer"
+                          },
+                          "connectorId": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "elements": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "string"
+                            },
+                            "default": null
+                          }
+                        },
+                        "required": [
+                          "parameterId"
+                        ]
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "address",
+                      "value"
+                    ],
+                    "default": null
+                  },
+                  "mapping": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "address": {
+                        "type": "object",
+                        "properties": {
+                          "parameterId": {
+                            "type": "integer"
+                          },
+                          "connectorId": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "elements": {
+                            "$ref": "#/properties/steps/items/properties/change/properties/configuration/properties/parameter/properties/address/properties/elements",
+                            "default": null,
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "parameterId"
+                        ]
+                      },
+                      "variable": {
+                        "type": "string"
+                      },
+                      "createVariable": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    },
+                    "required": [
+                      "address",
+                      "variable"
+                    ],
+                    "default": null
+                  }
+                },
+                "default": null
+              },
+              "artifactId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "expectedGraphSha256": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "operation",
+          "change"
+        ]
+      }
+    }
+  },
+  "required": [
+    "applicationId",
+    "steps"
+  ]
+}

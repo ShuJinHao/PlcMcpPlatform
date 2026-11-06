@@ -16,17 +16,21 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore PlcMcpPlatform.sln --locked-mode
       - run: dotnet build PlcMcpPlatform.sln -c Release --no-restore
-      - run: python eng/verify-execution.py --write-contracts
-      - uses: actions/upload-artifact@v4
-        if: runner.os == 'Linux'
-        with:
-          name: p5-contract-review
-          path: contracts/*.json
       - run: dotnet test PlcMcpPlatform.sln -c Release --no-build --no-restore
       - run: python eng/verify-mcp.py
       - run: python eng/verify-execution.py
       - run: python eng/verify-editing.py
       - run: python eng/verify-configuration.py
       - run: python eng/verify-exchange.py
+      - uses: actions/setup-node@v4
+        if: runner.os == 'Linux'
+        with:
+          node-version: '22'
+      - name: Install pinned OpenCode CLI for connection regression
+        if: runner.os == 'Linux'
+        run: npm install --prefix "$RUNNER_TEMP/plc-opencode" --no-save --package-lock=false opencode-ai@1.19.5
       - run: python eng/verify-delivery.py
+        env:
+          PLCMCP_OPENCODE: ${{ runner.os == 'Linux' && format('{0}/plc-opencode/node_modules/.bin/opencode', runner.temp) || '' }}
+      - run: python eng/verify-publish.py
       - run: python -m unittest discover -s tests/script_engine -v
