@@ -1,5 +1,7 @@
 # 第六批：已有工程接入、增量编程与版本恢复
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 目标是让 OpenCode 在已有汇川工程上读取上下文、提出可审阅修改、得到编译诊断，再交付或恢复工程内容。MCP 不调用模型，也不引入第三方 PLC MCP。服务继续使用 .NET 8；P6 新增 6 个工具，TestHost / ValidationHost 合计 73 个，默认生产宿主仍为 2 个。
 
 新增工具契约版本 1.5，Worker 主版本仍为 1。所有汇川能力保持 `Unverified`，`engineeringReady=false`。自动测试中的 JSON 工程、编译诊断和任务组态均是 fixture，不代表真实 InoProShop、IronPython 或 PLC 运行通过。

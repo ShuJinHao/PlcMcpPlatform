@@ -1,4 +1,4 @@
-> P9：正式执行、范围验收与预发布交付，见 [docs/20-production-readiness.md](docs/20-production-readiness.md)。
+> P10 / 0.1.0-rc.1：功能收口与统一回归交付，见 [运行手册](docs/21-delivery-closure.md)、[74 个工具清单](docs/22-current-tools.md) 和 [剩余缺口](docs/23-capability-closure.md)。
 
 # PLC MCP Platform
 
@@ -10,7 +10,7 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
 
-## 当前阶段 P9 正式运行与预发布交付
+## 当前阶段 P10 候选交付
 
 正式宿主提供 22 个不依赖 IDE 的本地工具；其余工程工具根据实际安装、Profile、脚本与执行代码指纹及人工验收范围开放。发现、调用、任务提交和执行共用门禁；批次缺少依赖或参数越界时先拒绝再写入。
 
@@ -18,7 +18,7 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 既有 graph-v1/v2、POU/成员、设备/任务/库、批量编辑、修订历史、精确补丁与交付包能力继续保留。.NET 8、DDD、官方 MCP C# SDK、原创厂商脚本和 OpenCode 标准 MCP 连接保持不变。
 
-详见 [P9 运行和验收手册](docs/20-production-readiness.md)。统一检查 `python eng/verify.py`；集中工程场景 `eng/run-regressions.py --suite all` 包含 P3～P8。CI 的 Windows 作业生成 production / validation / fixture 三种预发布 ZIP、SHA256 和来源提交清单，保存在 Actions artifacts 中。
+详见 [P9 运行和验收手册](docs/20-production-readiness.md)。统一检查 `python eng/verify.py`；集中工程场景 `eng/run-regressions.py --suite all` 包含 P3～P8。CI 的 Windows 作业生成 production / validation / fixture 三种预发布 ZIP、SHA256 和来源提交清单，保存在 Actions artifacts 中；main 全量检查通过后创建版本化 GitHub prerelease。P10 增加停服清理、可选模型回归及 SFC 定时动作。
 
 ## 文档入口
 
@@ -45,6 +45,9 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 | [第七批成员与批量修改](docs/18-members-batch.md) | 工程对象查询、访问器修改、设备/库作用范围和多应用检查 |
 | [第八批图形扩展](docs/19-graph-v2-engineering.md) | graph-v2 类型、LD/FBD 连线、SFC 分支、混合语言与回归边界 |
 | [第九批正式执行与预发布](docs/20-production-readiness.md) | 实际身份、验收范围、正式工具门禁、三种交付包与诊断 |
+| [第十批交付与统一回归](docs/21-delivery-closure.md) | 启动、保留策略、模型回归、候选发布 |
+| [当前工具清单](docs/22-current-tools.md) | 74 个实现的契约与代码入口 |
+| [当前功能范围与缺口](docs/23-capability-closure.md) | 已实现范围、厂商待验证和未实现项 |
 
 ## 核心工程
 
@@ -74,4 +77,4 @@ dotnet run --project src/hosts/PlcMcp.McpHost --no-launch-profile
 
 Host 固定监听 `http://127.0.0.1:5088`，MCP 路径为 `/mcp`。OpenCode 配置参考 [示例](config/opencode.example.json)，从另一个继承相同 `PlcMcp__ApiKey` 的终端启动 OpenCode。密钥不写入仓库。完整步骤见开发文档。
 
-上面启动的是生产宿主，当前只开放两个查询工具。要在 Mac 验证编辑流程，请按 [第二批启动说明](docs/13-managed-editing.md) 使用独立 TestHost；已有实现继续接受离线测试，真实支持声明须待目标 IDE 验收。
+上面启动的是生产宿主；没有真实验收记录时开放 22 个本地工具，IDE 操作仍受范围门禁控制。要在 Mac 验证编辑流程，请按 [第二批启动说明](docs/13-managed-editing.md) 使用独立 TestHost；已有实现继续接受离线测试，真实支持声明须待目标 IDE 验收。

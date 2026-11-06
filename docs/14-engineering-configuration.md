@@ -1,5 +1,7 @@
 # 第三批：工程组态与真实回归入口
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 本批交付完整的工具入口、输入验证、候选版本执行、原创 ScriptEngine 调用、保存重开核对、测试和回归运行器。目标仍然是 OpenCode 调用本服务完成 PLC 工程编程。没有接入第三方 PLC MCP，也没有增加第二层 MCP 服务。
 
 当前实际 InoProShop、IronPython 和 OpenCode 客户端未运行。以下“已实现”表示代码与自动检查范围；汇川兼容性仍为 Unverified。真实回归可以等取得 Windows 环境后集中进行，不阻塞后续代码开发。

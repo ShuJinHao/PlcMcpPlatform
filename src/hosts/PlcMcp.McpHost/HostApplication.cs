@@ -56,7 +56,7 @@ public static class HostApplication
         builder.Services.AddSerilog(config => config.WriteTo.Console());
         builder.Services.AddPlcMcpApplication();
         builder.Services.AddSingleton(paths);
-        builder.Services.AddSingleton(_ => new InstanceOwnership(paths.DataDirectory));
+        builder.Services.AddSingleton(_ => new InstanceOwnership(paths.DataDirectory, paths.WorkspaceRoot));
         IEngineeringExecutor rawWorker = testExecutor?.Invoke(paths) ?? new InovanceExecutor(new(
             builder.Configuration["PlcMcp:Inovance:ExecutablePath"] ?? "", builder.Configuration["PlcMcp:Inovance:Profile"] ?? "",
             Path.Combine(AppContext.BaseDirectory, "Scripts", "engineering_worker.py"), Path.Combine(data, "invocations"), maximum,

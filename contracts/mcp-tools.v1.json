@@ -3435,6 +3435,13 @@
                           "null"
                         ],
                         "default": null
+                      },
+                      "duration": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
                       }
                     },
                     "required": [
@@ -3792,6 +3799,13 @@
                       "null"
                     ],
                     "default": null
+                  },
+                  "duration": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
                   }
                 },
                 "required": [
@@ -4140,6 +4154,13 @@
                           "priority": {
                             "type": [
                               "integer",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "duration": {
+                            "type": [
+                              "string",
                               "null"
                             ],
                             "default": null

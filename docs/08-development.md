@@ -32,13 +32,13 @@ Start-Process dotnet -ArgumentList 'run --project src/hosts/PlcMcp.McpHost --no-
 opencode
 ```
 
-OpenCode 提示示例：“使用 plc MCP 查询平台状态和汇川能力，只报告当前真正可用的能力。”预期：发现两个平台工具，IDE 未连接，工程能力未验证。此生产入口当前不能执行工程编辑。
+OpenCode 提示示例：“使用 plc MCP 查询平台状态和汇川能力，只报告当前真正可用的能力。”预期：没有验收记录时发现 22 个本地工具；IDE 未连接、工程能力仍未验证。按范围验收的 IDE 操作才会开放，见 docs/20；当前启动与回归总入口见 docs/21。
 
 `type: remote` 表示 HTTP MCP 传输，即使服务运行在本机也使用该类型。示例禁用 OAuth 自动发现，使用环境变量提供的 Bearer 密钥。当前没有浏览器交互入口，Host 拒绝带 Origin 的 MCP 请求。
 
 ## 离线开发与真实执行准备
 
-P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编辑启动见 [第二批说明](13-managed-editing.md)，读取/调度背景见 [第一批说明](12-execution.md)。默认真实宿主仅注册两个查询工具；测试宿主提供 74 个工具，明确标注 fixture/simulated，不能将模拟结果视为汇川支持证据。
+P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编辑启动见 [第二批说明](13-managed-editing.md)，读取/调度背景见 [第一批说明](12-execution.md)。默认真实宿主无验收记录时提供 22 个本地工具；测试宿主提供 74 个工具，明确标注 fixture/simulated，不能将模拟结果视为汇川支持证据。
 
 真实环境后续确认 InoProShop 脚本入口、Profile、无 UI、进程归属和官方 API 兼容性。`IInovanceLaunchProfile` 隔离启动差异；当前首个策略仍为未验证。目标工程脚本由 IDE 内置环境执行，普通 CPython 只用于测试调用逻辑。
 

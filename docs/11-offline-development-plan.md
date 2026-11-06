@@ -1,5 +1,7 @@
 # 下一阶段开发与交付计划
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 本阶段先完成可独立开发的 PLC MCP 服务、汇川适配器和官方 API 调用脚本，并通过自动测试验证服务流程。目标 InoProShop 的兼容性与真实工程验收安排在取得 Windows 环境之后，不作为当前开发的前置条件。
 
 计划日期：2026-11-06。当前用户使用 Mac，暂时无法提供 Windows、InoProShop 或真实 PLC。本文件保留开发路线；第一至第五批已完成离线实现；组态与真实回归入口见 [第三批说明](14-engineering-configuration.md)，XML 与 graph-v1 内容编辑见 [第四批说明](15-engineering-exchange.md)，批量、大文件和交付见 [第五批说明](16-engineering-delivery.md)。复杂图形、CFC 结构化编辑与 PDO 仍保留明确缺口。

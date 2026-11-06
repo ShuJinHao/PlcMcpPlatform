@@ -1,5 +1,7 @@
 # 官方接口对照与原创 ScriptEngine 探针
 
+> 本文保留对应批次的实现记录。当前工具数量、启动和剩余范围以 [P10 交付说明](21-delivery-closure.md)、[工具清单](22-current-tools.md) 和 [能力缺口](23-capability-closure.md) 为准。
+
 核对日期：2026-11-06。适用阶段：P3。目标：由 OpenCode 调用自主实现的 .NET MCP 服务，通过官方 ScriptEngine 接口完成汇川工程编程。
 
 ## 实现来源
