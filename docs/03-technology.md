@@ -13,6 +13,7 @@
 | 调度 | `System.Threading.Channels` + 持久化状态机 | P2 实现；内存队列只做唤醒，不承担持久性 |
 | 日志 | Serilog.AspNetCore 8.0.3 | 结构化事件；不记录密钥、原始工程全文或厂商凭据 |
 | 汇川执行 | IDE 内置 ScriptEngine / IronPython | 与 IDE、Profile 和设备/库环境一起验证 |
+| 汇川实现来源 | 依据供应商文档和 CODESYS 官方 API 自主编写 | 不集成第三方 PLC MCP 服务、bundle 或脚本；具体对照见 [官方接口基线](10-official-api-baseline.md) |
 | IPC | 版本化 JSON；Windows Named Pipe 为首选候选 | P1 验证脚本环境兼容，P2 定稿传输和 ACL |
 | 测试 | xUnit 2.9.3、官方 Assert、真实 SQLite | 无须额外断言库；真实 IDE 测试单独运行 |
 | 部署 | Windows 工程师本机 | Host 与 Worker 解耦；服务化在真实会话测试后确定 |

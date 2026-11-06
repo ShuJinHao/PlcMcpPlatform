@@ -4,6 +4,10 @@
 
 OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工程访问、能力发现、任务管理、厂商执行与真实结果反馈。后续通过版本化适配器支持西门子、欧姆龙。
 
+**产品定位：面向 PLC 工程自动化的 MCP Server。** 仓库名称中的 Platform 表示可扩展的 PLC 工程能力，不表示通用 MCP 管理平台。对外由一个 MCP 服务提供工程工具；内部汇川模块是自主实现的适配器和脚本执行器，不是另一个 MCP Server。厂商 Worker 使用内部执行协议，不承担 MCP 工具发现或代理转发。
+
+通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
+
 ## 当前阶段：P0 核心架构
 
 本仓库提供 .NET 8 / C# 12 核心工程与中文设计文档。当前 MCP Host 只开放两个真实只读工具：
@@ -16,6 +20,8 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 **当前不能生成或编译真实 PLC 工程。** InoProShop Worker、脚本实现、持久化调度和工程写入属于后续阶段；没有模拟成功的工程工具。SQLite 当前提供领域映射与测试，Host 尚未接入运行数据库。
 
 P0 已通过 Windows/Linux 的 Release 构建、9 项测试和 HTTP MCP 冒烟验证，详见 [验收记录](docs/07-validation.md)。
+
+P1 开始依据供应商 API 参考与 CODESYS 官网自主实现汇川脚本，不接入第三方 PLC MCP。已增加[官方接口对照与只读探针](docs/10-official-api-baseline.md)；探针用于确认实际 IDE 暴露的接口，尚未接入 MCP 工程工具，也不改变能力的 `Unverified` 状态。
 
 ## 文档入口
 
@@ -31,6 +37,8 @@ P0 已通过 Windows/Linux 的 Release 构建、9 项测试和 HTTP MCP 冒烟�
 | [验收方案](docs/07-validation.md) | 自动测试和真实 IDE 验收方法 |
 | [开发与 OpenCode 接入](docs/08-development.md) | 如何构建、启动和连接 |
 | [架构决策记录](docs/09-decisions.md) | 关键取舍与调整条件 |
+| [官方接口对照与原创探针](docs/10-official-api-baseline.md) | CHM 与官网如何对应，如何验证目标 IDE 接口 |
+| [下一阶段开发与交付计划](docs/11-offline-development-plan.md) | 无汇川环境时先开发什么，各批如何交付与验收 |
 
 ## 核心工程
 
@@ -60,4 +68,4 @@ dotnet run --project src/hosts/PlcMcp.McpHost --no-launch-profile
 
 Host 固定监听 `http://127.0.0.1:5088`，MCP 路径为 `/mcp`。OpenCode 配置参考 [示例](config/opencode.example.json)，从另一个继承相同 `PlcMcp__ApiKey` 的终端启动 OpenCode。密钥不写入仓库。完整步骤见开发文档。
 
-下一项工程交付是：在目标 Windows/InoProShop 版本上验证脚本宿主、工程读取和编译诊断，再实现工程写入闭环。所有编程语言均在能力范围内，具体实现路径按证据决定。
+下一项工程交付是：先实现持久化任务、进程执行器、工程读取与编译工具，并通过离线自动测试，再开发程序写入及其他工程能力。Windows/InoProShop 验证不阻塞这些开发工作，实际支持声明仍须真实 IDE 证据。所有编程语言均在能力范围内，具体实现路径按证据决定。详见[下一阶段计划](docs/11-offline-development-plan.md)。

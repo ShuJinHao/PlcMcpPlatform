@@ -34,6 +34,8 @@
 
 ## 后续必须覆盖的故障场景
 
+P1 新增的原创只读探针使用 `python -m unittest discover -s tests/script_engine -v` 验证。本地 CPython 的 10 项边界测试已通过，并加入 Windows/Linux CI。该结果仅覆盖只读调用约束、接口检查、遍历边界和错误反馈，不证明目标 IronPython、InoProShop 或写入编译能力通过；实机证据仍待采集。探针依据与使用方式见 [官方接口基线](10-official-api-baseline.md)。
+
 1. 数据库入队后、Channel 通知前崩溃：恢复后任务仍可识别。
 2. 脚本已保存工程、服务未记录完成时断连：进入结果待确认，不自动重复写入。
 3. 人工修改或另一个 IDE 打开同工程：拒绝覆盖并说明冲突。

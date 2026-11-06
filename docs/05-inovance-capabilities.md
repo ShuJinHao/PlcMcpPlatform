@@ -11,7 +11,9 @@
 | Unsupported | 有证据证明指定范围不支持，必须记录原因和范围 |
 | Unavailable | 能力可能支持，但当前环境缺依赖、授权或执行器不可用 |
 
-API 名称以 P1 实际探测为准。本表不编造厂商方法名。第三方项目和新版 CODESYS 文档只用作调查线索。
+API 名称、重载及版本依据供应商提供的 `ScriptEngine.chm` 与 CODESYS 官方文档交叉核对，详见 [官方接口基线](10-official-api-baseline.md)。PLC 业务脚本自主实现，不引用第三方 PLC MCP 的实现或限制作为能力依据。
+
+证据分三层：文档描述接口、运行时检查接口可见、完整操作验收通过。前两层均不能直接把运行时能力改为 `Supported`。探针发现接口缺失也不能单独证明某能力不存在，仍需检查对象类型、IDE 版本、插件与替代官方路径。
 
 ## 全量能力登记
 
@@ -87,8 +89,11 @@ API 名称以 P1 实际探测为准。本表不编造厂商方法名。第三方
 
 测试失败需判断原因是 API 缺失、版本差异、前提缺失还是实现错误。只在确认限定范围不支持后标记 Unsupported。证据不包含公司生产程序和商业库内容。
 
-## 已知调查线索
+## 官方资料核对结果
 
-[LIMIT-LMT 的开源实现](https://github.com/LIMIT-LMT/InoProShop_LIMIT_MCP)声明面向 InoProShop V1.9.1.6/SP11，公开工程、POU、设备和任务工具，并列出任务调用绑定、IO/PDO 映射限制。这些限制应进入本项目专项测试，不能直接套用为所有汇川版本的结论。
+- 供应商 CHM 的相关程序集标注为 `3.5.9.0`，不是本项目已确认的 InoProShop 产品版本。
+- 官网 [ScriptTaskConfigObject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptTaskConfigObject.html)列出 `create_task`、`pous` 和集合的 `add/insert/replace/remove`，对应类标注自 `3.5.10.0` 引入。此 CHM 未检出这套接口，因此应补充验证，不能登记为不支持。
+- CHM 的 `IScriptIoVariableMapping.variable` 与官网 [ScriptDeviceParameters](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptDeviceParameters.html)均描述映射变量读写；CHM 与官网设备对象文档也列出 IO 映射 CSV 导入导出。
+- 图形语言的创建标识与网络编辑分别验证；通用 IO 变量映射与 EtherCAT PDO 配置分别验证，不相互替代。
 
 [CODESYS PLCopen XML 文档](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_cmd_import_plcopenxml.html)说明该格式存在表达限制，因此“可以导入”不等于所有对象、布局和语义无损。

@@ -9,6 +9,8 @@ OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先�
 - 当前主工程统一 .NET 8 / C# 12；新代码按 hosts/core/services/infrastructure/adapters/shared 分层。
 - Core 维护领域行为，不引用 EF、MCP SDK、进程 API 或厂商程序集。
 - Tool 只承担协议入口，应用用例通过端口访问外部能力。
+- PLC 工程业务和脚本自主实现，不依赖、调用或移植第三方 PLC MCP 的服务、bundle 或脚本；MCP 协议层继续使用官方 C# SDK。
+- 汇川接口依据供应商 API 文档与 CODESYS 官方资料交叉核对，参见 docs/10；文档存在、运行时可见、操作验收通过必须分别记录。
 - 平台聚合不等于厂商工程对象；数据库不能复制成第二套 PLC 工程事实来源。
 - 所有工程能力必须有真实版本与样例证据才标 Supported。未实现工具不注册，不返回假成功。
 - 不限制能力规划为 ST；各图形语言、设备、任务、库、导入导出按能力矩阵推进。
@@ -21,5 +23,6 @@ OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先�
 
 - 运行受影响的领域、契约、持久化和架构测试；正常交付运行 restore/build/test。
 - IDE 相关变更还需真实 Windows/InoProShop 验收；环境不可用时明确写未验证。
+- Python 探针变更运行 `python -m unittest discover -s tests/script_engine -v`；CPython 测试不替代目标 IronPython/IDE 验证。
 - 提交更新实现状态和相关文档；保持锁文件，不使用预览依赖或关闭检查掩盖错误。
 - 后续功能使用独立分支和 PR，保持变更聚焦；发布、在线 PLC 操作按用户明确范围执行。
