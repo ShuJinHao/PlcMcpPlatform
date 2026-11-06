@@ -82,6 +82,905 @@
     }
   },
   {
+    "name": "plc_dut_create",
+    "description": "Create a Structure/Enumeration/Alias/Union DUT with a complete TYPE declaration. Alias requires baseType; array aliases can use an ARRAY type expression.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "dutType": {
+          "type": "string"
+        },
+        "declaration": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "baseType": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "parentId",
+        "name",
+        "dutType",
+        "declaration",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_dut_read",
+    "description": "Read a DUT declaration by GUID from an explicit project version. No implementation text or graphical network is synthesized.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 60
+        }
+      },
+      "required": [
+        "projectPath",
+        "objectId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_dut_update",
+    "description": "Replace a DUT declaration by GUID and verify persistence after reopening the candidate.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "declaration": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "objectId",
+        "declaration",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_gvl_create",
+    "description": "Create a GVL with a complete VAR_GLOBAL declaration in a managed version; read back after save and reopen.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "declaration": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "parentId",
+        "name",
+        "declaration",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_gvl_read",
+    "description": "Read a GVL declaration by GUID from an explicit project version. Returns a file revision; use plc_workspace_get for the managed editing revision.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "projectPath": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 60
+        }
+      },
+      "required": [
+        "projectPath",
+        "objectId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_gvl_update",
+    "description": "Replace a GVL declaration by GUID, preserving earlier immutable versions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "declaration": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "objectId",
+        "declaration",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
     "name": "plc_job_cancel",
     "description": "Request cancellation. CancelRequested does not confirm executor termination; terminal jobs retain their existing outcome.",
     "inputSchema": {
@@ -466,6 +1365,307 @@
     }
   },
   {
+    "name": "plc_job_reconcile",
+    "description": "Reconcile an unknown edit only from durable stopped-executor evidence and matching files. Does not rerun scripts, overwrite files or force-unlock an unproven outcome.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "jobId"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_pou_create",
+    "description": "Create Program/FunctionBlock/Function under a parent GUID, save and reopen a new workspace version. ST/IL accept text; LD/FBD/SFC/CFC creation leaves graphical content empty. Function needs returnType; SFC Function is invalid.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "pouType": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "declaration": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "implementation": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "returnType": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "parentId",
+        "name",
+        "pouType",
+        "language",
+        "declaration",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
     "name": "plc_pou_read",
     "description": "Queue reading a textual object's declaration and implementation by GUID. Graphical networks are not represented as source strings.",
     "inputSchema": {
@@ -494,6 +1694,163 @@
       },
       "required": [
         "projectPath",
+        "objectId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_pou_update",
+    "description": "Replace explicit declaration and/or textual implementation by GUID in an isolated candidate. Null leaves that part unchanged. Save/readback/reopen must succeed before publishing the new revision. Graphical networks cannot be replaced with text.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "declaration": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "implementation": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
         "objectId",
         "idempotencyKey"
       ]
@@ -641,6 +1998,152 @@
       "required": [
         "projectPath",
         "applicationId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_project_create",
+    "description": "Create a managed workspace from a registered template or registered existing-project copy. Verify/save/reopen in a candidate; never overwrite the source. Fixture files are simulated.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "templateId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "expectedTemplateRevision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "templateId",
         "idempotencyKey"
       ]
     },
@@ -1046,6 +2549,145 @@
     }
   },
   {
+    "name": "plc_project_save",
+    "description": "Finalize a new delivery snapshot: save and reopen a copy of the current managed version. Earlier edits already persist to working versions. Delivery does not imply compilation, task binding or PLC runtime correctness.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedRevision": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 120
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedRevision",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
     "name": "plc_runtime_get_status",
     "description": "Report execution mode and scheduler state. Fixture results are simulated; real InoProShop capabilities are not yet verified.",
     "inputSchema": {
@@ -1089,6 +2731,352 @@
         "evidenceKind",
         "schedulerBlocked",
         "reason"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "plc_templates_list",
+    "description": "List registered templates and declared-file revisions. IDE profile, controller and libraries are declared requirements, not verified installed dependencies.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "revision": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "definition": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "projectFile": {
+                    "type": "string"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "ideProfile": {
+                    "type": "string"
+                  },
+                  "targetController": {
+                    "type": "string"
+                  },
+                  "requiredLibraries": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "executionMode": {
+                    "type": "string"
+                  },
+                  "controller": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "integer"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "version": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id",
+                      "version"
+                    ],
+                    "default": null
+                  }
+                },
+                "required": [
+                  "id",
+                  "projectFile",
+                  "files",
+                  "ideProfile",
+                  "targetController",
+                  "requiredLibraries",
+                  "executionMode"
+                ]
+              },
+              "errorCode": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "revision",
+              "definition",
+              "errorCode"
+            ]
+          }
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "value",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true
+    }
+  },
+  {
+    "name": "plc_workspace_get",
+    "description": "Get the managed workspace's current manifest revision and immutable project path. Use this revision for editing; file-read revisions are a separate scope.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspaceName"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "workspaceName": {
+              "type": "string"
+            },
+            "revision": {
+              "type": "string"
+            },
+            "projectPath": {
+              "type": "string"
+            },
+            "isDelivery": {
+              "type": "boolean"
+            },
+            "template": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "projectFile": {
+                  "type": "string"
+                },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "ideProfile": {
+                  "type": "string"
+                },
+                "targetController": {
+                  "type": "string"
+                },
+                "requiredLibraries": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "executionMode": {
+                  "type": "string"
+                },
+                "controller": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "integer"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "id",
+                    "version"
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "projectFile",
+                "files",
+                "ideProfile",
+                "targetController",
+                "requiredLibraries",
+                "executionMode"
+              ]
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "length": {
+                    "type": "integer"
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "length",
+                  "sha256"
+                ]
+              }
+            },
+            "dependencyValidation": {
+              "type": "string",
+              "default": "declared_files_only"
+            }
+          },
+          "required": [
+            "workspaceName",
+            "revision",
+            "projectPath",
+            "isDelivery",
+            "template",
+            "files"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "value",
+        "error"
       ]
     },
     "annotations": {

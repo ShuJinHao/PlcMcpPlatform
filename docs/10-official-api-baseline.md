@@ -1,6 +1,6 @@
 # 官方接口对照与原创 ScriptEngine 探针
 
-核对日期：2026-11-06。适用阶段：P1。目标：由 OpenCode 调用自主实现的 .NET MCP 服务，通过官方 ScriptEngine 接口完成汇川工程编程。
+核对日期：2026-11-06。适用阶段：P2。目标：由 OpenCode 调用自主实现的 .NET MCP 服务，通过官方 ScriptEngine 接口完成汇川工程编程。
 
 ## 实现来源
 
@@ -22,7 +22,7 @@ PLC 工程用例、汇川适配器、脚本与工具契约由本项目自主编�
 
 ## CHM、官网与 MCP 能力对照
 
-表中包含已实现及后续规划的工具名称。生产 Host 当前只注册两个平台查询工具；第一批四个工程工具和三个任务工具已在独立测试宿主接通，真实能力仍未开放，见 [执行实现](12-execution.md)。
+表中包含已实现及后续规划的工具名称。生产 Host 当前只注册两个平台查询工具；独立测试宿主已有 22 个工具，包括读/编译、程序写入、保存和对账；真实能力仍未开放，见 [编辑实现](13-managed-editing.md)。
 
 | 工程能力 | CHM 证据 | 官网核对 | 实现目标与待验证项 |
 |---|---|---|---|
@@ -90,7 +90,13 @@ python -m unittest discover -s tests/script_engine -v
 3. 在工作区修订、备份和读回规则就绪后实现程序创建/修改/保存，再扩展 Task、IO、库和各图形语言。独立测试宿主用于离线契约与流程验证，不改变真实能力状态。
 4. 以后取得 Windows/InoProShop 环境，再运行探针并完成各项真实操作验收，补齐版本、Profile、样例与证据，逐项开放生产能力。
 
-上述第 1～2 项已完成离线实现与测试，真实 IDE 仍未验证。完整顺序和每批验收标准见[下一阶段开发与交付计划](11-offline-development-plan.md)。
+上述第 1～2 项和第 3 项中的 POU/GVL/DUT 创建、写入、保存重开已完成离线实现；其余工程能力继续开发，真实 IDE 仍未验证。完整顺序和每批验收标准见[下一阶段开发与交付计划](11-offline-development-plan.md)。
+
+## 第二批调用补充
+
+原创编辑脚本采用 CHM 中的普通 `create_pou(name, type, language, return_type)`、`create_gvl(name)`、`create_dut(name, type, baseType)` 和文本 `replace(new_text)`，对照 [IEC 容器][iec]、[文本对象][text] 与 [工程保存][project] 官网页面；不把不同重载当作可互换签名。Function 返回类型、DUT Alias 基础类型和 SFC 适用范围分别检查。
+
+创建图形语言对象只确认类型标识，不等于编辑网络。保存后关闭并重开自有候选会话，核对实际对象与文本；替身检查调用流程，不提供真实版本支持证明。设备标识取自 [设备对象][device]，库引用取自 [库管理器][libraries] 的 `get_libraries(False)`，不据此宣称设备包/库已经安装并解析。
 
 [projects]: https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProjects.html
 [project]: https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProject.html

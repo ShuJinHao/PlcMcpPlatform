@@ -1,16 +1,19 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using PlcMcp.Services.Contracts.Execution;
+using PlcMcp.Services.Contracts.Editing;
 using PlcMcp.Services.Contracts.Workers;
 
 namespace PlcMcp.TestHost;
 
 public sealed record FixtureProject(string ApplicationId, string ProgramId, string Declaration = "PROGRAM PLC_PRG",
-    string Implementation = "counter := counter + 1;", bool CompileError = false, int DelayMilliseconds = 0, string? Fault = null);
+    string Implementation = "counter := counter + 1;", bool CompileError = false, int DelayMilliseconds = 0, string? Fault = null, FixtureObject[]? Objects = null);
+public sealed record FixtureObject(string Id, string Name, string Kind, string Declaration, string? Implementation, string? Language = null);
 
 /// <summary>Childless deterministic test process. It never interprets or compiles PLC code.</summary>
 public static class FixtureWorker
 {
+    private static string Normalize(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
     public static async Task<int> RunAsync(string inputPath, string outputPath)
     {
         var request = JsonSerializer.Deserialize<WorkerRequest>(await File.ReadAllTextAsync(inputPath), WorkerJson.Options)!;
@@ -30,26 +33,74 @@ public static class FixtureWorker
         {
             var payload = new Dictionary<string, object?> { ["revision"] = revision, ["revisionScope"] = "project_file_sha256", ["simulated"] = true };
             string? error = null;
+            var nodes = fixture.Objects ?? [new(fixture.ProgramId, "PLC_PRG", "pou", fixture.Declaration, fixture.Implementation, "ST")];
             switch (request.Operation)
             {
                 case EngineeringOperations.Open:
                     payload["opened"] = true; payload["sessionClosedAfterOperation"] = true; break;
                 case EngineeringOperations.Structure:
-                    object[] objects = [new { id = fixture.ApplicationId, name = "Application", parentId = (string?)null, kind = "application" },
-                        new { id = fixture.ProgramId, name = "PLC_PRG", parentId = fixture.ApplicationId, kind = "object" }];
-                    payload["objects"] = objects.Take(input.MaxObjects).ToArray(); payload["truncated"] = input.MaxObjects < objects.Length; break;
+                    var objects = new List<object> { new { id = fixture.ApplicationId, name = "Application", parentId = (string?)null, kind = "application" } };
+                    objects.AddRange(nodes.Select(n => (object)new { id = n.Id, name = n.Name, parentId = fixture.ApplicationId, kind = n.Kind }));
+                    payload["objects"] = objects.Take(input.MaxObjects).ToArray(); payload["truncated"] = input.MaxObjects < objects.Count; break;
                 case EngineeringOperations.ReadProgram:
-                    if (input.ObjectId != fixture.ProgramId) { error = "object_not_found"; break; }
-                    payload["objectId"] = fixture.ProgramId; payload["language"] = "ST";
-                    payload["declaration"] = fixture.Declaration; payload["implementation"] = fixture.Implementation; break;
+                    var node = nodes.SingleOrDefault(n => n.Id == input.ObjectId);
+                    if (node is null) { error = "object_not_found"; break; }
+                    if (node.Implementation is null) { error = "textual_source_unavailable"; break; }
+                    payload["objectId"] = node.Id; payload["language"] = node.Language;
+                    payload["declaration"] = node.Declaration; payload["implementation"] = node.Implementation; break;
+                case EngineeringOperations.ReadGvl:
+                case EngineeringOperations.ReadDut:
+                    var declarationNode = nodes.SingleOrDefault(n => n.Id == input.ObjectId);
+                    if (declarationNode is null) { error = "object_not_found"; break; }
+                    if (declarationNode.Kind != request.Operation.Split('.')[0]) { error = "object_kind_mismatch"; break; }
+                    payload["objectId"] = declarationNode.Id; payload["kind"] = declarationNode.Kind; payload["declaration"] = declarationNode.Declaration; break;
                 case EngineeringOperations.Compile:
                     if (input.ApplicationId != fixture.ApplicationId) { error = "object_not_found"; break; }
-                    payload["applicationId"] = fixture.ApplicationId; payload["succeeded"] = !fixture.CompileError;
-                    payload["diagnostics"] = fixture.CompileError
-                        ? new object[] { new { severity = "error", code = "FIXTURE0001", message = "Simulated compilation error; no PLC compiler ran.", objectId = fixture.ProgramId, line = (int?)null, column = (int?)null } } : [];
-                    if (fixture.CompileError) error = "compile_failed";
+                    var errorNode = nodes.FirstOrDefault(n => n.Implementation?.Contains("FIXTURE_ERROR", StringComparison.Ordinal) == true);
+                    var compileError = fixture.CompileError || errorNode is not null;
+                    payload["applicationId"] = fixture.ApplicationId; payload["succeeded"] = !compileError;
+                    payload["diagnostics"] = compileError
+                        ? new object[] { new { severity = "error", code = "FIXTURE0001", message = "Simulated compilation error; no PLC compiler ran.", objectId = errorNode?.Id ?? fixture.ProgramId, line = (int?)null, column = (int?)null } } : [];
+                    if (compileError) error = "compile_failed";
                     break;
-                default: error = "invalid_operation"; break;
+                default:
+                    if (!input.Candidate || input.Edit is null || !(EditOperations.Contains(request.Operation) || request.Operation == EditOperations.VerifyProject)) { error = "invalid_operation"; break; }
+                    var edit = input.Edit;
+                    FixtureObject? edited = null;
+                    var list = nodes.ToList();
+                    if (EditOperations.CreatesObject(request.Operation))
+                    {
+                        if (edit.ParentId != fixture.ApplicationId) { error = "object_not_found"; break; }
+                        if (list.Any(n => string.Equals(n.Name, edit.Name, StringComparison.OrdinalIgnoreCase))) { error = "object_name_conflict"; break; }
+                        var kind = request.Operation.Split('.')[0];
+                        edited = new(Guid.NewGuid().ToString(), edit.Name!, kind, Normalize(edit.Declaration!),
+                            kind == "pou" && edit.Language is "ST" or "IL" ? Normalize(edit.Implementation ?? "") : null, edit.Language);
+                        list.Add(edited);
+                    }
+                    else if (EditOperations.UpdatesObject(request.Operation))
+                    {
+                        var index = list.FindIndex(n => n.Id == edit.ObjectId);
+                        if (index < 0) { error = "object_not_found"; break; }
+                        var existing = list[index];
+                        if (existing.Kind != request.Operation.Split('.')[0]) { error = "object_kind_mismatch"; break; }
+                        if (existing.Implementation is null && edit.Implementation is not null) { error = "textual_implementation_unavailable"; break; }
+                        edited = existing with { Declaration = edit.Declaration is null ? existing.Declaration : Normalize(edit.Declaration),
+                            Implementation = edit.Implementation is null ? existing.Implementation : Normalize(edit.Implementation) };
+                        list[index] = edited;
+                    }
+                    if (fixture.Fault == "save_failure") { error = "save_failed"; break; }
+                    var saved = fixture with { Objects = list.ToArray() };
+                    await File.WriteAllTextAsync(input.ProjectPath, JsonSerializer.Serialize(saved, WorkerJson.Options));
+                    if (fixture.Fault == "after_save_exit") return 9;
+                    var reopened = JsonSerializer.Deserialize<FixtureProject>(await File.ReadAllTextAsync(input.ProjectPath), WorkerJson.Options)!;
+                    if (fixture.Fault == "reopen_mismatch" || edited is not null && reopened.Objects!.Single(n => n.Id == edited.Id) != edited) { error = "reopen_readback_mismatch"; break; }
+                    payload["baseRevision"] = revision;
+                    payload["revision"] = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(input.ProjectPath))).ToLowerInvariant();
+                    payload["dependencies"] = new { controllerMatched = true, libraryReferencesMatched = true, installedDependenciesVerified = false, simulated = true };
+                    payload["saved"] = fixture.Fault != "false_save"; payload["reopened"] = true; payload["readBackVerified"] = true; payload["sessionClosedAfterOperation"] = true;
+                    if (edited is not null)
+                    { payload["objectId"] = edited.Id; payload["name"] = edited.Name; payload["declaration"] = edited.Declaration; payload["implementation"] = edited.Implementation; }
+                    break;
             }
             response = new(1, request.RequestId, request.JobId, error is null ? "succeeded" : "failed", error, "fixture", JsonSerializer.SerializeToElement(payload, WorkerJson.Options));
         }

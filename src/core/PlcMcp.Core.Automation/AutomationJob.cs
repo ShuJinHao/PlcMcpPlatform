@@ -69,6 +69,14 @@ public sealed class AutomationJob : IAggregateRoot
         MoveTo(JobStatus.OutcomeUnknown, "execution_outcome_unknown", now);
     }
 
+    public void ReconcileVerified(JobStatus confirmed, string? errorCode, DateTimeOffset now)
+    {
+        Require(JobStatus.OutcomeUnknown);
+        if (confirmed is not (JobStatus.Succeeded or JobStatus.Failed or JobStatus.Cancelled)) throw new InvalidOperationException("invalid_reconciliation");
+        if (confirmed != JobStatus.Succeeded) ArgumentException.ThrowIfNullOrWhiteSpace(errorCode);
+        MoveTo(confirmed, confirmed == JobStatus.Succeeded ? null : errorCode, now);
+    }
+
     private void Require(JobStatus expected)
     {
         if (Status != expected) throw new InvalidOperationException("invalid_job_transition");

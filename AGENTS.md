@@ -2,7 +2,7 @@
 
 ## 产品目标
 
-OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先读 README，再按变更范围读取 docs/01～12；文档与实际实现不一致时必须明确指出并修正状态。
+OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先读 README，再按变更范围读取 docs/01～13；文档与实际实现不一致时必须明确指出并修正状态。
 
 ## 实现规则
 
@@ -23,7 +23,7 @@ OpenCode 调用 MCP，操作真实 InoProShop 工程并取得编译反馈。先�
 
 - 运行受影响的领域、契约、持久化和架构测试；正常交付运行 restore/build/test。
 - IDE 相关变更还需真实 Windows/InoProShop 验收；环境不可用时明确写未验证。
-- 执行与 MCP 变更还需运行 `python eng/verify-mcp.py` 和 `python eng/verify-execution.py`；fixture 证据不能替代真实 IDE 验证。
+- 执行与 MCP 变更还需运行 `python eng/verify-mcp.py` 、`python eng/verify-execution.py` 和 `python eng/verify-editing.py`；fixture 证据不能替代真实 IDE 验证。
 - Python 探针变更运行 `python -m unittest discover -s tests/script_engine -v`；CPython 测试不替代目标 IronPython/IDE 验证。
 - 提交更新实现状态和相关文档；保持锁文件，不使用预览依赖或关闭检查掩盖错误。
 - 后续功能使用独立分支和 PR，保持变更聚焦；发布、在线 PLC 操作按用户明确范围执行。

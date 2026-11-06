@@ -11,6 +11,8 @@ public sealed class PlcMcpDbContext(DbContextOptions<PlcMcpDbContext> options) :
     public DbSet<AutomationJob> Jobs => Set<AutomationJob>();
     public DbSet<JobRecord> JobRecords => Set<JobRecord>();
     public DbSet<ExecutionState> ExecutionStates => Set<ExecutionState>();
+    public DbSet<ManagedProjectRow> ManagedProjects => Set<ManagedProjectRow>();
+    public DbSet<ProjectChangeRow> ProjectChanges => Set<ProjectChangeRow>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var workspace = modelBuilder.Entity<ProjectWorkspace>();
@@ -30,5 +32,9 @@ public sealed class PlcMcpDbContext(DbContextOptions<PlcMcpDbContext> options) :
         modelBuilder.Entity<JobRecord>().HasKey(x => x.JobId);
         modelBuilder.Entity<JobRecord>().HasOne<AutomationJob>().WithOne().HasForeignKey<JobRecord>(x => x.JobId);
         modelBuilder.Entity<ExecutionState>().HasKey(x => x.Id);
+        modelBuilder.Entity<ManagedProjectRow>().HasKey(x => x.WorkspacePath);
+        modelBuilder.Entity<ManagedProjectRow>().Property(x => x.Revision).IsConcurrencyToken();
+        modelBuilder.Entity<ProjectChangeRow>().HasKey(x => x.JobId);
+        modelBuilder.Entity<ProjectChangeRow>().HasOne<AutomationJob>().WithOne().HasForeignKey<ProjectChangeRow>(x => x.JobId);
     }
 }

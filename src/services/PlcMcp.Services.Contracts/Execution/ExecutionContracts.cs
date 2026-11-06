@@ -9,12 +9,13 @@ public static class EngineeringOperations
     public const string Open = "project.open";
     public const string Structure = "project.tree.read";
     public const string ReadProgram = "pou.read";
+    public const string ReadGvl = "gvl.read", ReadDut = "dut.read";
     public const string Compile = "project.compile";
-    public static bool Contains(string value) => value is Open or Structure or ReadProgram or Compile;
+    public static bool Contains(string value) => value is Open or Structure or ReadProgram or Compile or ReadGvl or ReadDut;
 }
 
 public sealed record EngineeringInput(string ProjectPath, string? ObjectId = null,
-    string? ApplicationId = null, int MaxObjects = 256);
+    string? ApplicationId = null, int MaxObjects = 256, PlcMcp.Services.Contracts.Editing.EditInput? Edit = null, bool Candidate = false, string? IdeProfile = null, PlcMcp.Services.Contracts.Editing.TemplateDefinition? Requirements = null);
 public sealed record Submission(string Operation, EngineeringInput Input, string IdempotencyKey,
     string? ExpectedRevision = null, int TimeoutSeconds = 60);
 public sealed record ResolvedProject(string Path, string Revision);
@@ -47,5 +48,7 @@ public interface IJobStore
     Task<Result<JobView>> CancelAsync(Guid id, CancellationToken cancellationToken);
     Task<ClaimedJob?> ClaimAsync(CancellationToken cancellationToken);
     Task FinishAsync(WorkerResponse response, CancellationToken cancellationToken);
+    Task<WorkerRequest?> GetRequestAsync(Guid id, CancellationToken cancellationToken);
+    Task<Result<JobView>> ReconcileAsync(WorkerResponse evidence, CancellationToken cancellationToken);
     Task<ExecutionSlot> GetSlotAsync(CancellationToken cancellationToken);
 }

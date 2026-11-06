@@ -8,15 +8,15 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
 
-## 当前阶段 P1 离线执行开发
+## 当前阶段 P2 受控工程编辑
 
-已实现持久化任务、串行调度、进程执行器、七个工程/任务工具和原创工程读取/编译脚本。默认生产宿主仍只注册 `plc_capabilities_list` 与 `plc_runtime_get_status`，汇川能力全部为 `Unverified`，`engineeringReady=false`。
+已实现模板工程复制、POU/GVL/DUT 创建与读写、备份、修订检查、保存重开、新版本发布与证据对账，复用第一批持久化任务、串行调度和内部进程协议。工程操作与 ScriptEngine 脚本均自主实现。
 
-独立的 `tests/PlcMcp.TestHost` 注册九个工具，在 Mac、Windows、Linux 上用明确标识的测试进程验证完整流程。测试宿主不调用 InoProShop，也不编译 PLC 程序。生产宿主不包含 fixture 依赖或自动模拟回退。
+独立的 `tests/PlcMcp.TestHost` 提供 **22 个工具**，可在 Mac、Windows、Linux 执行“创建—修改—模拟诊断—修复—保存”流程。测试 JSON 不是真实工程，模拟诊断不解释或编译 PLC 代码。
 
-**当前尚不能生成、修改或保存真实 PLC 工程。** 原创脚本已包含官方 API 调用，但真实 InoProShop/IronPython 兼容性待验收；程序写入、备份和完整修订约束属于下一批。SQLite 已接入 Host，保存任务、工作区元数据与执行结果。
+默认生产宿主仍只注册 `plc_capabilities_list` 与 `plc_runtime_get_status`，汇川能力全部为 `Unverified`，`engineeringReady=false`。没有生产模式自动模拟回退。**真实 InoProShop/IronPython 与实际 OpenCode 客户端尚未联调**；本批不能宣称已生成、保存或编译真实汇川工程。
 
-开始使用见 [第一批实现与 Mac/Windows 启动说明](docs/12-execution.md)，开发路线见 [下一阶段计划](docs/11-offline-development-plan.md)。CI 运行锁定还原、Release 构建、.NET/Python 测试及真实模式/测试模式 HTTP 验证，执行环境包含 Windows、Ubuntu、macOS；真实 IDE 与 OpenCode 客户端验收单独记录。
+Mac 使用入口是 [第二批编辑与启动说明](docs/13-managed-editing.md)，附 [OpenCode 操作提示](config/opencode-editing-scenario.md)。CI 对 Windows、Ubuntu、macOS 运行锁定还原、Release 构建、标准 .NET/Python 测试及三组 HTTP 验证。下一批是有官方依据的 Task、POU 成员、Library 和工程交换等能力，见 [开发路线](docs/11-offline-development-plan.md)。
 
 ## 文档入口
 
@@ -34,7 +34,8 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 | [架构决策记录](docs/09-decisions.md) | 关键取舍与调整条件 |
 | [官方接口对照与原创探针](docs/10-official-api-baseline.md) | CHM 与官网如何对应，如何验证目标 IDE 接口 |
 | [下一阶段开发与交付计划](docs/11-offline-development-plan.md) | 无汇川环境时先开发什么，各批如何交付与验收 |
-| [第一批执行实现与使用说明](docs/12-execution.md) | 已实现什么、Mac 如何运行、故障处理与验证边界 |
+| [第一批执行实现与使用说明](docs/12-execution.md) | 读取/编译、调度与进程边界 |
+| [第二批受控工程编辑](docs/13-managed-editing.md) | Mac 编辑启动、模板、备份、修订、保存与对账 |
 
 ## 核心工程
 
@@ -64,4 +65,4 @@ dotnet run --project src/hosts/PlcMcp.McpHost --no-launch-profile
 
 Host 固定监听 `http://127.0.0.1:5088`，MCP 路径为 `/mcp`。OpenCode 配置参考 [示例](config/opencode.example.json)，从另一个继承相同 `PlcMcp__ApiKey` 的终端启动 OpenCode。密钥不写入仓库。完整步骤见开发文档。
 
-第一批已落地任务持久化、执行器、读取与编译调用流程；下一项工程交付是程序写入、备份、读回和保存，再扩展其他工程能力。Windows/InoProShop 验证不阻塞这些开发工作，实际支持声明仍须真实 IDE 证据。所有编程语言均在能力范围内，具体实现路径按证据决定。详见[下一阶段计划](docs/11-offline-development-plan.md)。
+上面启动的是生产宿主，当前只开放两个查询工具。要在 Mac 验证编辑流程，请按 [第二批启动说明](docs/13-managed-editing.md) 使用独立 TestHost；已有实现继续接受离线测试，真实支持声明须待目标 IDE 验收。

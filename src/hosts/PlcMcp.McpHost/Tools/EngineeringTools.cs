@@ -53,6 +53,14 @@ public sealed class EngineeringTools(EngineeringJobs jobs, ExecutionSignal signa
         var pending = result.Value.Status is "Queued" or "Running" or "CancelRequested";
         return Reply(result, new(pending ? "job_not_finished" : result.Value.ErrorCode ?? "job_failed", pending ? "The job has not finished." : "The operation did not succeed; inspect the recorded result."));
     }
+    [McpServerTool(Name = "plc_gvl_read", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
+    [Description("Read a GVL declaration by GUID from an explicit project version. Returns a file revision; use plc_workspace_get for the managed editing revision.")]
+    public Task<CallToolResult> ReadGvl(string projectPath, string objectId, string idempotencyKey, CancellationToken cancellationToken, string? expectedRevision = null, int timeoutSeconds = 60)
+        => Submit(new(EngineeringOperations.ReadGvl, new(projectPath, ObjectId:objectId), idempotencyKey, expectedRevision, timeoutSeconds), cancellationToken);
+    [McpServerTool(Name = "plc_dut_read", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
+    [Description("Read a DUT declaration by GUID from an explicit project version. No implementation text or graphical network is synthesized.")]
+    public Task<CallToolResult> ReadDut(string projectPath, string objectId, string idempotencyKey, CancellationToken cancellationToken, string? expectedRevision = null, int timeoutSeconds = 60)
+        => Submit(new(EngineeringOperations.ReadDut, new(projectPath, ObjectId:objectId), idempotencyKey, expectedRevision, timeoutSeconds), cancellationToken);
     private async Task<CallToolResult> Submit(Submission submission, CancellationToken token)
     {
         var result = await jobs.SubmitAsync(submission, token);
