@@ -112,3 +112,9 @@ BatchService 做计划校验与提交，BatchExecutor 位于 ManagedProjectExecu
 DeliveryExecutor 在最外层截获 project.package，在私有副本上读取任务并编译；ZIP 从同一源修订的已验证文件清单创建，不推进当前头。交付 manifest、工作区版本和编译对应的主文件 SHA 各有明确范围。
 
 大 XML 通过制品身份进入队列，执行时再传私有侧文件。固定名称、长度、摘要与字符编码校验属于基础设施边界，不向模型开放服务器任意文件路径。具体组合、限额和故障语义见 [docs/16](16-engineering-delivery.md)。
+
+## P6：增量工程的版本边界
+
+IncrementalReadExecutor 在只读任务中复制指定历史版本，读取上下文与差异；IncrementalEditExecutor 在既有候选内运行精确补丁或恢复验证。实际组合见 [docs/17](17-incremental-engineering.md)。新增历史端口显式注入，底层仍复用 SQLite 发布证据，不创建第二套 PLC 对象事实库。
+
+工程接入以 a1 绑定声明清单和控制器/依赖要求。恢复时当前头和历史源分别验证，备份当前头，候选来自历史源；只有唯一发布事务能推进头。项目文件、控制器和库仓库的不同修订范围继续分开。旧版本缺少完整清单元数据时只能在重建清单与原 m2 摘要一致后读取。

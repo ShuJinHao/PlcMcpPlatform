@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using PlcMcp.Services.Contracts.Incremental;
+using PlcMcp.Services.Contracts.Configuration;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using PlcMcp.Services.Contracts.Editing;
@@ -44,16 +46,53 @@ public sealed class ManagedProjectFiles(string workspaceRoot) : IManagedProjectF
         if (new FileInfo(descriptor).Length > 65536) throw new ProjectEditException("template_too_large");
         var template = JsonSerializer.Deserialize<TemplateDefinition>(await File.ReadAllTextAsync(descriptor, token), WorkerJson.Options)
             ?? throw new ProjectEditException("invalid_template");
-        if (template.Id != templateId || template.ExecutionMode != mode || template.Files is not { Length: > 0 and <= 512 }
+        if (template.Id != templateId) throw new ProjectEditException("invalid_template");
+        ValidateDefinition(template, mode);
+        var stamps = await CaptureAsync(directory, template.Files, token);
+        var fingerprint = Hash(JsonSerializer.SerializeToUtf8Bytes(new { template, files = stamps }, WorkerJson.Options));
+        return new(directory, template.ProjectFile, "t2:" + fingerprint, stamps, template);
+    }
+    private static void ValidateDefinition(TemplateDefinition template, string mode)
+    {
+        if (JsonSerializer.SerializeToUtf8Bytes(template, WorkerJson.Options).Length > 65536) throw new ProjectEditException("template_too_large");
+        if (!ValidName(template.Id) || template.ExecutionMode != mode || template.Files is not { Length: > 0 and <= 512 }
             || template.RequiredLibraries is null || template.RequiredLibraries.Length > 128 || template.RequiredLibraries.Any(string.IsNullOrWhiteSpace)
             || mode == "real" && (template.Controller is null || template.Controller.Type < 0 || string.IsNullOrWhiteSpace(template.Controller.Id) || string.IsNullOrWhiteSpace(template.Controller.Version))
             || string.IsNullOrWhiteSpace(template.IdeProfile) || string.IsNullOrWhiteSpace(template.TargetController)
             || !template.Files.Contains(template.ProjectFile, StringComparer.Ordinal)
             || template.Files.Distinct(StringComparer.OrdinalIgnoreCase).Count() != template.Files.Length
             || template.Files.Contains("template.json", StringComparer.OrdinalIgnoreCase)) throw new ProjectEditException("invalid_template");
-        var stamps = await CaptureAsync(directory, template.Files, token);
-        var fingerprint = Hash(JsonSerializer.SerializeToUtf8Bytes(new { template, files = stamps }, WorkerJson.Options));
-        return new(directory, template.ProjectFile, "t2:" + fingerprint, stamps, template);
+    }
+    public async Task<ProjectSnapshot> ReadAdoptionAsync(AdoptionSource source, string mode, CancellationToken token)
+    {
+        if (!ValidName(source.SourceName)) throw new ProjectEditException("invalid_source_name");
+        var definition = new TemplateDefinition("adopted", source.ProjectFile, source.Files, source.IdeProfile,
+            source.TargetController, source.RequiredLibraries, mode, source.Controller);
+        ValidateDefinition(definition, mode);
+        var directory = Canonical(Path.Combine(root, "imports", source.SourceName));
+        var stamps = await CaptureAsync(directory, source.Files, token);
+        var revision = "a1:" + Hash(JsonSerializer.SerializeToUtf8Bytes(new { definition, files = stamps }, WorkerJson.Options));
+        return new(directory, source.ProjectFile, revision, stamps, definition);
+    }
+    public async Task<ProjectSnapshot> ReadVersionAsync(VersionRecord record, TemplateDefinition legacyTemplate, CancellationToken token)
+    {
+        var evidence = record.Evidence;
+        if (evidence.Stage != "published" || evidence.Response?.Payload is not { } payload || evidence.VersionPath is null)
+            throw new ProjectEditException("version_not_found");
+        var result = payload.Deserialize<EditResult>(WorkerJson.Options) ?? throw new ProjectEditException("invalid_version_evidence");
+        var directory = Canonical(Path.Combine(evidence.WorkspacePath, "versions", evidence.JobId.ToString("N")));
+        if (Canonical(evidence.VersionPath) != directory || !Canonical(result.ProjectPath).StartsWith(directory + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            throw new ProjectEditException("invalid_version_evidence");
+        // Before P6 the published manifest hash was durable, but the full manifest lived only in the current head.
+        // Reconstruct legacy metadata only after matching that original m2 hash, never accepting changed files.
+        var stamps = await CaptureAsync(directory, Enumerate(directory), token);
+        var revision = "m2:" + evidence.JobId.ToString("N") + ":" + Hash(JsonSerializer.SerializeToUtf8Bytes(stamps, WorkerJson.Options));
+        if (revision != result.Revision) throw new ProjectEditException("workspace_revision_conflict");
+        var snapshot = evidence.Snapshot ?? new(directory, Path.GetRelativePath(directory, result.ProjectPath).Replace(Path.DirectorySeparatorChar, '/'), revision, stamps, legacyTemplate, result.CurrentDependencies);
+        if (Canonical(snapshot.Directory) != directory || snapshot.Revision != revision || !snapshot.Files.SequenceEqual(stamps)
+            || Canonical(Within(directory, snapshot.ProjectFile)) != Canonical(result.ProjectPath) || !stamps.Any(x => x.Path == snapshot.ProjectFile))
+            throw new ProjectEditException("invalid_version_evidence");
+        return snapshot;
     }
     public async Task VerifyAsync(ProjectSnapshot snapshot, CancellationToken token)
     {
@@ -62,29 +101,37 @@ public sealed class ManagedProjectFiles(string workspaceRoot) : IManagedProjectF
             var actual = await ReadTemplateAsync(snapshot.Template.Id, snapshot.Template.ExecutionMode, token);
             if (actual.Revision != snapshot.Revision) throw new ProjectEditException("workspace_revision_conflict");
         }
+        else if (snapshot.Revision.StartsWith("a1:", StringComparison.Ordinal))
+        {
+            var stamps = await CaptureAsync(snapshot.Directory, snapshot.Template.Files, token);
+            var revision = "a1:" + Hash(JsonSerializer.SerializeToUtf8Bytes(new { definition = snapshot.Template, files = stamps }, WorkerJson.Options));
+            if (revision != snapshot.Revision || !stamps.SequenceEqual(snapshot.Files)) throw new ProjectEditException("workspace_revision_conflict");
+        }
         else
         {
             var actual = await CaptureAsync(snapshot.Directory, Enumerate(snapshot.Directory), token);
             if (!actual.SequenceEqual(snapshot.Files)) throw new ProjectEditException("workspace_revision_conflict");
         }
     }
-    public async Task<(ProjectSnapshot Candidate, string BackupPath)> PrepareAsync(string workspacePath, Guid jobId, ProjectSnapshot source, CancellationToken token)
+    public async Task<(ProjectSnapshot Candidate, string BackupPath)> PrepareAsync(string workspacePath, Guid jobId, ProjectSnapshot source, CancellationToken token, ProjectSnapshot? backupSource = null)
     {
         var change = Path.Combine(workspacePath, "changes", jobId.ToString("N"));
         GuardFuture(change);
         if (Directory.Exists(change)) throw new ProjectEditException("change_already_exists");
         await VerifyAsync(source, token);
+        backupSource ??= source;
+        await VerifyAsync(backupSource, token);
         var backup = Path.Combine(change, "before"); var candidate = Path.Combine(change, "candidate");
         Directory.CreateDirectory(backup); Directory.CreateDirectory(candidate);
+        foreach (var stamp in backupSource.Files)
+            await CopyAsync(Within(backupSource.Directory, stamp.Path), Within(backup, stamp.Path), token);
         foreach (var stamp in source.Files)
-        {
-            await CopyAsync(Within(source.Directory, stamp.Path), Within(backup, stamp.Path), token);
-            await CopyAsync(Within(backup, stamp.Path), Within(candidate, stamp.Path), token);
-        }
+            await CopyAsync(Within(source.Directory, stamp.Path), Within(candidate, stamp.Path), token);
         await VerifyAsync(source, token);
+        await VerifyAsync(backupSource, token);
         var copied = await CaptureAsync(candidate, Enumerate(candidate), token);
         var backedUp = await CaptureAsync(backup, Enumerate(backup), token);
-        if (!copied.SequenceEqual(source.Files) || !backedUp.SequenceEqual(source.Files)) throw new ProjectEditException("backup_verification_failed");
+        if (!copied.SequenceEqual(source.Files) || !backedUp.SequenceEqual(backupSource.Files)) throw new ProjectEditException("backup_verification_failed");
         return (new(candidate, source.ProjectFile, "candidate", copied, source.Template, source.Dependencies), backup);
     }
     public async Task<ProjectSnapshot> SealAsync(string workspacePath, Guid jobId, ProjectSnapshot candidate, CancellationToken token)

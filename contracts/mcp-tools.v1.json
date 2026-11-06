@@ -7729,6 +7729,437 @@
     }
   },
   {
+    "name": "plc_project_adopt",
+    "description": "Enroll a saved project as a new managed workspace. Requires the exact source revision from adopt_preview. Copy only declared files, check source before and after copying, validate dependencies, save/reopen the private candidate and publish an initial m2 revision. Original files remain untouched; this does not compile or certify PLC behavior.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "sourceName": {
+              "type": "string"
+            },
+            "projectFile": {
+              "type": "string"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "ideProfile": {
+              "type": "string"
+            },
+            "targetController": {
+              "type": "string"
+            },
+            "requiredLibraries": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "controller": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "type": {
+                  "type": "integer"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "id",
+                "version"
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "sourceName",
+            "projectFile",
+            "files",
+            "ideProfile",
+            "targetController",
+            "requiredLibraries"
+          ]
+        },
+        "expectedSourceRevision": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 600
+        }
+      },
+      "required": [
+        "workspaceName",
+        "source",
+        "expectedSourceRevision",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_project_adopt_preview",
+    "description": "Hash an existing saved project and explicitly listed companion files from WorkspaceRoot/imports/sourceName. Returns an a1 source revision for adoption. Unsaved external IDE state and undeclared dependencies are outside this inventory. No IDE is opened and no file is changed.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "object",
+          "properties": {
+            "sourceName": {
+              "type": "string"
+            },
+            "projectFile": {
+              "type": "string"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "ideProfile": {
+              "type": "string"
+            },
+            "targetController": {
+              "type": "string"
+            },
+            "requiredLibraries": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "controller": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "type": {
+                  "type": "integer"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "id",
+                "version"
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "sourceName",
+            "projectFile",
+            "files",
+            "ideProfile",
+            "targetController",
+            "requiredLibraries"
+          ]
+        }
+      },
+      "required": [
+        "source"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "sourceRevision": {
+              "type": "string"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "length": {
+                    "type": "integer"
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "length",
+                  "sha256"
+                ]
+              }
+            },
+            "requirements": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "projectFile": {
+                  "type": "string"
+                },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "ideProfile": {
+                  "type": "string"
+                },
+                "targetController": {
+                  "type": "string"
+                },
+                "requiredLibraries": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "executionMode": {
+                  "type": "string"
+                },
+                "controller": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "integer"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "id",
+                    "version"
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "projectFile",
+                "files",
+                "ideProfile",
+                "targetController",
+                "requiredLibraries",
+                "executionMode"
+              ]
+            },
+            "scope": {
+              "type": "string",
+              "default": "saved_declared_files_only"
+            }
+          },
+          "required": [
+            "sourceRevision",
+            "files",
+            "requirements"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "value",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true
+    }
+  },
+  {
     "name": "plc_project_batch_apply",
     "description": "Execute a previewed plan in one managed candidate. Resolve prior-step identities, verify each save/reopen, compile the chosen Application, then publish once. Failure preserves the old head; unknown outcomes are never automatically resumed.",
     "inputSchema": {
@@ -8232,6 +8663,33 @@
                           "null"
                         ],
                         "default": null
+                      },
+                      "patch": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "section": {
+                            "type": "string"
+                          },
+                          "expectedSha256": {
+                            "type": "string"
+                          },
+                          "oldText": {
+                            "type": "string"
+                          },
+                          "newText": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "section",
+                          "expectedSha256",
+                          "oldText",
+                          "newText"
+                        ],
+                        "default": null
                       }
                     }
                   }
@@ -8383,7 +8841,7 @@
   },
   {
     "name": "plc_project_batch_preview",
-    "description": "Preview up to 32 ordered steps for one Application. Allowed operations: dut.create, dut.update, gvl.create, gvl.update, pou.create, pou.update, pou.graph.write, task.configuration.create, task.create, task.update, task.calls.set. Parent/object IDs and task-call pouId can reference prior identities as @stepId; source text is never interpolated. Returns a plan hash bound to the exact workspace revision; this does not validate or modify an IDE.",
+    "description": "Preview up to 32 ordered steps for one Application. Allowed operations: text.patch, dut.create, dut.update, gvl.create, gvl.update, pou.create, pou.update, pou.graph.write, task.configuration.create, task.create, task.update, task.calls.set. Parent/object IDs and task-call pouId can reference prior identities as @stepId; source text is never interpolated. text.patch requires objectId and patch (section, expectedSha256, oldText, newText); SHA-256 covers the complete LF-normalized UTF-8 section, and oldText must match uniquely. Returns a plan hash bound to the exact workspace revision; this does not validate or modify an IDE.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -8883,6 +9341,33 @@
                         "type": [
                           "string",
                           "null"
+                        ],
+                        "default": null
+                      },
+                      "patch": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "section": {
+                            "type": "string"
+                          },
+                          "expectedSha256": {
+                            "type": "string"
+                          },
+                          "oldText": {
+                            "type": "string"
+                          },
+                          "newText": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "section",
+                          "expectedSha256",
+                          "oldText",
+                          "newText"
                         ],
                         "default": null
                       }
@@ -9428,6 +9913,33 @@
                           "null"
                         ],
                         "default": null
+                      },
+                      "patch": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "section": {
+                            "type": "string"
+                          },
+                          "expectedSha256": {
+                            "type": "string"
+                          },
+                          "oldText": {
+                            "type": "string"
+                          },
+                          "newText": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "section",
+                          "expectedSha256",
+                          "oldText",
+                          "newText"
+                        ],
+                        "default": null
                       }
                     }
                   }
@@ -9648,6 +10160,176 @@
     }
   },
   {
+    "name": "plc_project_context",
+    "description": "Queue revision-bound Application context from a private copy: object IDs, source windows and full normalized SHA-256, task bindings and library references. Optional objectId is returned first; remaining Application objects, including GVL/DUT, follow across pages. Offset/pageSize select objects; textOffset/maxTextChars select UTF-16 source windows. Follow nextOffset and truncation flags. Explicit references are not a complete call graph. Read completion through plc_job_get.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedHeadRevision": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "applicationId": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "offset": {
+          "type": "integer",
+          "default": 0
+        },
+        "pageSize": {
+          "type": "integer",
+          "default": 8
+        },
+        "textOffset": {
+          "type": "integer",
+          "default": 0
+        },
+        "maxTextChars": {
+          "type": "integer",
+          "default": 4096
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 600
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedHeadRevision",
+        "revision",
+        "applicationId",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true
+    }
+  },
+  {
     "name": "plc_project_create",
     "description": "Create a managed workspace from a registered template or registered existing-project copy. Verify/save/reopen in a candidate; never overwrite the source. Fixture files are simulated.",
     "inputSchema": {
@@ -9791,6 +10473,194 @@
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_project_diff",
+    "description": "Queue a comparison of two published revisions. File changes are exact hashes only. Optional objectId plus applicationId reads source before/after with hashes and bounded windows; graph=true compares supported graph-v1 variables, nodes, pins/connections, actions and ordering. Use toObjectId when XML replacement changed the vendor object GUID. Graphs outside graph-v1 return an explicit error. Offset/pageSize page file and graph changes; read completion through plc_job_get.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedHeadRevision": {
+          "type": "string"
+        },
+        "fromRevision": {
+          "type": "string"
+        },
+        "toRevision": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "applicationId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "objectId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "graph": {
+          "type": "boolean",
+          "default": false
+        },
+        "offset": {
+          "type": "integer",
+          "default": 0
+        },
+        "pageSize": {
+          "type": "integer",
+          "default": 8
+        },
+        "textOffset": {
+          "type": "integer",
+          "default": 0
+        },
+        "maxTextChars": {
+          "type": "integer",
+          "default": 4096
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 600
+        },
+        "toObjectId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedHeadRevision",
+        "fromRevision",
+        "toRevision",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true
     }
   },
   {
@@ -10097,6 +10967,148 @@
     }
   },
   {
+    "name": "plc_project_history",
+    "description": "List published immutable revisions in chronological order, bound to an exact current head so concurrent publication cannot silently change pagination. Includes pre-P6 history. Failed candidates are job evidence, not historical published versions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedHeadRevision": {
+          "type": "string"
+        },
+        "offset": {
+          "type": "integer",
+          "default": 0
+        },
+        "pageSize": {
+          "type": "integer",
+          "default": 32
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedHeadRevision"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "workspaceName": {
+              "type": "string"
+            },
+            "headRevision": {
+              "type": "string"
+            },
+            "versions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "revision": {
+                    "type": "string"
+                  },
+                  "jobId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "operation": {
+                    "type": "string"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "baseRevision": {
+                    "type": "string"
+                  },
+                  "isCurrent": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "revision",
+                  "jobId",
+                  "operation",
+                  "createdAt",
+                  "baseRevision",
+                  "isCurrent"
+                ]
+              }
+            },
+            "nextOffset": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "workspaceName",
+            "headRevision",
+            "versions",
+            "nextOffset"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "value",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true
+    }
+  },
+  {
     "name": "plc_project_import",
     "description": "Import a staged artifact into a managed candidate at a parent GUID or project. Conflict policy reject/replace/skip is explicit. Save/reopen/re-export proof precedes publication. Unknown/partial failures never publish; warnings require allowWarnings.",
     "inputSchema": {
@@ -10388,6 +11400,149 @@
     },
     "annotations": {
       "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": false
+    }
+  },
+  {
+    "name": "plc_project_restore",
+    "description": "Restore historical project content by publishing a NEW revision, preserving every existing version. Requires the exact current head and an intact historical manifest. Validate historical dependencies, save/reopen a candidate, check tasks and compile every Application before publication. Failed or unknown execution never advances the head; unknown outcomes stay quarantined.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "workspaceName": {
+          "type": "string"
+        },
+        "expectedHeadRevision": {
+          "type": "string"
+        },
+        "sourceRevision": {
+          "type": "string"
+        },
+        "idempotencyKey": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "default": 600
+        }
+      },
+      "required": [
+        "workspaceName",
+        "expectedHeadRevision",
+        "sourceRevision",
+        "idempotencyKey"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "type": "string"
+        },
+        "executionMode": {
+          "type": "string"
+        },
+        "evidenceKind": {
+          "type": "string"
+        },
+        "engineeringReady": {
+          "type": "boolean"
+        },
+        "job": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "workspaceId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "operation": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "executionMode": {
+              "type": "string"
+            },
+            "evidenceKind": {
+              "type": "string"
+            },
+            "engineeringReady": {
+              "type": "boolean"
+            },
+            "errorCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "result": true,
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "jobId",
+            "workspaceId",
+            "operation",
+            "status",
+            "executionMode",
+            "evidenceKind",
+            "engineeringReady",
+            "errorCode",
+            "result",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "error": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "retryable": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ]
+        }
+      },
+      "required": [
+        "contractVersion",
+        "executionMode",
+        "evidenceKind",
+        "engineeringReady",
+        "job",
+        "error"
+      ]
+    },
+    "annotations": {
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
       "readOnlyHint": false

@@ -116,3 +116,7 @@ Task、Member、Object、Library、Device/Parameter/IO 已有完整工具和原�
 | OpenCode CLI | 1.19.5 连接成功；HTTP 契约 67 工具 | 只证明连接；LLM 生成仍未验收 |
 
 复杂 SFC、图形 POU 子成员、CFC 结构和 PDO 的证据调查见 docs/10；本批没有据语言枚举或通用 IO 参数接口提升这些能力。
+
+## P6 实现记录
+
+已实现工程接入、版本绑定上下文、text.patch 批量步骤、历史/差异/恢复的服务、原创 Worker 文本读取及自动回归。能力仍为 Unverified；源文本由实际文本标记读取，未推断语言 GUID。图形差异只覆盖 graph-v1，复杂 SFC、图形 POU 子成员、CFC 和 PDO 限制保持。详见 docs/17。

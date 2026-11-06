@@ -1,0 +1,360 @@
+{
+  "schemaVersion": 1,
+  "description": "Adopt an existing saved project with PLC_PRG and existing task bindings; add an interlock, reject stale patch, compare, compile/package and restore as a new revision. Source POU implementation must fit the requested 8192 UTF-16 window; real test inputs remain local.",
+  "cases": [
+    {
+      "id": "source-preview",
+      "tool": "plc_project_adopt_preview",
+      "arguments": {
+        "source": "${adoptionSource}"
+      },
+      "bind": {
+        "sourceRevision": "/value/sourceRevision"
+      }
+    },
+    {
+      "id": "adopt",
+      "tool": "plc_project_adopt",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "source": "${adoptionSource}",
+        "expectedSourceRevision": "${sourceRevision}"
+      },
+      "bind": {
+        "baseRevision": "/result/revision"
+      }
+    },
+    {
+      "id": "context",
+      "tool": "plc_project_context",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedHeadRevision": "${baseRevision}",
+        "revision": "${baseRevision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${programId}",
+        "pageSize": 1,
+        "maxTextChars": 8192
+      },
+      "bind": {
+        "sourceSha": "/result/objects/0/implementation/sha256",
+        "oldImplementation": "/result/objects/0/implementation/text"
+      },
+      "expect": [
+        {
+          "path": "/result/objects/0/objectId",
+          "equals": "${programId}"
+        },
+        {
+          "path": "/result/objects/0/implementation/nextOffset",
+          "equals": null
+        }
+      ]
+    },
+    {
+      "id": "conflict-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "interlock",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InterlockData",
+                "declaration": "VAR_GLOBAL\nEnabled : BOOL := FALSE;\nEND_VAR"
+              }
+            },
+            {
+              "id": "patch",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${programId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+                  "oldText": "${oldImplementation}",
+                  "newText": "IF InterlockData.Enabled THEN\n${oldImplementation}\nEND_IF;"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "wrongHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "conflicting-patch",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "interlock",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InterlockData",
+                "declaration": "VAR_GLOBAL\nEnabled : BOOL := FALSE;\nEND_VAR"
+              }
+            },
+            {
+              "id": "patch",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${programId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+                  "oldText": "${oldImplementation}",
+                  "newText": "IF InterlockData.Enabled THEN\n${oldImplementation}\nEND_IF;"
+                }
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${wrongHash}"
+      },
+      "expect": [
+        {
+          "path": "/status",
+          "equals": "Failed"
+        },
+        {
+          "path": "/errorCode",
+          "equals": "source_hash_conflict"
+        }
+      ]
+    },
+    {
+      "id": "head-preserved",
+      "tool": "plc_workspace_get",
+      "arguments": {
+        "workspaceName": "p6-${runId}"
+      },
+      "expect": [
+        {
+          "path": "/value/revision",
+          "equals": "${baseRevision}"
+        }
+      ]
+    },
+    {
+      "id": "patch-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "interlock",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InterlockData",
+                "declaration": "VAR_GLOBAL\nEnabled : BOOL := FALSE;\nEND_VAR"
+              }
+            },
+            {
+              "id": "patch",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${programId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${sourceSha}",
+                  "oldText": "${oldImplementation}",
+                  "newText": "IF InterlockData.Enabled THEN\n${oldImplementation}\nEND_IF;"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "planHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "patch-apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "interlock",
+              "operation": "gvl.create",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InterlockData",
+                "declaration": "VAR_GLOBAL\nEnabled : BOOL := FALSE;\nEND_VAR"
+              }
+            },
+            {
+              "id": "patch",
+              "operation": "text.patch",
+              "change": {
+                "objectId": "${programId}",
+                "patch": {
+                  "section": "implementation",
+                  "expectedSha256": "${sourceSha}",
+                  "oldText": "${oldImplementation}",
+                  "newText": "IF InterlockData.Enabled THEN\n${oldImplementation}\nEND_IF;"
+                }
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${planHash}"
+      },
+      "bind": {
+        "revision": "/result/revision"
+      },
+      "expect": [
+        {
+          "path": "/result/published",
+          "equals": true
+        },
+        {
+          "path": "/result/engineeringResult/batch/compile/succeeded",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "diff",
+      "tool": "plc_project_diff",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "fromRevision": "${baseRevision}",
+        "toRevision": "${revision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${programId}"
+      },
+      "expect": [
+        {
+          "path": "/result/objectDifference/implementationChanged",
+          "equals": true
+        },
+        {
+          "path": "/result/objectDifference/declarationChanged",
+          "equals": false
+        }
+      ]
+    },
+    {
+      "id": "history",
+      "tool": "plc_project_history",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "pageSize": 1
+      },
+      "expect": [
+        {
+          "path": "/value/nextOffset",
+          "equals": 1
+        },
+        {
+          "path": "/value/versions/0/revision",
+          "equals": "${baseRevision}"
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "tool": "plc_delivery_create",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedRevision": "${revision}",
+        "applicationId": "${applicationId}"
+      },
+      "bind": {
+        "packageId": "/result/artifact/artifactId",
+        "packageSha": "/result/artifact/sha256"
+      },
+      "expect": [
+        {
+          "path": "/result/packaged",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "restore",
+      "tool": "plc_project_restore",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedHeadRevision": "${revision}",
+        "sourceRevision": "${baseRevision}"
+      },
+      "bind": {
+        "restoredRevision": "/result/revision"
+      },
+      "expect": [
+        {
+          "path": "/result/published",
+          "equals": true
+        },
+        {
+          "path": "/result/engineeringResult/restore/sourceRevision",
+          "equals": "${baseRevision}"
+        }
+      ]
+    },
+    {
+      "id": "restored-context",
+      "tool": "plc_project_context",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedHeadRevision": "${restoredRevision}",
+        "revision": "${restoredRevision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${programId}",
+        "pageSize": 1,
+        "maxTextChars": 8192
+      },
+      "expect": [
+        {
+          "path": "/result/objects/0/implementation/sha256",
+          "equals": "${sourceSha}"
+        }
+      ]
+    },
+    {
+      "id": "new-history-entry",
+      "tool": "plc_project_history",
+      "arguments": {
+        "workspaceName": "p6-${runId}",
+        "expectedHeadRevision": "${restoredRevision}",
+        "offset": 2,
+        "pageSize": 1
+      },
+      "expect": [
+        {
+          "path": "/value/versions/0/isCurrent",
+          "equals": true
+        },
+        {
+          "path": "/value/versions/0/baseRevision",
+          "equals": "${revision}"
+        }
+      ]
+    }
+  ]
+}

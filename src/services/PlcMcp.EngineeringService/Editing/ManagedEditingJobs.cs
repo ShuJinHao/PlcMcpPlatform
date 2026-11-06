@@ -1,3 +1,5 @@
+using PlcMcp.Services.Contracts.Incremental;
+using PlcMcp.EngineeringService.Incremental;
 using PlcMcp.EngineeringService.Configuration;
 using PlcMcp.EngineeringService.Exchange;
 using PlcMcp.EngineeringService.Batch;
@@ -13,12 +15,13 @@ using PlcMcp.SharedKernel.Results;
 
 namespace PlcMcp.EngineeringService.Editing;
 
-public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore changes, IManagedProjectFiles files, IEngineeringExecutor executor) : IProjectReconciliation
+public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore changes, IManagedProjectFiles files, IEngineeringExecutor executor, IProjectHistoryStore? history = null) : IProjectReconciliation
 {
     public async Task<Result<JobView>> SubmitAsync(string operation, EditInput input, string key, string? expectedRevision, int timeoutSeconds, CancellationToken token)
     {
         try
         {
+            if (operation == IncrementalOperations.Patch) return Result<JobView>.Failure("patch_requires_batch", "Use batch preview/apply so patch publication includes compilation.");
             var validation = Validate(operation, input, key, expectedRevision, timeoutSeconds);
             if (validation is not null) return Result<JobView>.Failure(validation, "Invalid editing request.");
             var workspace = files.WorkspacePath(input.WorkspaceName);
@@ -39,10 +42,12 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
                     if (executor.CheckAvailability(required) is { } denied) return Result<JobView>.Failure(denied.Code, denied.Message);
             var head = await changes.GetHeadAsync(workspace, token);
             ProjectSnapshot source;
-            if (operation == EditOperations.CreateProject)
+            if (operation is EditOperations.CreateProject or IncrementalOperations.Adopt)
             {
                 if (head is not null) return Result<JobView>.Failure("workspace_exists", "Choose another workspace name.");
-                source = await files.ReadTemplateAsync(edit.TemplateId!, executor.ExecutionMode, token);
+                source = operation == IncrementalOperations.Adopt
+                    ? await files.ReadAdoptionAsync(edit.Adoption!, executor.ExecutionMode, token)
+                    : await files.ReadTemplateAsync(edit.TemplateId!, executor.ExecutionMode, token);
             }
             else
             {
@@ -51,6 +56,13 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
                 if (source.Template.ExecutionMode != executor.ExecutionMode) return Result<JobView>.Failure("execution_mode_mismatch", "Workspace mode mismatch.");
                 await files.VerifyAsync(source, token);
             }
+            if (operation == IncrementalOperations.Restore)
+            {
+                var record = await (history ?? throw new ProjectEditException("history_unavailable")).GetAsync(workspace, edit.RestoreRevision!, token) ?? throw new ProjectEditException("version_not_found");
+                await files.VerifyAsync(await files.ReadVersionAsync(record, source.Template, token), token);
+            }
+            foreach (var required in IncrementalValidation.Required(operation))
+                if (executor.CheckAvailability(required) is { } denied) return Result<JobView>.Failure(denied.Code, denied.Message);
             if (bytes.Length + JsonSerializer.SerializeToUtf8Bytes(source.Template, WorkerJson.Options).Length + JsonSerializer.SerializeToUtf8Bytes(source.Dependencies, WorkerJson.Options).Length > WorkerJson.MaxRequestBytes - 16384)
                 return Result<JobView>.Failure("request_too_large", "Source and template requirements exceed the worker limit.");
             return await jobs.SubmitAsync(submission, new(workspace, source.Revision), fingerprint, executor.ExecutionMode, token);
@@ -112,6 +124,12 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
     {
         if (!EditOperations.Contains(op) || string.IsNullOrWhiteSpace(key) || key.Length > 128 || timeout is < 1 or > 600
             || revision is { Length: > 128 } || string.IsNullOrWhiteSpace(input.WorkspaceName)) return "invalid_request";
+        if (op == IncrementalOperations.Adopt)
+            return input.Adoption is null || string.IsNullOrWhiteSpace(revision) ? "adoption_preview_required" : null;
+        if (input.Adoption is not null) return "adoption_field_not_applicable";
+        if (op == IncrementalOperations.Restore)
+            return !IncrementalValidation.Revision(input.RestoreRevision) || !IncrementalValidation.Revision(revision) ? "invalid_restore_request" : null;
+        if (input.RestoreRevision is not null) return "restore_field_not_applicable";
         if (op == EditOperations.CreateProject)
             return string.IsNullOrWhiteSpace(input.TemplateId) ? "template_required" : null;
         if (string.IsNullOrWhiteSpace(revision)) return "expected_revision_required";
@@ -121,6 +139,8 @@ public sealed class ManagedEditingJobs(IJobStore jobs, IProjectChangeStore chang
             return error ?? (BatchValidation.Hash(input.WorkspaceName, revision, input.Batch!) == input.PlanSha256 ? null : "batch_plan_changed");
         }
         if (input.Batch is not null || input.PlanSha256 is not null) return "batch_field_not_applicable";
+        if (op == IncrementalOperations.Patch) return IncrementalValidation.Patch(input);
+        if (input.Patch is not null) return "patch_field_not_applicable";
         if (op == EditOperations.SaveProject) return null;
         if (ExchangeOperations.IsWrite(op)) return ExchangeValidation.Write(op, input);
         if (ConfigurationOperations.IsWrite(op)) return ConfigurationValidation.Write(op, input);

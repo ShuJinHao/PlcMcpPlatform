@@ -8,6 +8,12 @@ public sealed class InovanceCapabilityProvider : IPlcCapabilityProvider
     public string VendorId => "inovance";
     public IReadOnlyList<CapabilityDescriptor> GetCapabilities() => Array.AsReadOnly(new CapabilityDescriptor[]
     {
+        Describe("project.adopt", OperationRisk.ModifyProject),
+        Describe("project.restore", OperationRisk.ModifyProject),
+        Describe("project.context", OperationRisk.Read),
+        Describe("project.diff", OperationRisk.Read),
+        Describe("object.source.read", OperationRisk.Read),
+        Describe("text.patch", OperationRisk.ModifyProject),
         Describe("project.create", OperationRisk.ModifyProject),
         Describe("project.open", OperationRisk.Read),
         Describe("project.close", OperationRisk.ModifyProject),

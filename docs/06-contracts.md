@@ -4,7 +4,7 @@
 
 端点为 `http://127.0.0.1:5088/mcp`，协议由官方 C# SDK 实现。默认真实宿主注册 `plc_capabilities_list`、`plc_runtime_get_status` 两个查询工具；真实汇川能力尚未验证，不注册工程工具。
 
-独立测试宿主共 67 个工具，以下是第一批七个工程/任务工具，复用生产用例与基础设施，执行结果显式标识 fixture/simulated。它们有实际实现，不是返回常量成功的占位工具；当前不能据此宣称目标 InoProShop 已支持。
+独立测试宿主共 73 个工具，以下是第一批七个工程/任务工具，复用生产用例与基础设施，执行结果显式标识 fixture/simulated。它们有实际实现，不是返回常量成功的占位工具；当前不能据此宣称目标 InoProShop 已支持。
 
 | 工具 | 主要输入 | 结果 |
 |---|---|---|
@@ -116,3 +116,11 @@ batch 计划摘要绑定 workspace、m2 修订与规范化内容；原有幂等�
 Worker 仍为主版本 1。新增 batch/package 属于应用协调操作，不作为新方法传给厂商脚本。队列中的 edit.exchange 可省略 xml，执行时验证 artifactId 后加载；线上传输允许固定 file={name,sha256,byteLength}，与非空 xml 互斥。侧文件只在单次私有调用目录中读取，默认 8 MiB、最高 64 MiB；JSON 请求/响应仍限制 128 KiB / 1 MiB。新 Host 和三份配套脚本须一起发布。
 
 新增错误包括 batch_plan_changed、batch_reference_not_ready、batch_application_scope_mismatch、batch_scope_incomplete、task_inventory_incomplete、invalid_upload_request、upload_offset_conflict、upload_chunk_conflict、upload_incomplete、upload_hash_mismatch、upload_requires_utf8、invalid_exchange_file、exchange_file_integrity_mismatch、invalid_delivery_id、delivery_integrity_mismatch。失败、取消、未知状态均沿用既有任务语义。完整范围、事务含义与示例见 [docs/16](16-engineering-delivery.md)。
+
+## P6 契约扩展
+
+新增 6 个工具返回 contractVersion=1.5：plc_project_adopt_preview、plc_project_adopt、plc_project_context、plc_project_history、plc_project_diff、plc_project_restore。batch-v1 增加 text.patch 步骤；旧工具和 Worker 主版本保持兼容。源码摘要覆盖完整 LF 规范化 UTF-8 文本，窗口位置是 UTF-16 单元；工程 a1/m2 和主文件 SHA 不可混用。
+
+Worker 输入新增 adoption/restoreRevision/patch/incremental 可选字段。project.adopt/restore/context/diff/text.patch 是应用协调操作，仅 object.source.read 是新增原始脚本端口。MCP 工具、batch 与 Worker Schema 已同步。graph diff 的 toObjectId 用于显式配对 XML 替换后改变的对象 GUID。
+
+新增错误包括 adoption_preview_required、invalid_source_name、source_hash_conflict、patch_ambiguous、patch_old_text_missing、patch_object_kind_not_supported、context_scope_incomplete、object_application_scope_mismatch、version_not_found、restore_application_scope_invalid、task_binding_unresolved。失败候选不会推进头，未知结果不可自动重试。完整协议语义见 docs/17。

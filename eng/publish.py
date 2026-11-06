@@ -29,7 +29,7 @@ def publish(mode, destination, dotnet='dotnet'):
     dirty = bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=normal'], cwd=root, text=True).strip())
     rows = [dict(path=p.relative_to(output).as_posix(), byteLength=p.stat().st_size, sha256=sha256(p))
             for p in sorted(output.rglob('*')) if p.is_file()]
-    manifest = dict(schemaVersion=1, stage='P5', mode=mode, entryPoint='bin/'+entry, sourceCommit=revision,
+    manifest = dict(schemaVersion=1, stage='P6', mode=mode, entryPoint='bin/'+entry, sourceCommit=revision,
                     sourceDirty=dirty, requiredRuntime='Microsoft.AspNetCore.App 8.0', engineeringReady=False,
                     evidenceKind='simulated' if mode == 'fixture' else 'unverified', files=rows)
     (output/'release.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')

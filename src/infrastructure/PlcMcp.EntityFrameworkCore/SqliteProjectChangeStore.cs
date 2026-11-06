@@ -1,4 +1,5 @@
 using System.Text.Json;
+using PlcMcp.Services.Contracts.Incremental;
 using Microsoft.EntityFrameworkCore;
 using PlcMcp.Core.Workspaces;
 using PlcMcp.Core.Automation;
@@ -7,8 +8,27 @@ using PlcMcp.Services.Contracts.Workers;
 
 namespace PlcMcp.EntityFrameworkCore;
 
-public sealed class SqliteProjectChangeStore(DbContextOptions<PlcMcpDbContext> options) : IProjectChangeStore
+public sealed class SqliteProjectChangeStore(DbContextOptions<PlcMcpDbContext> options) : IProjectChangeStore, IProjectHistoryStore
 {
+    public async Task<VersionRecord[]> ListAsync(string workspacePath, int offset, int count, CancellationToken token)
+    {
+        await using var db = new PlcMcpDbContext(options);
+        var rows = await (from change in db.ProjectChanges.AsNoTracking() join job in db.Jobs on change.JobId equals job.Id
+            where change.WorkspacePath == workspacePath && change.Stage == "published"
+            orderby job.CreatedAt, job.Id select new { change.EvidenceJson, job.Operation, job.CreatedAt }).Skip(offset).Take(count).ToArrayAsync(token);
+        return rows.Select(x => new VersionRecord(JsonSerializer.Deserialize<ChangeEvidence>(x.EvidenceJson, WorkerJson.Options)!, x.Operation, x.CreatedAt)).ToArray();
+    }
+    public async Task<VersionRecord?> GetAsync(string workspacePath, string revision, CancellationToken token)
+    {
+        if (revision.Length != 100 || !revision.StartsWith("m2:", StringComparison.Ordinal) || !Guid.TryParseExact(revision.Substring(3, 32), "N", out var id)) return null;
+        await using var db = new PlcMcpDbContext(options);
+        var row = await (from change in db.ProjectChanges.AsNoTracking() join job in db.Jobs on change.JobId equals job.Id
+            where change.WorkspacePath == workspacePath && change.JobId == id && change.Stage == "published"
+            select new { change.EvidenceJson, job.Operation, job.CreatedAt }).SingleOrDefaultAsync(token);
+        if (row is null) return null;
+        var evidence = JsonSerializer.Deserialize<ChangeEvidence>(row.EvidenceJson, WorkerJson.Options)!;
+        return evidence.Response?.Payload?.GetProperty("revision").GetString() == revision ? new(evidence, row.Operation, row.CreatedAt) : null;
+    }
     public async Task<ManagedHead?> GetHeadAsync(string workspacePath, CancellationToken token)
     {
         await using var db = new PlcMcpDbContext(options);

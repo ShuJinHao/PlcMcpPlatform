@@ -50,6 +50,12 @@
     "pou.graph.read",
     "pou.graph.write",
     "project.batch",
-    "project.package"
+    "project.package",
+    "project.adopt",
+    "project.context",
+    "project.diff",
+    "project.restore",
+    "object.source.read",
+    "text.patch"
   ]
 }

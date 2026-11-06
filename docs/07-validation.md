@@ -90,3 +90,9 @@ P2 历史的 35 项 Python 测试包含 10 项探针、12 项读取/编译与 13
 Linux CI 安装固定官方 OpenCode 1.19.5，独立配置执行 mcp list，已得到 plc connected。HTTP 工具发现为 67 个。检查不提供模型凭据、不请求 LLM，因此实际模型的生成/修复行为仍未验证。Windows CI 没有 InoProShop，不能作为真实 IDE/IronPython 或设备运行证据。
 
 统一开发入口为 python eng/verify.py；后续真实 Windows 集中验收入口为 eng/run-regressions.py，版本、模式、配置和任务结果随报告保留，失败后停止，不自动重放未知操作。
+
+## P6 增量工程验证
+
+三系统检查包括 98 项 .NET 测试、75 项 Python 测试、七组 HTTP 检查与发布回归；最新结果见 [PR #7 checks](https://github.com/ShuJinHao/PlcMcpPlatform/pull/7/checks)。P6 场景为 14 步，另检验源码保护、原有任务绑定、ZIP 完整性、编译失败、预览后源变更和未知执行隔离。MCP 快照为 73 个工具，正常 CI 只核对已提交契约。
+
+.NET 增加声明/实现补丁、重叠歧义、版本冲突、旧格式历史回读、篡改历史拒绝、图形 GUID 更换后的比较、图形文本补丁拒绝、恢复失败/未知与未解析任务绑定。Python 新增实际文本标记和未知类型保留检查。OpenCode CLI 连通性沿用固定版本；模型生成、目标 IDE/IronPython 及 PLC 运行仍待真实验收。

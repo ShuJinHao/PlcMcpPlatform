@@ -95,6 +95,7 @@ public sealed class BatchExecutor(IEngineeringExecutor worker, IBatchJournal jou
             var tasks = await Invoke(ConfigurationOperations.TaskList, new(input.ProjectPath, ObjectId: plan.ApplicationId, IdeProfile: input.IdeProfile, MaxObjects: 2000));
             if (tasks.Outcome != "succeeded") { await Record(tasks.Outcome, tasks.ErrorCode); return Failure(tasks.Outcome, tasks.ErrorCode!, tasks.Payload); }
             if (tasks.Payload!.Value.GetProperty("configuration").GetProperty("data").GetProperty("truncated").GetBoolean()) throw new ProjectEditException("task_inventory_incomplete");
+            if (!ConfigurationResultValidation.CompleteTaskBindings(tasks.Payload!.Value)) throw new ProjectEditException("task_binding_unresolved");
             active = "$compile";
             var compiled = await Invoke(EngineeringOperations.Compile, new(input.ProjectPath, ApplicationId: plan.ApplicationId, IdeProfile: input.IdeProfile));
             if (compiled.Outcome != "succeeded") { await Record(compiled.Outcome, compiled.ErrorCode); return Failure(compiled.Outcome, compiled.ErrorCode!, compiled.Payload); }

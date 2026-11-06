@@ -21,13 +21,15 @@ public sealed record InovanceValidationProfile(string ValidationId, string IdeVe
     public void Validate()
     {
         if (new[] { ValidationId, IdeVersion, EngineVersion, Profile }.Any(x => string.IsNullOrWhiteSpace(x) || x.Length > 256 || x.Contains('\0'))
-            || AllowedOperations is not { Length: > 0 and <= 64 } || AllowedOperations.Distinct(StringComparer.Ordinal).Count() != AllowedOperations.Length
+            || AllowedOperations is not { Length: > 0 and <= 96 } || AllowedOperations.Distinct(StringComparer.Ordinal).Count() != AllowedOperations.Length
             || AllowedOperations.Any(x => !EngineeringOperations.Contains(x) && !EditOperations.Contains(x)))
             throw new InvalidOperationException("Validation requires explicit identity, versions, IDE profile and known operation allowlist.");
     }
     public bool Allows(string operation) => operation == EditOperations.VerifyProject
         ? AllowedOperations.Contains(EditOperations.CreateProject, StringComparer.Ordinal) || AllowedOperations.Contains(EditOperations.SaveProject, StringComparer.Ordinal)
             || AllowedOperations.Contains(PlcMcp.Services.Contracts.Batch.BatchOperations.Apply, StringComparer.Ordinal)
+            || AllowedOperations.Contains(PlcMcp.Services.Contracts.Incremental.IncrementalOperations.Adopt, StringComparer.Ordinal)
+            || AllowedOperations.Contains(PlcMcp.Services.Contracts.Incremental.IncrementalOperations.Restore, StringComparer.Ordinal)
         : AllowedOperations.Contains(operation, StringComparer.Ordinal);
     public ValidationEvidence Evidence(string scriptPath)
     {

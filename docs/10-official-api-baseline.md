@@ -147,3 +147,9 @@ python -m unittest discover -s tests/script_engine -v
 | XML 导入导出 | [ScriptProject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptProject.html) 和 [ScriptObject](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptObject.html) 给出字符串/文件入口及报告机制 | 大文件扩容只改变内部传递方式，继续复用已实现 API，不借此宣称格式兼容或源工程无损 |
 
 上述内容未引入第三方 MCP 实现，也没有将用户供应商 CHM 复制到公有仓库。当前先完成有依据的通用批量/传递/交付代码，真实 IDE 到位后按本地版本样例逐项收集证据。
+
+## P6 文本读取依据
+
+新增原创 object.source.read 复用 [ScriptTextualObject 官方接口](https://content.helpme-codesys.com/en/ScriptingEngine/ScriptTextualObject.html) 的 has_textual_declaration、has_textual_implementation、get_text 和已有 replace 路径。官方说明文本行结束符规范化为 LF；应用层据此计算完整段落摘要并执行唯一精确替换。保留真实对象 GUID/type，无法识别的声明类别返回 object，不把 ST/IL/LD 等枚举当成可编辑证明。
+
+工程接入、历史清单、源码/graph-v1 比较和新修订恢复由本项目实现，不调用较新版本的工程 compare API。每个厂商读取/修改仍经既有 Profile 与 ScriptEngine Worker；文档存在与真实 SP11/InoProShop 验收仍分开。来源核对与实现范围见 docs/17，供应商原始 CHM 未提交公共仓库。

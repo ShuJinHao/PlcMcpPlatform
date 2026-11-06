@@ -100,6 +100,7 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-fixture-check-') as tmp, tempfil
         expected.update({'plc_object_inspect', 'plc_device_set_parameter', 'plc_task_set_calls', 'plc_pou_member_create', 'plc_device_set_io_mapping', 'plc_folder_create', 'plc_library_remove', 'plc_pou_member_update', 'plc_task_create', 'plc_task_configuration_create', 'plc_task_update', 'plc_device_get_parameters', 'plc_device_add', 'plc_object_delete', 'plc_library_list_installed', 'plc_library_add', 'plc_object_rename', 'plc_object_move', 'plc_task_read', 'plc_task_list', 'plc_device_remove', 'plc_library_set_placeholder', 'plc_pou_member_read', 'plc_device_get_tree', 'plc_library_list', 'plc_task_delete', 'plc_device_get_io_mappings'})
         expected.update({'plc_exchange_stage', 'plc_exchange_read', 'plc_exchange_validate', 'plc_graph_generate', 'plc_graph_decode', 'plc_project_export', 'plc_project_import', 'plc_pou_graph_read', 'plc_pou_graph_write'})
         expected.update({'plc_project_batch_preview', 'plc_project_batch_apply', 'plc_batch_get', 'plc_exchange_upload_begin', 'plc_exchange_upload_append', 'plc_exchange_upload_complete', 'plc_exchange_upload_abort', 'plc_delivery_create', 'plc_delivery_read'})
+        expected.update({'plc_project_adopt_preview', 'plc_project_adopt', 'plc_project_context', 'plc_project_history', 'plc_project_diff', 'plc_project_restore'})
         assert names == expected, names
         for tool in tools:
             assert tool['inputSchema']['type'] == 'object'

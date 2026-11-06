@@ -25,7 +25,7 @@ except NameError:
     text_type = str
 
 EDIT_OPERATIONS = ("project.verify", "pou.create", "pou.update", "gvl.create", "gvl.update", "dut.create", "dut.update") + CONFIG_WRITES + EXCHANGE_WRITES
-OPERATIONS = ("project.open", "project.tree.read", "pou.read", "gvl.read", "dut.read", "project.compile") + EDIT_OPERATIONS + CONFIG_READS + EXCHANGE_READS
+OPERATIONS = ("project.open", "project.tree.read", "object.source.read", "pou.read", "gvl.read", "dut.read", "project.compile") + EDIT_OPERATIONS + CONFIG_READS + EXCHANGE_READS
 MAX_REQUEST = 131072
 MAX_RESULT = 1048576
 
@@ -56,7 +56,7 @@ def validate(request):
     payload = request["payload"]
     if not os.path.isabs(payload["projectPath"]) or type(payload.get("maxObjects", 256)) is not int or not 1 <= payload.get("maxObjects", 256) <= 2000:
         raise WorkerError("invalid_worker_request")
-    if request["operation"] in ("pou.read", "gvl.read", "dut.read"):
+    if request["operation"] in ("pou.read", "gvl.read", "dut.read", "object.source.read"):
         uuid.UUID(payload["objectId"])
     if request["operation"] == "project.compile":
         uuid.UUID(payload["applicationId"])
@@ -96,7 +96,7 @@ def tree(project, limit):
         objects[identity] = node
         rows.append({"id": identity, "parentId": parent,
                      "name": "Project" if node is project else text_type(node.get_name()),
-                     "kind": "application" if getattr(node, "is_application", False) else "object"})
+                     "kind": "application" if getattr(node, "is_application", False) else "library_manager" if getattr(node, "is_libman", False) else "object"})
         for child in node.get_children(False):
             if depth >= 64 or len(rows) + len(queue) >= limit:
                 truncated = True
@@ -181,6 +181,27 @@ def object_text(node):
     return {"objectId": str(uuid.UUID(text_type(node.guid))), "name": text_type(node.get_name()),
             "declaration": text_type(declaration.get_text(0, declaration.length)),
             "implementation": text_type(implementation.get_text(0, implementation.length)) if implementation else None}
+
+
+def source_view(node):
+    # The documented textual markers determine editability; do not guess an IDE language GUID.
+    source = object_text(node) if getattr(node, "has_textual_declaration", False) else {
+        "objectId": str(uuid.UUID(text_type(node.guid))), "name": text_type(node.get_name()), "declaration": None, "implementation": None}
+    kind = "object"
+    for marker, label in (("is_application", "application"), ("is_task", "task"), ("is_task_configuration", "task_configuration"),
+                          ("is_libman", "library_manager"), ("is_device", "device"), ("is_folder", "folder")):
+        if getattr(node, marker, False): kind = label; break
+    if source["declaration"] is not None:
+        try:
+            header = declaration_header(source["declaration"])
+            if re.match(r"^VAR_GLOBAL\b", header, re.I): kind = "gvl"
+            elif re.match(r"^TYPE\s+" + re.escape(source["name"]) + r"\b", header, re.I): kind = "dut"
+            elif re.match(r"^(PROGRAM|FUNCTION_BLOCK|FUNCTION)\s+" + re.escape(source["name"]) + r"\b", header, re.I): kind = "pou"
+        except WorkerError:
+            pass
+    source.update(kind=kind, typeId=text_type(node.type) if hasattr(node, "type") else None,
+                  implementationKind="textual" if source["implementation"] is not None else "graphical_or_unavailable" if kind == "pou" else "none")
+    return source
 
 
 def check_kind(source, operation, name):
@@ -330,6 +351,8 @@ def execute(request, bindings):
         elif operation == "project.tree.read":
             rows, unused, truncated = tree(project, payload.get("maxObjects", 256))
             result.update({"objects": rows, "truncated": truncated})
+        elif operation == "object.source.read":
+            result.update(source_view(get_object(project, payload["objectId"])))
         elif operation == "pou.read":
             node = get_object(project, payload["objectId"])
             declaration, implementation = read_source(node)
