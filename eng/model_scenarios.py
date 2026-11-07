@@ -101,16 +101,113 @@ def prove(scenario, calls, jobs, head, workspace, mode, variables):
     def require(condition, code):
         if not condition: raise ValueError(code)
     if scenario == 'graphics':
-        programs = [row['program'] for row in rows('pou.graph.read') if isinstance(row.get('program'), dict)]
-        by_name = {p['name']:p for p in programs}
-        require({'ModelLD', 'ModelFBD', 'ModelSFC'} <= set(by_name), 'final_graph_readback_missing')
-        writes = [row for j in succeeded if j['operation'] == 'pou.graph.write' for row in walk(j['result']) if isinstance(row.get('program'), dict)]
-        require(all(len({r.get('semanticSha256') for r in writes if r['program'].get('name') == name}) >= 2
-                    for name in ('ModelLD', 'ModelFBD', 'ModelSFC')), 'graph_creation_and_modification_missing')
-        require(any(n['kind'] == 'coil' and n.get('negated') is True for n in by_name['ModelLD']['nodes']), 'ld_modification_missing')
-        require(any(n['kind'] == 'inVariable' and n.get('expression') == '2' for n in by_name['ModelFBD']['nodes']), 'fbd_modification_missing')
-        require(any(a['name'] == 'Mark' and re.fullmatch(r'\s*Counter\s*:=\s*Counter\s*\+\s*2\s*;\s*', a['implementation']) for a in by_name['ModelSFC']['actions']), 'sfc_modification_missing')
-        require(all(p.get('variableGroups') and all(v.get('documentation') == 'model regression' for v in p['variables']) for p in programs), 'graph_declaration_readback_missing')
+        languages = dict(ModelLD='LD', ModelFBD='FBD', ModelSFC='SFC')
+
+        def graph_record(job, name):
+            result = job.get('result') or {}
+            if job.get('operation') == 'pou.graph.write':
+                if result.get('published') is not True: return None
+                result = result.get('engineeringResult') or {}
+            elif job.get('operation') != 'pou.graph.read': return None
+            exchange = result.get('exchange') or {}
+            graph = exchange.get('graph') or {}
+            program = graph.get('program') or {}
+            identities = exchange.get('objectIds')
+            if (program.get('name') != name or program.get('language') != languages[name]
+                    or not isinstance(graph.get('semanticSha256'), str) or not graph['semanticSha256']
+                    or not isinstance(identities, list) or len(identities) != 1
+                    or not isinstance(identities[0], str) or not identities[0]): return None
+            return exchange
+
+        def connected(source, target):
+            return source.get('id') is not None and any(
+                connection.get('sourceId') == source['id']
+                for pin in target.get('inputs') or [] for connection in pin.get('connections') or [])
+
+        def expected_state(program, name, initial):
+            nodes = program.get('nodes') or []
+            if name == 'ModelLD':
+                coils = [n for n in nodes if n.get('kind') == 'coil' and n.get('expression') == 'Running']
+                return (len(coils) == 1 and coils[0].get('negated', False) is (not initial)
+                        and coils[0].get('storage', 'none') == 'none' and coils[0].get('edge', 'none') == 'none')
+            if name == 'ModelFBD':
+                targets = [n for n in nodes if n.get('kind') == 'outVariable' and n.get('expression') == 'Result']
+                if len(targets) != 1: return False
+                sources = [n for n in nodes if n.get('kind') == 'inVariable' and connected(n, targets[0])]
+                return len(sources) == 1 and sources[0].get('expression') == ('1' if initial else '2')
+            actions = [a for a in program.get('actions') or [] if a.get('name') == 'Mark']
+            if (len(actions) != 1 or not isinstance(actions[0].get('implementation'), str)
+                    or not re.fullmatch(r'\s*Counter\s*:=\s*Counter\s*\+\s*'+('1' if initial else '2')+r'\s*;\s*', actions[0]['implementation'])):
+                return False
+            steps = [n for n in nodes if n.get('kind') == 'step' and n.get('name') == 'Run']
+            links = [(node, association) for node in nodes if node.get('kind') == 'actionBlock'
+                     for association in (node.get('associations') or [dict(action=node.get('action'), qualifier=node.get('qualifier', 'N'))])
+                     if association.get('action') == 'Mark']
+            return len(steps) == 1 and len(links) == 1 and links[0][1].get('qualifier', 'N') == 'N' and connected(steps[0], links[0][0])
+
+        def observed_job(call):
+            # Keep identity, status and graph inside one actual JobToolReply.
+            # Walking arbitrary output rows can accidentally combine unrelated jobs.
+            output = call.get('output')
+            if call.get('status') != 'completed' or not isinstance(output, dict) or output.get('error'): return None
+            job = output.get('job')
+            return job if isinstance(job, dict) else None
+
+        server_jobs = {j['jobId']: j for j in succeeded if isinstance(j.get('jobId'), str)}
+        for name, language in languages.items():
+            final_reads = [record for j in reads if (record := graph_record(j, name)) is not None]
+            require(bool(final_reads), 'final_graph_readback_missing')
+            require(any(expected_state(r['graph']['program'], name, False) for r in final_reads), language.lower()+'_modification_missing')
+            submitted = []
+            seen = set()
+            for index, call in enumerate(calls):
+                if call['name'] != 'plc_pou_graph_write': continue
+                observed = observed_job(call)
+                if not observed or observed.get('operation') != 'pou.graph.write' or observed.get('status') not in ('Queued', 'Running', 'Succeeded'): continue
+                identity = observed.get('jobId')
+                job = server_jobs.get(identity)
+                if not job or job.get('operation') != 'pou.graph.write' or identity in seen or (record := graph_record(job, name)) is None: continue
+                seen.add(identity); submitted.append((index, call, record))
+            require(len(submitted) >= 2, 'graph_creation_and_modification_missing')
+            first_index, first_call, first = submitted[0]
+            initial_hash = first['graph']['semanticSha256']; initial_id = first['objectIds'][0]
+            require(first_call['input'].get('objectId') is None and first_call['input'].get('expectedGraphSha256') is None
+                    and expected_state(first['graph']['program'], name, True), 'graph_initial_state_missing')
+
+            modifications = []
+            for index, call, record in submitted[1:]:
+                graph = record['graph']; target_id = record['objectIds'][0]
+                if (call['input'].get('objectId') != initial_id or call['input'].get('expectedGraphSha256') != initial_hash
+                        or graph['semanticSha256'] == initial_hash or not expected_state(graph['program'], name, False)): continue
+                # XML replacement can assign a new object GUID. Require its explicit
+                # old-to-new mapping rather than treating an equal name as identity.
+                if target_id != initial_id and not any(r.get('oldObjectId') == initial_id and r.get('objectId') == target_id
+                                                       and r.get('name') == name for r in record.get('report') or []): continue
+                matching = [r for r in final_reads if r['objectIds'] == record['objectIds'] and r['graph'] == graph]
+                if matching: modifications.append((index, matching))
+            require(bool(modifications), 'graph_modification_evidence_missing')
+
+            observed_initial = False
+            for index, call in enumerate(calls):
+                if call['name'] not in ('plc_job_get', 'plc_job_get_result', 'plc_pou_graph_read'): continue
+                if not first_index < index or not any(index < modification_index for modification_index, _ in modifications): continue
+                observed = observed_job(call)
+                if not observed or observed.get('status') != 'Succeeded' or observed.get('operation') != 'pou.graph.read': continue
+                identity = observed.get('jobId'); job = server_jobs.get(identity)
+                if not job or job.get('operation') != 'pou.graph.read': continue
+                if call['name'] == 'plc_pou_graph_read':
+                    if call['input'].get('objectId') != initial_id: continue
+                elif call['input'].get('jobId') != identity: continue
+                record = graph_record(job, name); received = graph_record(observed, name)
+                if (record is None or received is None or record['objectIds'] != [initial_id]
+                        or received['objectIds'] != record['objectIds'] or received['graph'] != record['graph']
+                        or observed.get('result', {}).get('revision') != job.get('result', {}).get('revision')
+                        or record['graph']['semanticSha256'] != initial_hash
+                        or not expected_state(record['graph']['program'], name, True)): continue
+                observed_initial = True
+            require(observed_initial, 'graph_initial_read_not_observed_before_modification')
+            require(any(all(p.get('variableGroups') and all(v.get('documentation') == 'model regression' for v in p.get('variables', []))
+                            for p in [r['graph']['program'] for r in matching]) for _, matching in modifications), 'graph_declaration_readback_missing')
     elif scenario == 'declarations':
         programs = [row['program'] for row in rows('pou.graph.read') if isinstance(row.get('program'), dict) and row['program'].get('name') == 'ModelDeclarations']
         require(bool(programs), 'declaration_final_readback_missing')
