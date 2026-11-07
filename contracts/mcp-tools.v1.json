@@ -3447,6 +3447,249 @@
                           "upper"
                         ],
                         "default": null
+                      },
+                      "structMembers": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string"
+                                },
+                                "stringLength": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "default": null
+                                },
+                                "dimensions": {
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "items": {
+                                    "$ref": "#/properties/value/properties/program/properties/variables/items/properties/dimensions/items"
+                                  },
+                                  "default": null
+                                },
+                                "enumValues": {
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "items": {
+                                    "$ref": "#/properties/value/properties/program/properties/variables/items/properties/enumValues/items"
+                                  },
+                                  "default": null
+                                },
+                                "subrange": {
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "properties": {
+                                    "lower": {
+                                      "type": "string"
+                                    },
+                                    "upper": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "lower",
+                                    "upper"
+                                  ],
+                                  "default": null
+                                },
+                                "structMembers": {
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "items": {
+                                    "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items"
+                                  },
+                                  "default": null
+                                },
+                                "pointerTo": {
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "properties": {
+                                    "type": {
+                                      "type": "string"
+                                    },
+                                    "stringLength": {
+                                      "type": [
+                                        "integer",
+                                        "null"
+                                      ],
+                                      "default": null
+                                    },
+                                    "dimensions": {
+                                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                                      "default": null,
+                                      "items": {}
+                                    },
+                                    "enumValues": {
+                                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                                      "default": null,
+                                      "items": {}
+                                    },
+                                    "subrange": {
+                                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                                      "default": null
+                                    },
+                                    "structMembers": {
+                                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                                      "default": null,
+                                      "items": {}
+                                    },
+                                    "pointerTo": {
+                                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
+                                      "default": null
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "default": null
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ]
+                            },
+                            "initialValue": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            },
+                            "initializer": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "default": null
+                                },
+                                "items": {
+                                  "$ref": "#/properties/value/properties/program/properties/variables/items/properties/initializer/properties/items",
+                                  "default": null,
+                                  "items": {}
+                                },
+                                "members": {
+                                  "$ref": "#/properties/value/properties/program/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                                  "default": null,
+                                  "items": {}
+                                }
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "default": null
+                            },
+                            "address": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            },
+                            "documentation": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            },
+                            "documentationXhtml": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "type"
+                          ]
+                        },
+                        "default": null
+                      },
+                      "pointerTo": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "stringLength": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "dimensions": {
+                            "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                            "default": null,
+                            "items": {}
+                          },
+                          "enumValues": {
+                            "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                            "default": null,
+                            "items": {}
+                          },
+                          "subrange": {
+                            "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                            "default": null
+                          },
+                          "structMembers": {
+                            "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                            "default": null,
+                            "items": {}
+                          },
+                          "pointerTo": {
+                            "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
+                            "default": null
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "default": null
+                      },
+                      "documentationXhtml": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
                       }
                     },
                     "required": [
@@ -3703,42 +3946,26 @@
                       "default": null
                     },
                     "dimensions": {
-                      "type": [
-                        "array",
-                        "null"
-                      ],
-                      "items": {
-                        "$ref": "#/properties/value/properties/program/properties/variables/items/properties/dimensions/items"
-                      },
-                      "default": null
+                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                      "default": null,
+                      "items": {}
                     },
                     "enumValues": {
-                      "type": [
-                        "array",
-                        "null"
-                      ],
-                      "items": {
-                        "$ref": "#/properties/value/properties/program/properties/variables/items/properties/enumValues/items"
-                      },
-                      "default": null
+                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                      "default": null,
+                      "items": {}
                     },
                     "subrange": {
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "properties": {
-                        "lower": {
-                          "type": "string"
-                        },
-                        "upper": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "lower",
-                        "upper"
-                      ],
+                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                      "default": null
+                    },
+                    "structMembers": {
+                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                      "default": null,
+                      "items": {}
+                    },
+                    "pointerTo": {
+                      "$ref": "#/properties/value/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
                       "default": null
                     }
                   },
@@ -3784,6 +4011,17 @@
                         "default": null
                       },
                       "documentation": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "persistence": {
+                        "type": "string",
+                        "default": "default"
+                      },
+                      "documentationXhtml": {
                         "type": [
                           "string",
                           "null"
@@ -3861,7 +4099,7 @@
   },
   {
     "name": "plc_graph_generate",
-    "description": "Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. Types accept enumValues [{name,value?}] (type=ENUM for implicit INT base, or explicit integer base) or subrange {lower,upper} with decimal string bounds; these are mutually exclusive. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. graph-v2 variableGroups reference every variable name exactly once with matching scope; group order/boundaries, constant, retention(default/retain/nonRetain), name and plain documentation are preserved. Variables accept address and plain documentation; scopes include temp/external. Use empty pin name for non-block nodes. Connections belong on inputs, not outputs. Positive executionOrder is required on block/coil/outVariable and forbidden on inVariable/rails/SFC nodes. SFC step/transition have one output; jumpStep/actionBlock have none. An actionBlock has one input from its owning step and associations [{id,action,qualifier:N}]; the referenced action must be in program.actions as {name,implementation}. Omit unused optional fields; do not send null for qualifier/edge/storage. Do not combine associations with legacy action/qualifier/duration. Association list order is preserved, not a runtime execution guarantee. Target write checks apply Inovance restrictions separately. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.",
+    "description": "Generate original PLCopen TC6 XML. Graph pouType is case-sensitive: program or functionBlock, plus function in graph-v2; never Program/PROGRAM. Language is LD/FBD/SFC. Exact node kinds: LD leftPowerRail,rightPowerRail,contact,coil,block,inVariable,outVariable; FBD block,inVariable,outVariable; SFC step,transition,jumpStep,actionBlock. graph-v2 additionally allows connector/continuation in LD/FBD and selectionDivergence/selectionConvergence/simultaneousDivergence/simultaneousConvergence in SFC. typeName and instanceName belong only on block nodes; inVariable/outVariable use expression and variables declared in program.variables. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. Types accept enumValues [{name,value?}] (type=ENUM for implicit INT base, or explicit integer base) or subrange {lower,upper} with decimal string bounds; these are mutually exclusive. graph-v2 also supports type=STRUCT with structMembers [{name,type:{type,...},initialValue?,initializer?,address?,documentation?,documentationXhtml?}] and type=POINTER with pointerTo {type,...}; choose only one type form. Arrays use dimensions around the chosen type. Nesting is limited to 8 levels and 4096 type nodes; structs have at most 256 members. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. graph-v2 variableGroups reference every variable name exactly once with matching scope; group order/boundaries, constant, retention(default/retain/nonRetain), independent persistence(default/persistent/nonPersistent), name and documentation are preserved. Persistent flags do not configure instance paths or prove runtime persistence. Variables and groups accept documentationXhtml instead of documentation; XHTML is bounded inert data and must preserve structure. Variables accept address and documentation; scopes include temp/external. Use empty pin name for non-block nodes. Connections belong on inputs, not outputs. Positive executionOrder is required on block/coil/outVariable and forbidden on inVariable/rails/SFC nodes. SFC step/transition have one output; jumpStep/actionBlock have none. An actionBlock has one input from its owning step and associations [{id,action,qualifier:N}]; the referenced action must be in program.actions as {name,implementation}. Omit unused optional fields; do not send null for qualifier/edge/storage. Do not combine associations with legacy action/qualifier/duration. Association list order is preserved, not a runtime execution guarantee. Target write checks apply Inovance restrictions separately. Selection output order, priorities 1..N and left-to-right X must agree. Validation errors name the offending field path where it can be identified; read the diagnostic before resubmitting. Return artifact and semantic hash; no IDE/compiler is run.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -4099,6 +4337,249 @@
                     "required": [
                       "lower",
                       "upper"
+                    ],
+                    "default": null
+                  },
+                  "structMembers": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "stringLength": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "default": null
+                            },
+                            "dimensions": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "$ref": "#/properties/program/properties/variables/items/properties/dimensions/items"
+                              },
+                              "default": null
+                            },
+                            "enumValues": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "$ref": "#/properties/program/properties/variables/items/properties/enumValues/items"
+                              },
+                              "default": null
+                            },
+                            "subrange": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "lower": {
+                                  "type": "string"
+                                },
+                                "upper": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "lower",
+                                "upper"
+                              ],
+                              "default": null
+                            },
+                            "structMembers": {
+                              "type": [
+                                "array",
+                                "null"
+                              ],
+                              "items": {
+                                "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items"
+                              },
+                              "default": null
+                            },
+                            "pointerTo": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "type": "string"
+                                },
+                                "stringLength": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "default": null
+                                },
+                                "dimensions": {
+                                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                                  "default": null,
+                                  "items": {}
+                                },
+                                "enumValues": {
+                                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                                  "default": null,
+                                  "items": {}
+                                },
+                                "subrange": {
+                                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                                  "default": null
+                                },
+                                "structMembers": {
+                                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                                  "default": null,
+                                  "items": {}
+                                },
+                                "pointerTo": {
+                                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
+                                  "default": null
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "default": null
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ]
+                        },
+                        "initialValue": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "default": null
+                        },
+                        "initializer": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            },
+                            "items": {
+                              "$ref": "#/properties/program/properties/variables/items/properties/initializer/properties/items",
+                              "default": null,
+                              "items": {}
+                            },
+                            "members": {
+                              "$ref": "#/properties/program/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                              "default": null,
+                              "items": {}
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "default": null
+                        },
+                        "address": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "default": null
+                        },
+                        "documentation": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "default": null
+                        },
+                        "documentationXhtml": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "default": null
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "type"
+                      ]
+                    },
+                    "default": null
+                  },
+                  "pointerTo": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      },
+                      "stringLength": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "dimensions": {
+                        "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                        "default": null,
+                        "items": {}
+                      },
+                      "enumValues": {
+                        "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                        "default": null,
+                        "items": {}
+                      },
+                      "subrange": {
+                        "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                        "default": null
+                      },
+                      "structMembers": {
+                        "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                        "default": null,
+                        "items": {}
+                      },
+                      "pointerTo": {
+                        "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "default": null
+                  },
+                  "documentationXhtml": {
+                    "type": [
+                      "string",
+                      "null"
                     ],
                     "default": null
                   }
@@ -4357,42 +4838,26 @@
                   "default": null
                 },
                 "dimensions": {
-                  "type": [
-                    "array",
-                    "null"
-                  ],
-                  "items": {
-                    "$ref": "#/properties/program/properties/variables/items/properties/dimensions/items"
-                  },
-                  "default": null
+                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                  "default": null,
+                  "items": {}
                 },
                 "enumValues": {
-                  "type": [
-                    "array",
-                    "null"
-                  ],
-                  "items": {
-                    "$ref": "#/properties/program/properties/variables/items/properties/enumValues/items"
-                  },
-                  "default": null
+                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                  "default": null,
+                  "items": {}
                 },
                 "subrange": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "lower": {
-                      "type": "string"
-                    },
-                    "upper": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "lower",
-                    "upper"
-                  ],
+                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                  "default": null
+                },
+                "structMembers": {
+                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                  "default": null,
+                  "items": {}
+                },
+                "pointerTo": {
+                  "$ref": "#/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
                   "default": null
                 }
               },
@@ -4438,6 +4903,17 @@
                     "default": null
                   },
                   "documentation": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "default": null
+                  },
+                  "persistence": {
+                    "type": "string",
+                    "default": "default"
+                  },
+                  "documentationXhtml": {
                     "type": [
                       "string",
                       "null"
@@ -4749,6 +5225,249 @@
                               "upper"
                             ],
                             "default": null
+                          },
+                          "structMembers": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string"
+                                    },
+                                    "stringLength": {
+                                      "type": [
+                                        "integer",
+                                        "null"
+                                      ],
+                                      "default": null
+                                    },
+                                    "dimensions": {
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "items": {
+                                        "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/dimensions/items"
+                                      },
+                                      "default": null
+                                    },
+                                    "enumValues": {
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "items": {
+                                        "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/enumValues/items"
+                                      },
+                                      "default": null
+                                    },
+                                    "subrange": {
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ],
+                                      "properties": {
+                                        "lower": {
+                                          "type": "string"
+                                        },
+                                        "upper": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "lower",
+                                        "upper"
+                                      ],
+                                      "default": null
+                                    },
+                                    "structMembers": {
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "items": {
+                                        "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items"
+                                      },
+                                      "default": null
+                                    },
+                                    "pointerTo": {
+                                      "type": [
+                                        "object",
+                                        "null"
+                                      ],
+                                      "properties": {
+                                        "type": {
+                                          "type": "string"
+                                        },
+                                        "stringLength": {
+                                          "type": [
+                                            "integer",
+                                            "null"
+                                          ],
+                                          "default": null
+                                        },
+                                        "dimensions": {
+                                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                                          "default": null,
+                                          "items": {}
+                                        },
+                                        "enumValues": {
+                                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                                          "default": null,
+                                          "items": {}
+                                        },
+                                        "subrange": {
+                                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                                          "default": null
+                                        },
+                                        "structMembers": {
+                                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                                          "default": null,
+                                          "items": {}
+                                        },
+                                        "pointerTo": {
+                                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
+                                          "default": null
+                                        }
+                                      },
+                                      "required": [
+                                        "type"
+                                      ],
+                                      "default": null
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ]
+                                },
+                                "initialValue": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "default": null
+                                },
+                                "initializer": {
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string"
+                                    },
+                                    "value": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ],
+                                      "default": null
+                                    },
+                                    "items": {
+                                      "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/initializer/properties/items",
+                                      "default": null,
+                                      "items": {}
+                                    },
+                                    "members": {
+                                      "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                                      "default": null,
+                                      "items": {}
+                                    }
+                                  },
+                                  "required": [
+                                    "kind"
+                                  ],
+                                  "default": null
+                                },
+                                "address": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "default": null
+                                },
+                                "documentation": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "default": null
+                                },
+                                "documentationXhtml": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "default": null
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "type"
+                              ]
+                            },
+                            "default": null
+                          },
+                          "pointerTo": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "type": {
+                                "type": "string"
+                              },
+                              "stringLength": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "default": null
+                              },
+                              "dimensions": {
+                                "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                                "default": null,
+                                "items": {}
+                              },
+                              "enumValues": {
+                                "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                                "default": null,
+                                "items": {}
+                              },
+                              "subrange": {
+                                "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                                "default": null
+                              },
+                              "structMembers": {
+                                "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                                "default": null,
+                                "items": {}
+                              },
+                              "pointerTo": {
+                                "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
+                                "default": null
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "default": null
+                          },
+                          "documentationXhtml": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
                           }
                         },
                         "required": [
@@ -5005,42 +5724,26 @@
                           "default": null
                         },
                         "dimensions": {
-                          "type": [
-                            "array",
-                            "null"
-                          ],
-                          "items": {
-                            "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/dimensions/items"
-                          },
-                          "default": null
+                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                          "default": null,
+                          "items": {}
                         },
                         "enumValues": {
-                          "type": [
-                            "array",
-                            "null"
-                          ],
-                          "items": {
-                            "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/enumValues/items"
-                          },
-                          "default": null
+                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                          "default": null,
+                          "items": {}
                         },
                         "subrange": {
-                          "type": [
-                            "object",
-                            "null"
-                          ],
-                          "properties": {
-                            "lower": {
-                              "type": "string"
-                            },
-                            "upper": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "lower",
-                            "upper"
-                          ],
+                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                          "default": null
+                        },
+                        "structMembers": {
+                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                          "default": null,
+                          "items": {}
+                        },
+                        "pointerTo": {
+                          "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
                           "default": null
                         }
                       },
@@ -5086,6 +5789,17 @@
                             "default": null
                           },
                           "documentation": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "default": null
+                          },
+                          "persistence": {
+                            "type": "string",
+                            "default": "default"
+                          },
+                          "documentationXhtml": {
                             "type": [
                               "string",
                               "null"
@@ -7656,7 +8370,7 @@
   },
   {
     "name": "plc_pou_graph_read",
-    "description": "Read graph-v1/v2 LD/FBD/SFC content from an actual POU via PLCopen export. Return nodes, variables and semantic hash. Unsupported extensions are explicit errors; use project export for opaque exchange.",
+    "description": "Read graph-v1/v2 LD/FBD/SFC content from an actual POU via PLCopen export. Return nodes, variables and semantic hash. Copy projectPath exactly from plc_workspace_get; never reconstruct, translate or rename any path segment. Unsupported extensions are explicit errors; use project export for opaque exchange.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -7802,7 +8516,7 @@
   },
   {
     "name": "plc_pou_graph_write",
-    "description": "Create or replace a complete graph-v1/v2 POU from an artifact in a managed candidate. Updating requires objectId and expectedGraphSha256 from graph read. Name/type/language cannot change; unknown properties cannot be discarded. Readback verifies logic before publication.",
+    "description": "Create or replace a complete graph-v1/v2 POU from an artifact in a managed candidate. Updating requires objectId and expectedGraphSha256 from graph read. Name/type/language cannot change; unknown properties cannot be discarded. Validate/decode the artifact before writing; generation errors include field paths. A POU with child objects remains protected. Readback verifies logic before publication.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -8600,7 +9314,7 @@
   },
   {
     "name": "plc_pou_read",
-    "description": "Queue reading a textual object's declaration and implementation by GUID. Graphical networks are not represented as source strings.",
+    "description": "Queue reading a textual object's declaration and implementation by GUID. Graphical networks are not represented as source strings. Copy projectPath exactly from plc_workspace_get; never reconstruct, translate or rename any path segment.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -12118,7 +12832,7 @@
   },
   {
     "name": "plc_project_get_structure",
-    "description": "Queue a bounded project-tree read; poll its result. No project content is changed; a task record is created.",
+    "description": "Queue a bounded project-tree read; poll its result. No project content is changed; a task record is created. Copy projectPath exactly from plc_workspace_get; never reconstruct, translate or rename any path segment.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -14822,7 +15536,7 @@
   },
   {
     "name": "plc_workspace_get",
-    "description": "Get the managed workspace's current manifest revision and immutable project path. Use this revision for editing; file-read revisions are a separate scope.",
+    "description": "Get the managed workspace's current manifest revision and immutable project path. Use this revision for editing; file-read revisions are a separate scope. Reuse the returned projectPath verbatim in read tools, including Unicode and spaces; do not guess, translate or expand directory names.",
     "inputSchema": {
       "type": "object",
       "properties": {

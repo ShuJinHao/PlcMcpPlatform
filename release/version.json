@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0-rc.4",
-  "stage": "P13-mac-opencode-handoff",
+  "version": "0.1.0-rc.5",
+  "stage": "P14-standard-declarations",
   "prerelease": true,
   "realIdeValidated": false,
   "plcRuntimeValidated": false

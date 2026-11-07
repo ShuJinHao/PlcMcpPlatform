@@ -14,6 +14,33 @@ model=importlib.util.module_from_spec(spec);spec.loader.exec_module(model)
 
 
 class ModelRegressionTests(unittest.TestCase):
+    def test_metrics_read_codes_from_cli_error_json_without_leaking_error_text(self):
+        def event(error):return json.dumps(dict(type='tool_use',part=dict(tool='plc_plc_graph_generate',state=dict(status='error',error=error))))
+        raw='\n'.join([event(json.dumps(dict(error=dict(code='invalid_graph_definition',message='private source')))),
+                       event('provider detail must never be copied'),
+                       event(json.dumps(dict(error=dict(code='unsafe-code/secret',message='secret'))))])
+        result=model.observed_metrics(raw)
+        self.assertEqual(result['invalidToolCalls'],3)
+        self.assertEqual(result['failedToolCalls'],3)
+        self.assertEqual(result['toolRejectionCodes'],dict(invalid_graph_definition=1))
+        for secret in ('private source','provider detail','unsafe-code/secret'):
+            self.assertNotIn(secret,json.dumps(result))
+
+    def test_metrics_count_tool_rejections_but_not_successful_reads_of_failed_jobs(self):
+        def event(status, output, job=None):
+            return json.dumps(dict(type='tool_use',part=dict(tool='plc_plc_graph_generate',state=dict(status=status,input=dict(jobId=job) if job else {},output=json.dumps(output)))))
+        raw='\n'.join([event('completed',dict(error=dict(code='invalid_graph_ports',message='private details'))),
+                       event('error',None),
+                       event('completed',dict(job=dict(jobId='failed-job',status='Failed',errorCode='compile_failed'))),
+                       event('completed',dict(error=None,value=dict(ok=True))), '{truncated'])
+        result=model.observed_metrics(raw)
+        self.assertEqual(result['observedToolCalls'],4)
+        self.assertEqual(result['invalidToolCalls'],2)
+        self.assertEqual(result['failedToolCalls'],1)
+        self.assertEqual(result['toolRejectionCodes'],dict(invalid_graph_ports=1))
+        self.assertEqual(result['observedJobIds'],['failed-job'])
+        self.assertNotIn('private details',json.dumps(result))
+
     def test_each_graph_language_requires_two_distinct_written_semantics_and_final_readback(self):
         import copy
         import model_scenarios

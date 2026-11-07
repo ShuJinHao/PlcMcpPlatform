@@ -75,6 +75,38 @@ def calls_from_events(raw, allowed_tools):
     return calls
 
 
+def observed_metrics(raw):
+    """Count rejected calls, not failed jobs returned by successful status reads.
+
+    This best-effort summary also survives a truncated stream after a timeout.
+    It emits no arguments, provider errors or response text.
+    """
+    observed = []; job_ids = set(); codes = {}; rejected = 0
+    for line in raw.splitlines():
+        try: event = json.loads(line)
+        except ValueError: continue
+        if not isinstance(event, dict) or event.get('type') != 'tool_use': continue
+        part = event.get('part', {})
+        if not isinstance(part, dict): continue
+        state = part.get('state', {})
+        if not isinstance(state, dict): continue
+        # OpenCode puts an MCP rejection's JSON in state.error, not state.output.
+        # Decode only structured data and retain safe error codes, never raw text.
+        reply = decode_output(state.get('output') if state.get('output') is not None else state.get('error'))
+        observed.append(dict(tool=part.get('tool'), status=state.get('status')))
+        tool_error = reply.get('error') if isinstance(reply, dict) else None
+        if state.get('status') == 'error' or tool_error is not None or isinstance(reply, dict) and reply.get('isError') is True:
+            rejected += 1
+            code = tool_error.get('code') if isinstance(tool_error, dict) else None
+            if isinstance(code, str) and re.fullmatch('[a-z][a-z0-9_]{0,127}', code): codes[code] = codes.get(code, 0)+1
+        for row in objects(reply):
+            if isinstance(row.get('jobId'), str): job_ids.add(row['jobId'])
+        if isinstance(state.get('input'), dict) and isinstance(state['input'].get('jobId'), str): job_ids.add(state['input']['jobId'])
+    return dict(observedToolCalls=len(observed), failedToolCalls=sum(c['status']=='error' for c in observed),
+                invalidToolCalls=rejected, toolRejectionCodes=codes,
+                observedJobIds=sorted(job_ids), lastTool=observed[-1]['tool'] if observed else None)
+
+
 def prove(calls, jobs, head, workspace_name, mode):
     """Use jobs read back independently from the server, never the model's final narrative."""
     for call in calls:
@@ -189,6 +221,7 @@ def run(args, report):
         report['scenario'] = scenario
         text = prompt(workspace, template, app, args.expect_mode) if scenario == 'repair' else model_scenarios.prompt(scenario, workspace, template, app, args.expect_mode, variables)
         with (directory/'events').open('w+b') as output, (directory/'stderr').open('w+b') as errors:
+            started = time.monotonic()
             process = subprocess.Popen([args.opencode, 'run', '--format', 'json', '--model', args.model, text],
                                        cwd=directory, env=env, stdout=output, stderr=errors)
             deadline = time.monotonic()+args.timeout
@@ -204,18 +237,8 @@ def run(args, report):
                 if process.poll() is None: process.kill(); process.wait(timeout=10)
                 output.seek(0); captured = output.read(32*1024*1024)
                 report['eventStreamSha256'] = hashlib.sha256(captured).hexdigest()
-                observed = []; job_ids = set()
-                for line in captured.decode('utf-8', errors='replace').splitlines():
-                    try: event = json.loads(line)
-                    except ValueError: continue
-                    if event.get('type') != 'tool_use': continue
-                    part = event.get('part', {}); state = part.get('state', {})
-                    observed.append(dict(tool=part.get('tool'), status=state.get('status')))
-                    for row in objects(decode_output(state.get('output'))):
-                        if isinstance(row.get('jobId'), str): job_ids.add(row['jobId'])
-                    if isinstance(state.get('input', {}).get('jobId'), str): job_ids.add(state['input']['jobId'])
-                report.update(observedToolCalls=len(observed), failedToolCalls=sum(c['status']=='error' for c in observed),
-                              observedJobIds=sorted(job_ids), lastTool=observed[-1]['tool'] if observed else None)
+                report['modelDurationSeconds'] = round(time.monotonic()-started, 3)
+                report.update(observed_metrics(captured.decode('utf-8', errors='replace')))
         report['eventStreamSha256'] = hashlib.sha256(raw).hexdigest()
         calls = calls_from_events(raw.decode('utf-8'), allowed_tools)
         ids = {row['jobId'] for call in calls for row in objects(call['output']) if isinstance(row.get('jobId'), str)}
@@ -264,11 +287,13 @@ def main():
     if destination.exists(): parser.error('Choose a new report path.')
     report = dict(schemaVersion=1, status='not_run', connectionVerified=False, llmGenerationVerified=False,
                   realIdeScenarioPassed=False, plcRuntimeValidated=False, engineeringReady=False)
+    started = time.monotonic()
     try: result = run(args, report)
     except Exception as error:
         # Never emit provider stderr, credentials, prompts or PLC source into CI output.
         code = str(error) if isinstance(error, (ValueError, TimeoutError)) and re.fullmatch('[a-z_]+', str(error)) else type(error).__name__
         report.update(status='failed', errorCode=code); result=2
+    report['elapsedSeconds'] = round(time.monotonic()-started, 3)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with destination.open('x', encoding='utf-8') as output: json.dump(report, output, ensure_ascii=False, indent=2); output.write('\n')
     print(json.dumps(report, ensure_ascii=False)); return result

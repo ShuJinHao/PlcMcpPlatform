@@ -25,7 +25,7 @@ public sealed class EditingTools(ManagedEditingJobs jobs, IManagedProjectFiles f
         { return Query(Result<TemplateView[]>.Failure("template_unavailable", "Template catalog could not be read.")); }
     }
     [McpServerTool(Name = "plc_workspace_get", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<WorkspaceInfo>))]
-    [Description("Get the managed workspace's current manifest revision and immutable project path. Use this revision for editing; file-read revisions are a separate scope.")]
+    [Description("Get the managed workspace's current manifest revision and immutable project path. Use this revision for editing; file-read revisions are a separate scope. Reuse the returned projectPath verbatim in read tools, including Unicode and spaces; do not guess, translate or expand directory names.")]
     public async Task<CallToolResult> Workspace(string workspaceName, CancellationToken cancellationToken) => Query(await jobs.GetWorkspaceAsync(workspaceName, cancellationToken));
 
     [McpServerTool(Name = "plc_project_create", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]

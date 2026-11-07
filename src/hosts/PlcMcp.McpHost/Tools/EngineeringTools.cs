@@ -22,12 +22,12 @@ public sealed class EngineeringTools(EngineeringJobs jobs, ExecutionSignal signa
         string? expectedRevision = null, int timeoutSeconds = 60) => Submit(new(EngineeringOperations.Open, new(projectPath), idempotencyKey, expectedRevision, timeoutSeconds), cancellationToken);
 
     [McpServerTool(Name = "plc_project_get_structure", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
-    [Description("Queue a bounded project-tree read; poll its result. No project content is changed; a task record is created.")]
+    [Description("Queue a bounded project-tree read; poll its result. No project content is changed; a task record is created. Copy projectPath exactly from plc_workspace_get; never reconstruct, translate or rename any path segment.")]
     public Task<CallToolResult> Structure(string projectPath, string idempotencyKey, CancellationToken cancellationToken,
         string? expectedRevision = null, int maxObjects = 256, int timeoutSeconds = 60) => Submit(new(EngineeringOperations.Structure, new(projectPath, MaxObjects: maxObjects), idempotencyKey, expectedRevision, timeoutSeconds), cancellationToken);
 
     [McpServerTool(Name = "plc_pou_read", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
-    [Description("Queue reading a textual object's declaration and implementation by GUID. Graphical networks are not represented as source strings.")]
+    [Description("Queue reading a textual object's declaration and implementation by GUID. Graphical networks are not represented as source strings. Copy projectPath exactly from plc_workspace_get; never reconstruct, translate or rename any path segment.")]
     public Task<CallToolResult> Read(string projectPath, string objectId, string idempotencyKey, CancellationToken cancellationToken,
         string? expectedRevision = null, int timeoutSeconds = 60) => Submit(new(EngineeringOperations.ReadProgram, new(projectPath, ObjectId: objectId), idempotencyKey, expectedRevision, timeoutSeconds), cancellationToken);
 

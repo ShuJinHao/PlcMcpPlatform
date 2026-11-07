@@ -1,4 +1,4 @@
-> P13 / 0.1.0-rc.4：新增 [Mac 接入、类型补全与 Windows 回归入口](docs/26-mac-windows-handoff.md)，见 [运行手册](docs/21-delivery-closure.md)、[74 个工具清单](docs/22-current-tools.md) 和 [剩余缺口](docs/23-capability-closure.md)。
+> P14 / 0.1.0-rc.5：新增 [标准声明与模型稳定性](docs/27-standard-declarations.md)，见 [运行手册](docs/21-delivery-closure.md)、[74 个工具清单](docs/22-current-tools.md) 和 [剩余缺口](docs/23-capability-closure.md)。
 
 # PLC MCP Platform
 
@@ -10,17 +10,19 @@ OpenCode 负责理解需求、生成程序与迭代修复；本项目负责工�
 
 通用 MCP 服务目录、第三方服务托管/聚合、组织级网关和模型网关不属于本项目。未来需要这些功能时可评估 Obot 等已有产品接入本服务；PLC 工程修改、编译诊断和恢复仍由本项目负责。详见[产品与协议边界](docs/02-architecture.md#产品与协议边界)。
 
-## 当前阶段 P13 候选交付
+## 当前阶段 P14 候选交付
 
-P0～P13 是汇川阶段内的开发批次。当前工作分支承接 P12，候选版本为 `0.1.0-rc.4`；实现、Mac 模型测试和 Windows 真实兼容性分别记录，见 [本批交付说明](docs/26-mac-windows-handoff.md)。CFC/PDO 等阻塞项未解决，不能称第一阶段全量适配完成。
+P0～P14 是汇川阶段内的开发批次。当前工作分支从 P13 `0ffa17b` 延续，候选版本为 `0.1.0-rc.5`；实现、Mac 模型测试和 Windows 真实兼容性分别记录，见 [本批交付说明](docs/27-standard-declarations.md)。CFC/PDO 等阻塞项未解决，不能称第一阶段全量适配完成。
 
 正式宿主提供 22 个不依赖 IDE 的本地工具；其余工程工具根据实际安装、Profile、脚本与执行代码指纹及人工验收范围开放。发现、调用、任务提交和执行共用门禁；批次缺少依赖或参数越界时先拒绝再写入。
 
-共保留 **74 个工具实现**。TestHost 可离线回归全部实现；ValidationHost 按显式 allowlist 收集真实执行证据。OpenCode CLI 连接已有 CI 检查；Mac 的 OpenCode 1.18.2 + DeepSeek Flash 已通过五组真实模型回归：ST 诊断修复、LD/FBD/SFC、声明/成员、组态及增量/恢复/交换，工程执行来源仍是 fixture。当前没有真实 IDE 验收记录，所有汇川能力仍为 `Unverified`、`engineeringReady=false`；PLC 运行也未验证。Mac 可以继续开发和离线测试。
+共保留 **74 个工具实现**。TestHost 可离线回归全部实现；ValidationHost 按显式 allowlist 收集真实执行证据。OpenCode CLI 连接已有 CI 检查；P14 的 OpenCode 1.18.2 + DeepSeek Flash 已通过八次真实模型回归：ST 诊断修复、三个独立 LD/FBD/SFC 工作区、声明/成员、组态、增量/恢复/交换及新标准声明，共 361 次调用；工程执行来源仍是 fixture。当前没有真实 IDE 验收记录，所有汇川能力仍为 `Unverified`、`engineeringReady=false`；PLC 运行也未验证。Mac 可以继续开发和离线测试。
 
 既有 graph-v1/v2、POU/成员、设备/任务/库、批量编辑、修订历史、精确补丁与交付包能力继续保留。.NET 8、DDD、官方 MCP C# SDK、原创厂商脚本和 OpenCode 标准 MCP 连接保持不变。
 
-详见 [P9 运行和验收手册](docs/20-production-readiness.md)。统一检查 `python eng/verify.py`；集中工程场景 `eng/run-regressions.py --suite all` 包含 P3～P8、P11～P13。CI 的 Windows 作业生成 production / validation / fixture 三种预发布 ZIP、SHA256 和来源提交清单，保存在 Actions artifacts 中；main 全量检查通过后创建版本化 GitHub prerelease。P10 的停服清理、可选模型回归及 SFC 定时动作继续保留；P11 的有界聚合初值继续保留；P12 补齐声明分组、常量/保持属性、地址/注释、临时/外部变量、多动作 SFC 和 26 项工程场景，工具数量保持 74。
+详见 [P9 运行和验收手册](docs/20-production-readiness.md)。统一检查 `python eng/verify.py`；集中工程场景 `eng/run-regressions.py --suite all` 包含 P3～P8、P11～P14。CI 的 Windows 作业生成 production / validation / fixture 三种预发布 ZIP、SHA256 和来源提交清单，保存在 Actions artifacts 中；main 全量检查通过后创建版本化 GitHub prerelease。P10 的停服清理、可选模型回归及 SFC 定时动作继续保留；P11 的有界聚合初值继续保留；P12 补齐声明分组、常量/保持属性、地址/注释、临时/外部变量、多动作 SFC 和 26 项工程场景，工具数量保持 74。
+
+P14 扩展标准结构体、指针、持久性标志及 XHTML 注释，增加字段诊断与八次模型回归入口。实际本批结果见 [P14 说明](docs/27-standard-declarations.md)，历史结果不替代新代码验证。
 
 ## Mac 直接使用
 
@@ -62,6 +64,8 @@ python3 eng/dev.py opencode --no-build
 | [当前工具清单](docs/22-current-tools.md) | 74 个实现的契约与代码入口 |
 | [当前功能范围与缺口](docs/23-capability-closure.md) | 已实现范围、厂商待验证和未实现项 |
 | [第十一批图形初始化](docs/24-graph-initializers.md) | 数组、结构、重复初值和 22 项工程回归 |
+| [第十三批 Mac 接入与回归](docs/26-mac-windows-handoff.md) | Mac 环境、模型回归、Windows 集中入口 |
+| [第十四批标准声明](docs/27-standard-declarations.md) | 结构体、指针、持久性、XHTML 与模型稳定性 |
 | [第十二批工程语义](docs/25-engineering-semantics.md) | 声明组、地址、注释、多动作 SFC 和 26 项工程回归 |
 
 ## 核心工程

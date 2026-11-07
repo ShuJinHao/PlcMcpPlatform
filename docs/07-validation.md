@@ -1,6 +1,12 @@
 # 验收方案与当前证据
 
-## 当前工作分支验证（P13）
+## 当前工作分支验证（P14）
+
+P14 从 `0ffa17b` 继续，本机 .NET 8.0.427 Release 构建零警告/错误，294 项 .NET 与 116 项 Python 测试通过，MCP/执行/编辑/组态/交换/交付/增量/成员/图形/初值/语义/维护/发布检查全部通过。新增 P14 场景验证复合声明、字段诊断、差异、编译失败不发布及准确修订 ZIP；集中场景为十套、241 步。
+
+新声明 XML 已通过官方 TC6 2.01 XSD 校验。日志和摘要位于本机 `artifacts/p14/full-verification-final.log`、`python-verification-final.log`、`xsd-verification.json`。八次真实模型回归全部通过，共 361 次工具调用、35 次无效调用；逐场景结果见 [P14 说明](27-standard-declarations.md)；所有工程执行仍为 fixture/simulated，Windows 与样例采集均未提前进行。
+
+## 上批工作分支验证（P13）
 
 本批承接 P12，不把尚未合并的分支当作已发布主线。Mac 已安装独立 .NET 8.0.427 SDK；P13 最终全量检查通过：Release 构建零警告/错误，253 个 .NET 测试、102 个 Python 测试，以及 MCP/执行/编辑/组态/交换/交付/增量/成员/图形/初始化/语义/维护/发布检查。日志保存在本机 `artifacts/mac/full-verification.log`，交付范围及证据登记见 [本批说明](26-mac-windows-handoff.md)。
 

@@ -83,6 +83,33 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-semantics-check-') as tmp, tempf
                 raw = archive.read('project/'+stamp['path'])
                 assert hashlib.sha256(raw).hexdigest() == stamp['sha256'] and len(raw) == stamp['length']
         print('P13 HTTP regression: inline enum/subrange declarations, full-width bounds, overflow rejection, batch changes, readback, diff and exact-revision ZIP passed. Fixture only.')
+        variables['runId'] = secrets.token_hex(8)
+        scenario = json.loads((root/'config/regression/p14-standard-declarations.json').read_text(encoding='utf-8'))
+        report = regression.run(client, scenario, variables, 'fixture', 240)
+        if not report['succeeded']: raise AssertionError(json.dumps(report['cases'][-1], ensure_ascii=False, indent=2))
+        package = directory/'standard-declarations.zip'; download_delivery(client, variables['packageId'], package, variables['packageSha'])
+        with zipfile.ZipFile(package) as archive:
+            manifest = json.loads(archive.read('manifest.json')); assert manifest['revision'] == variables['patchedRevision']
+            for stamp in manifest['files']:
+                raw = archive.read('project/'+stamp['path'])
+                assert hashlib.sha256(raw).hexdigest() == stamp['sha256'] and len(raw) == stamp['length']
+        # New nested declarations must obey the same all-or-nothing publication gate.
+        changed = json.loads((root/'tests/fixtures/graphs/fbd-v2-standard-declarations.json').read_text(encoding='utf-8'))
+        changed['variables'][0]['structMembers'][0]['initialValue'] = '99'
+        artifact = client.call('plc_graph_generate', dict(program=changed))['value']['artifact']['artifactId']
+        name = 'p14-'+variables['runId']; current = variables['patchedRevision']
+        invalid = dict(applicationId=variables['applicationId'], steps=[
+            dict(id='change', operation='pou.graph.write', change=dict(parentId=variables['applicationId'], name='StandardDeclarations',
+                 objectId=variables['newGraphId'], artifactId=artifact, expectedGraphSha256=variables['newHash'])),
+            dict(id='bad_st', operation='pou.create', change=dict(parentId=variables['applicationId'], name='CompileFailure',
+                 pouType='Program', language='ST', declaration='PROGRAM CompileFailure', implementation='FIXTURE_ERROR'))])
+        preview = client.call('plc_project_batch_preview', dict(workspaceName=name, expectedRevision=current, plan=invalid))['value']
+        failed = job('plc_project_batch_apply', dict(workspaceName=name, expectedRevision=current, plan=invalid, expectedPlanSha256=preview['planSha256']), 'Failed')
+        assert failed['errorCode'] == 'compile_failed'
+        assert client.call('plc_workspace_get', dict(workspaceName=name))['value']['revision'] == current
+        read = job('plc_pou_graph_read', dict(projectPath=variables['projectPath'], objectId=variables['newGraphId']))
+        assert read['result']['exchange']['graph']['semanticSha256'] == variables['newHash']
+        print('P14 HTTP regression: nested struct/pointer, initializers, persistence, XHTML, rejection, batch/diff/readback, failed compile nonpublication and exact-revision ZIP passed. Fixture only.')
         print('P12 HTTP regression: 26 scenarios, declaration groups, multi-action SFC, 10-step batch, guarded two-graph edit, diffs, stale hash, target preflight, compile failure and exact-revision ZIP passed. Fixture only.')
     except Exception:
         log.seek(0); print(log.read()[-6000:]); raise

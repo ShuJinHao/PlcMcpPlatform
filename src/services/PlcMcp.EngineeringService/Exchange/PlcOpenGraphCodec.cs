@@ -45,11 +45,13 @@ public static class PlcOpenGraphCodec
         if (type.Subrange is { } range)
             scalar = E(GraphInlineTypes.Unsigned(type.Type) ? "subrangeUnsigned" : "subrangeSigned",
                 E("range", A("lower", range.Lower), A("upper", range.Upper)), E("baseType", scalar));
+        if (type.StructMembers is { } members) scalar = E("struct", members.Select(PlcOpenDeclarationCodec.EncodeMember));
+        if (type.PointerTo is { } pointer) scalar = E("pointer", E("baseType", EncodeType(pointer)));
         return type.Dimensions is null ? scalar : E("array", type.Dimensions.Select(d => E("dimension", A("lower", d.Lower), A("upper", d.Upper))), E("baseType", scalar));
     }
-    internal static GraphDataType DecodeType(XElement container, int depth = 0)
+    internal static GraphDataType DecodeType(XElement container, int depth = 1)
     {
-        if (depth > 2) throw new ProjectEditException("graph_contains_unrepresented_data");
+        if (depth > GraphCompositeTypes.MaxDepth + 1) throw new ProjectEditException("graph_contains_unrepresented_data");
         PlcOpenDeclarationCodec.Attributes(container);
         var type = container.Elements().Single(); GraphDimension[]? dimensions = null;
         if (type.Name == P + "array")
@@ -65,6 +67,18 @@ public static class PlcOpenGraphCodec
             var baseType = type.Elements(P + "baseType").Single(); PlcOpenDeclarationCodec.Attributes(baseType);
             type = baseType.Elements().Single();
         }
+        if (type.Name == P + "struct")
+        {
+            PlcOpenDeclarationCodec.Attributes(type);
+            if (type.Elements().Any(e => e.Name != P + "variable")) throw new ProjectEditException("graph_contains_unrepresented_data");
+            return new("STRUCT", Dimensions: dimensions, StructMembers: type.Elements(P + "variable").Select(v => PlcOpenDeclarationCodec.DecodeMember(v, depth + 1)).ToArray());
+        }
+        if (type.Name == P + "pointer")
+        {
+            PlcOpenDeclarationCodec.Attributes(type);
+            if (type.Elements().Any(e => e.Name != P + "baseType")) throw new ProjectEditException("graph_contains_unrepresented_data");
+            return new("POINTER", Dimensions: dimensions, PointerTo: DecodeType(type.Elements(P + "baseType").Single(), depth + 1));
+        }
         if (type.Name == P + "enum")
         {
             PlcOpenDeclarationCodec.Attributes(type);
@@ -78,7 +92,7 @@ public static class PlcOpenGraphCodec
             }).ToArray();
             var baseContainer = type.Elements(P + "baseType").SingleOrDefault();
             var baseType = baseContainer is null ? new GraphDataType("ENUM") : DecodeType(baseContainer, depth + 1);
-            if (baseType.Dimensions is not null || baseType.StringLength is not null || baseType.EnumValues is not null || baseType.Subrange is not null)
+            if (baseType.Dimensions is not null || baseType.StringLength is not null || baseType.EnumValues is not null || baseType.Subrange is not null || baseType.StructMembers is not null || baseType.PointerTo is not null)
                 throw new ProjectEditException("graph_contains_unrepresented_data");
             return baseType with { Dimensions = dimensions, EnumValues = entries };
         }
@@ -89,7 +103,7 @@ public static class PlcOpenGraphCodec
             var range = type.Elements(P + "range").Single(); PlcOpenDeclarationCodec.Attributes(range, "lower", "upper");
             if (range.Nodes().Any()) throw new ProjectEditException("graph_contains_unrepresented_data");
             var baseType = DecodeType(type.Elements(P + "baseType").Single(), depth + 1);
-            if (baseType.Dimensions is not null || baseType.StringLength is not null || baseType.EnumValues is not null || baseType.Subrange is not null
+            if (baseType.Dimensions is not null || baseType.StringLength is not null || baseType.EnumValues is not null || baseType.Subrange is not null || baseType.StructMembers is not null || baseType.PointerTo is not null
                 || (type.Name == P + "subrangeUnsigned") != GraphInlineTypes.Unsigned(baseType.Type)) throw new ProjectEditException("graph_contains_unrepresented_data");
             return baseType with { Dimensions = dimensions, Subrange = new(S(range, "lower")!, S(range, "upper")!) };
         }
@@ -203,12 +217,12 @@ public static class PlcOpenGraphCodec
         {
             if (e.Name == P + "position" || e.Name == P + "relPosition") return;
             Token(e.Name.ToString());
-            foreach (var a in e.Attributes().Where(a => !a.IsNamespaceDeclaration && a.Name != "width" && a.Name != "height").OrderBy(a => a.Name.ToString(), StringComparer.Ordinal))
+            foreach (var a in e.Attributes().Where(a => !a.IsNamespaceDeclaration && (e.Name.Namespace == H || a.Name != "width" && a.Name != "height")).OrderBy(a => a.Name.ToString(), StringComparer.Ordinal))
             {
-                if (a.Name.LocalName is "negated" or "initialStep" && a.Value is "false" or "0"
+                if (e.Name.Namespace != H && (a.Name.LocalName is "negated" or "initialStep" && a.Value is "false" or "0"
                     || a.Name.LocalName is "edge" or "storage" && a.Value == "none" || a.Name == "qualifier" && a.Value == "N"
-                    || e.Name == P + "value" && e.Parent?.Name == P + "arrayValue" && a.Name == "repetitionValue" && a.Value == "1") continue;
-                if (GraphDeclarationRules.Scopes.Any(s => e.Name == P + (s + "Vars")) && a.Name.LocalName is "constant" or "retain" or "nonretain"
+                    || e.Name == P + "value" && e.Parent?.Name == P + "arrayValue" && a.Name == "repetitionValue" && a.Value == "1")) continue;
+                if (GraphDeclarationRules.Scopes.Any(s => e.Name == P + (s + "Vars")) && a.Name.LocalName is "constant" or "retain" or "nonretain" or "persistent" or "nonpersistent"
                     && a.Name.Namespace == XNamespace.None)
                 {
                     if (a.Value is "false" or "0") continue;
@@ -220,7 +234,7 @@ public static class PlcOpenGraphCodec
             foreach (var node in e.Nodes())
             {
                 if (node is XElement child) Visit(child);
-                else if (node is XText t && (!e.HasElements || !string.IsNullOrWhiteSpace(t.Value))) Token(t.Value.Replace("\r\n", "\n", StringComparison.Ordinal));
+                else if (node is XText t && (e.Name.Namespace == H || !e.HasElements || !string.IsNullOrWhiteSpace(t.Value))) Token(t.Value.Replace("\r\n", "\n", StringComparison.Ordinal));
                 else if (node is XComment or XProcessingInstruction) Token(node.ToString());
             }
             Token("element-end");

@@ -80,7 +80,11 @@ public sealed class GraphDeclarationTests
         var p = Sample() with { Variables = Sample().Variables.Select(v => v.Name == "Request" ? v with { Documentation = "" } : v).ToArray() };
         var xml = XDocument.Parse(PlcOpenGraphCodec.Encode(p)); Assert.Equal("", PlcOpenGraphCodec.Decode(xml.ToString()).Program.Variables[0].Documentation);
         xml.Descendants(ExchangeXml.Xhtml + "xhtml").First().Add(new XElement(ExchangeXml.Xhtml + "b", "formatting"));
-        Assert.Equal("graph_contains_unrepresented_data", Assert.Throws<ProjectEditException>(() => PlcOpenGraphCodec.Decode(xml.ToString())).Code);
+        var formatted = PlcOpenGraphCodec.Decode(xml.ToString());
+        Assert.Null(formatted.Program.Variables[0].Documentation);
+        Assert.Contains("formatting", formatted.Program.Variables[0].DocumentationXhtml);
+        Assert.NotEqual(PlcOpenGraphCodec.SemanticHash(p), formatted.SemanticSha256);
+        Assert.Equal(formatted.SemanticSha256, PlcOpenGraphCodec.Decode(PlcOpenGraphCodec.Encode(formatted.Program)).SemanticSha256);
     }
     [Fact] public void Unknown_attributes_and_conflicting_XML_group_flags_are_not_ignored()
     {

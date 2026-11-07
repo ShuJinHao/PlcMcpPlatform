@@ -10,10 +10,14 @@ public sealed record GraphDimension(int Lower, int Upper);
 public sealed record GraphEnumValue(string Name, string? Value = null);
 public sealed record GraphSubrange(string Lower, string Upper);
 public sealed record GraphDataType(string Type, int? StringLength = null, GraphDimension[]? Dimensions = null,
-    GraphEnumValue[]? EnumValues = null, GraphSubrange? Subrange = null);
+    GraphEnumValue[]? EnumValues = null, GraphSubrange? Subrange = null,
+    GraphStructMember[]? StructMembers = null, GraphDataType? PointerTo = null);
+public sealed record GraphStructMember(string Name, GraphDataType Type, string? InitialValue = null,
+    GraphInitializer? Initializer = null, string? Address = null, string? Documentation = null, string? DocumentationXhtml = null);
 public sealed record GraphVariable(string Name, string Type, string Scope = "local", string? InitialValue = null,
     int? StringLength = null, GraphDimension[]? Dimensions = null, GraphInitializer? Initializer = null,
-    string? Address = null, string? Documentation = null, GraphEnumValue[]? EnumValues = null, GraphSubrange? Subrange = null);
+    string? Address = null, string? Documentation = null, GraphEnumValue[]? EnumValues = null, GraphSubrange? Subrange = null,
+    GraphStructMember[]? StructMembers = null, GraphDataType? PointerTo = null, string? DocumentationXhtml = null);
 public sealed record GraphAction(string Name, string Implementation);
 public sealed record GraphConnection(int SourceId, string? SourcePin = null);
 public sealed record GraphPin(string Name, GraphConnection[]? Connections = null, bool Negated = false);

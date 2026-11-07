@@ -73,3 +73,7 @@ P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编�
 ## P8 图形回归
 
 完成 Release 构建后运行 `python eng/verify-graphs.py`，或在现有验证/测试宿主上用 `eng/run-regressions.py --suite p8`。31 个场景覆盖四种图形样例、ST/GVL/DUT/任务组合、批量修改、返回类型差异、旧哈希拒绝和交付包。`--suite all` 已包含 P8，完整说明见 [docs/19](19-graph-v2-engineering.md)。
+
+## P14 连续模型验证
+
+在源码根目录运行 `python3 eng/dev.py model-suite --no-build --report artifacts/p14/models --timeout 1200`。选择新的报告目录；需要已配置的 DeepSeek 认证。串行执行八次独立流程，失败即停，不重试未知工程写入。每次保留模型报告、服务作业、工程修订和准确 ZIP，汇总在 summary.json。Windows 操作及样例采集留到最后，详见 [P14](27-standard-declarations.md)。

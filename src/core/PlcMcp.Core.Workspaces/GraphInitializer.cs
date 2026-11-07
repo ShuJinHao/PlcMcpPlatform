@@ -15,28 +15,63 @@ public static class GraphInitializerRules
         or "USINT" or "UINT" or "UDINT" or "ULINT" or "REAL" or "LREAL" or "TIME" or "DATE" or "DT" or "TOD"
         or "BYTE" or "WORD" or "DWORD" or "LWORD" or "STRING" or "WSTRING";
 
-    public static string? Validate(GraphVariable[] variables)
+    public static string? Validate(GraphVariable[] variables, GraphDataType? returnType = null)
     {
         var budget = MaxNodes; long total = 0;
-        foreach (var variable in variables)
+        string? Value(GraphDataType type, string? simple, GraphInitializer? value)
         {
-            if (variable.Initializer is not { } value) continue;
-            if (variable.InitialValue is not null || value.Kind is not ("array" or "struct")) return "invalid_graph_initializer";
-            if (variable.Dimensions is { } dimensions)
-            {
-                if (value.Kind != "array") return "invalid_graph_initializer";
-                // Dimensions have already passed GraphV2Rules.TypeValid.
-                long capacity = 1; foreach (var d in dimensions) capacity *= (long)d.Upper - d.Lower + 1;
-                if (value.Items is not null && value.Items.Where(i => i is not null).Sum(i => (long)i.Repeat) > capacity)
-                    return "graph_initializer_exceeds_array";
-                if ((Elementary(variable.Type) || variable.EnumValues is not null) && value.Items?.Any(i => i?.Value?.Kind != "simple") == true)
-                    return "invalid_graph_initializer";
-            }
-            else if (value.Kind != "struct" || Elementary(variable.Type) || variable.EnumValues is not null) return "invalid_graph_initializer";
+            if (simple is not null && (!GraphRules.Text(simple, 256) || value is not null || type.Dimensions is not null || type.StructMembers is not null))
+                return "invalid_graph_initializer";
+            if (value is null) return null;
+            if (value.Kind is not ("array" or "struct") || type.Dimensions is null && value.Kind != "struct") return "invalid_graph_initializer";
             if (Visit(value, 1, ref budget, out var expanded) is { } error) return error;
             total += expanded;
             if (total > 4L * MaxExpandedValues) return "graph_initializer_too_large";
+            return Match(type, value);
         }
+        string? Members(GraphDataType type)
+        {
+            foreach (var member in type.StructMembers ?? [])
+            {
+                if (Value(member.Type, member.InitialValue, member.Initializer) is { } error) return error;
+                if (Members(member.Type) is { } nested) return nested;
+            }
+            return type.PointerTo is { } pointer ? Members(pointer) : null;
+        }
+        foreach (var variable in variables)
+        {
+            var type = GraphCompositeTypes.TypeOf(variable);
+            if (Value(type, variable.InitialValue, variable.Initializer) is { } error) return error;
+            if (Members(type) is { } nested) return nested;
+        }
+        return returnType is null ? null : Members(returnType);
+    }
+
+    private static string? Match(GraphDataType type, GraphInitializer value)
+    {
+        if (type.Dimensions is { } dimensions)
+        {
+            if (value.Kind != "array") return "invalid_graph_initializer";
+            long capacity = 1; foreach (var dimension in dimensions) capacity *= (long)dimension.Upper - dimension.Lower + 1;
+            if (value.Items!.Sum(i => (long)i.Repeat) > capacity) return "graph_initializer_exceeds_array";
+            foreach (var item in value.Items!)
+                if (Match(type with { Dimensions = null }, item.Value) is { } error) return error;
+            return null;
+        }
+        if (type.StructMembers is { } members)
+        {
+            if (value.Kind != "struct") return "invalid_graph_initializer";
+            foreach (var item in value.Members!)
+            {
+                var member = members.SingleOrDefault(m => m.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase));
+                if (member is null) return "graph_initializer_unknown_member";
+                if (Match(member.Type, item.Value) is { } error) return error;
+            }
+            return null;
+        }
+        if (Elementary(type.Type) || type.EnumValues is not null || type.Subrange is not null || type.PointerTo is not null)
+            return value.Kind == "simple" ? null : "invalid_graph_initializer";
+        // Named DUT contents remain an IDE type-checking concern, as in the original graph profile.
         return null;
     }
 

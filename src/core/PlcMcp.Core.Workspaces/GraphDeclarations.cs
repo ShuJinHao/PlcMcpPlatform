@@ -4,7 +4,8 @@ namespace PlcMcp.Core.Workspaces;
 
 // Groups reference the one variable inventory; declaration order and boundaries are explicit.
 public sealed record GraphVariableGroup(string Scope, string[] Variables, bool Constant = false,
-    string Retention = "default", string? Name = null, string? Documentation = null);
+    string Retention = "default", string? Name = null, string? Documentation = null,
+    string Persistence = "default", string? DocumentationXhtml = null);
 
 public static class GraphDeclarationRules
 {
@@ -36,7 +37,7 @@ public static class GraphDeclarationRules
         {
             if (!Scopes.Contains(variable.Scope)) return "invalid_graph_variables";
             if (variable.Address is { } address && !AddressValid(address)) return "invalid_graph_address";
-            if (!DocumentationValid(variable.Documentation)) return "invalid_graph_documentation";
+            if (!GraphDocumentation.Valid(variable.Documentation, variable.DocumentationXhtml)) return "invalid_graph_documentation";
         }
         var groups = Groups(program);
         if (program.VariableGroups is not null && groups.Length is < 1 or > MaxGroups) return "invalid_graph_variable_groups";
@@ -46,10 +47,12 @@ public static class GraphDeclarationRules
         {
             if (group is null || !Scopes.Contains(group.Scope) || group.Variables is not { Length: > 0 and <= 512 }
                 || group.Retention is not ("default" or "retain" or "nonRetain")
+                || group.Persistence is not ("default" or "persistent" or "nonPersistent")
                 || group.Constant && group.Retention != "default"
+                || group.Constant && group.Persistence != "default"
                 || group.Name is not null && (!GraphRules.Text(group.Name, 128) || !DocumentationValid(group.Name)))
                 return "invalid_graph_variable_groups";
-            if (!DocumentationValid(group.Documentation)) return "invalid_graph_documentation";
+            if (!GraphDocumentation.Valid(group.Documentation, group.DocumentationXhtml)) return "invalid_graph_documentation";
             foreach (var name in group.Variables)
             {
                 if (name is null || !byName.TryGetValue(name, out var variable) || variable.Scope != group.Scope || !referenced.Add(name))

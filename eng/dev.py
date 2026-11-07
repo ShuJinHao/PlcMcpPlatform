@@ -185,11 +185,11 @@ def provider_environment(env):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['setup', 'start', 'status', 'stop', 'restart', 'opencode', 'model'])
+    parser.add_argument('action', choices=['setup', 'start', 'status', 'stop', 'restart', 'opencode', 'model', 'model-suite'])
     parser.add_argument('--dotnet'); parser.add_argument('--no-build', action='store_true')
     parser.add_argument('--opencode', default='opencode'); parser.add_argument('--report')
     parser.add_argument('--timeout', type=int, default=900)
-    parser.add_argument('--scenario', choices=['repair', 'graphics', 'members', 'configuration', 'incremental'], default='repair')
+    parser.add_argument('--scenario', choices=['repair', 'graphics', 'members', 'configuration', 'incremental', 'declarations'], default='repair')
     args = parser.parse_args()
     if os.name != 'posix': parser.error('Use eng/windows-regression.py for the Windows handoff.')
     try:
@@ -202,16 +202,19 @@ def main():
                 if args.action == 'restart': stop()
                 result = start(args)
         print(json.dumps(result, ensure_ascii=False), flush=True)
-        if args.action in ('opencode', 'model'):
+        if args.action in ('opencode', 'model', 'model-suite'):
             _, env = setup(args, build=False)
             env = provider_environment(env)
             if args.action == 'opencode':
                 return subprocess.call([args.opencode, str(CLIENT)], env=env)
             report = args.report or str(ROOT/'artifacts/mac'/('model-'+time.strftime('%Y%m%d-%H%M%S')+'.json'))
-            command = [sys.executable, str(ROOT/'eng/model-regression.py'), '--execute', '--model', 'deepseek/deepseek-flash',
+            suite = args.action == 'model-suite'
+            script = 'model-suite.py' if suite else 'model-regression.py'
+            command = [sys.executable, str(ROOT/'eng'/script), '--execute', '--model', 'deepseek/deepseek-flash',
                        '--opencode', args.opencode, '--variables', str(ROOT/'config/regression/fixture-variables.json'),
                        '--provider-config', str(ROOT/'config/deepseek.example.json'), '--provider-env', 'DEEPSEEK_API_KEY',
-                       '--report', report, '--timeout', str(args.timeout), '--scenario', args.scenario]
+                       '--report-directory' if suite else '--report', report, '--timeout', str(args.timeout)]
+            if not suite: command.extend(['--scenario', args.scenario])
             return subprocess.call(command, cwd=ROOT, env=env)
         return 0
     except (OSError, ValueError, subprocess.SubprocessError) as error:

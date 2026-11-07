@@ -70,7 +70,7 @@ def stop(process):
 
 with tempfile.TemporaryDirectory(prefix='plcmcp-edit-check-') as tmp, tempfile.TemporaryFile(mode='w+') as log:
     directory = Path(tmp)
-    projects = directory / 'projects'; projects.mkdir()
+    projects = directory / '产线项目'; projects.mkdir()
     template = projects / 'templates' / 'sample'; template.mkdir(parents=True)
     original = json.loads((root / 'tests/fixtures/sample.fixture.json').read_text())
     original.update(compileError=False)
@@ -103,6 +103,12 @@ with tempfile.TemporaryDirectory(prefix='plcmcp-edit-check-') as tmp, tempfile.T
         created = client.wait(create['jobId']); assert created['status'] == 'Succeeded', created
         assert client.call('plc_project_create', create_args)['job']['jobId'] == create['jobId']
         initial = client.call('plc_workspace_get', dict(workspaceName='demo'))['value']
+        # Model clients often consume MCP text rather than structuredContent.
+        # Unicode paths must remain readable there without changing the JSON value.
+        wire = client.rpc('tools/call', dict(name='plc_workspace_get', arguments=dict(workspaceName='demo')))
+        text_json = wire['content'][0]['text']
+        assert '产线项目' in text_json and json.loads(text_json) == wire['structuredContent']
+        assert Path(json.loads(text_json)['value']['projectPath']).is_file()
         revision = initial['revision']
         def edit(tool_name, **fields):
             global revision

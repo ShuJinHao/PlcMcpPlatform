@@ -1,7 +1,7 @@
 # InoProShop ScriptEngine 能力清单与验证矩阵
 
 
-当前 P13 承接 P12 声明与多动作 SFC，新增有界枚举/整数子范围、Mac 原生 OpenCode 接入和 Windows 集中回归入口；仍为 74 个工具。实现、资料阻塞和真实验证分列于 [本批覆盖表](26-mac-windows-handoff.md#能力状态)。厂商能力全部 Unverified，不能由模型模拟结果提升。
+当前 P14 在既有能力上补充标准内嵌结构体、指针、持久性声明及 XHTML 保留；仍为 74 个工具。标准实现见 [P14](27-standard-declarations.md)，缺资料和未实现范围见 [缺口清单](23-capability-closure.md)。厂商能力全部 Unverified，不能由模型模拟结果提升。
 
 ## 状态规则
 

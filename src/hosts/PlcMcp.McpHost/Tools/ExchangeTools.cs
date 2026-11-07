@@ -33,9 +33,9 @@ public sealed class ExchangeTools(ExchangeService exchange, EngineeringJobs jobs
         => Query(() => exchange.InspectAsync(artifactId, cancellationToken));
 
     [McpServerTool(Name = "plc_graph_generate", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<GeneratedGraph>))]
-    [Description("Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. Types accept enumValues [{name,value?}] (type=ENUM for implicit INT base, or explicit integer base) or subrange {lower,upper} with decimal string bounds; these are mutually exclusive. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. graph-v2 variableGroups reference every variable name exactly once with matching scope; group order/boundaries, constant, retention(default/retain/nonRetain), name and plain documentation are preserved. Variables accept address and plain documentation; scopes include temp/external. Use empty pin name for non-block nodes. Connections belong on inputs, not outputs. Positive executionOrder is required on block/coil/outVariable and forbidden on inVariable/rails/SFC nodes. SFC step/transition have one output; jumpStep/actionBlock have none. An actionBlock has one input from its owning step and associations [{id,action,qualifier:N}]; the referenced action must be in program.actions as {name,implementation}. Omit unused optional fields; do not send null for qualifier/edge/storage. Do not combine associations with legacy action/qualifier/duration. Association list order is preserved, not a runtime execution guarantee. Target write checks apply Inovance restrictions separately. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.")]
+    [Description("Generate original PLCopen TC6 XML. Graph pouType is case-sensitive: program or functionBlock, plus function in graph-v2; never Program/PROGRAM. Language is LD/FBD/SFC. Exact node kinds: LD leftPowerRail,rightPowerRail,contact,coil,block,inVariable,outVariable; FBD block,inVariable,outVariable; SFC step,transition,jumpStep,actionBlock. graph-v2 additionally allows connector/continuation in LD/FBD and selectionDivergence/selectionConvergence/simultaneousDivergence/simultaneousConvergence in SFC. typeName and instanceName belong only on block nodes; inVariable/outVariable use expression and variables declared in program.variables. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. Types accept enumValues [{name,value?}] (type=ENUM for implicit INT base, or explicit integer base) or subrange {lower,upper} with decimal string bounds; these are mutually exclusive. graph-v2 also supports type=STRUCT with structMembers [{name,type:{type,...},initialValue?,initializer?,address?,documentation?,documentationXhtml?}] and type=POINTER with pointerTo {type,...}; choose only one type form. Arrays use dimensions around the chosen type. Nesting is limited to 8 levels and 4096 type nodes; structs have at most 256 members. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. graph-v2 variableGroups reference every variable name exactly once with matching scope; group order/boundaries, constant, retention(default/retain/nonRetain), independent persistence(default/persistent/nonPersistent), name and documentation are preserved. Persistent flags do not configure instance paths or prove runtime persistence. Variables and groups accept documentationXhtml instead of documentation; XHTML is bounded inert data and must preserve structure. Variables accept address and documentation; scopes include temp/external. Use empty pin name for non-block nodes. Connections belong on inputs, not outputs. Positive executionOrder is required on block/coil/outVariable and forbidden on inVariable/rails/SFC nodes. SFC step/transition have one output; jumpStep/actionBlock have none. An actionBlock has one input from its owning step and associations [{id,action,qualifier:N}]; the referenced action must be in program.actions as {name,implementation}. Omit unused optional fields; do not send null for qualifier/edge/storage. Do not combine associations with legacy action/qualifier/duration. Association list order is preserved, not a runtime execution guarantee. Target write checks apply Inovance restrictions separately. Selection output order, priorities 1..N and left-to-right X must agree. Validation errors name the offending field path where it can be identified; read the diagnostic before resubmitting. Return artifact and semantic hash; no IDE/compiler is run.")]
     public Task<CallToolResult> Generate(GraphicalProgram program, CancellationToken cancellationToken)
-        => Query(() => exchange.GenerateAsync(program, cancellationToken));
+        => Query(() => exchange.GenerateAsync(program, cancellationToken), code => GraphDiagnostics.Explain(program, code));
 
     [McpServerTool(Name = "plc_graph_decode", ReadOnly = true, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<GraphDocument>))]
     [Description("Decode exactly one graph-v1/v2 POU from an artifact. Refuse unrepresented extensions or program data; the original artifact remains available.")]
@@ -55,23 +55,23 @@ public sealed class ExchangeTools(ExchangeService exchange, EngineeringJobs jobs
         => Submit(exchange.ImportAsync(workspaceName, expectedRevision, parentId, artifactId, conflictPolicy, allowWarnings, idempotencyKey, timeoutSeconds, cancellationToken));
 
     [McpServerTool(Name = "plc_pou_graph_read", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
-    [Description("Read graph-v1/v2 LD/FBD/SFC content from an actual POU via PLCopen export. Return nodes, variables and semantic hash. Unsupported extensions are explicit errors; use project export for opaque exchange.")]
+    [Description("Read graph-v1/v2 LD/FBD/SFC content from an actual POU via PLCopen export. Return nodes, variables and semantic hash. Copy projectPath exactly from plc_workspace_get; never reconstruct, translate or rename any path segment. Unsupported extensions are explicit errors; use project export for opaque exchange.")]
     public Task<CallToolResult> ReadGraph(string projectPath, string objectId, string idempotencyKey, CancellationToken cancellationToken, string? expectedRevision = null, int timeoutSeconds = 120)
         => Submit(jobs.SubmitAsync(new(ExchangeOperations.ReadGraph, new(projectPath, ObjectId: objectId), idempotencyKey, expectedRevision, timeoutSeconds), cancellationToken));
 
     [McpServerTool(Name = "plc_pou_graph_write", ReadOnly = false, Destructive = true, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(JobToolReply))]
-    [Description("Create or replace a complete graph-v1/v2 POU from an artifact in a managed candidate. Updating requires objectId and expectedGraphSha256 from graph read. Name/type/language cannot change; unknown properties cannot be discarded. Readback verifies logic before publication.")]
+    [Description("Create or replace a complete graph-v1/v2 POU from an artifact in a managed candidate. Updating requires objectId and expectedGraphSha256 from graph read. Name/type/language cannot change; unknown properties cannot be discarded. Validate/decode the artifact before writing; generation errors include field paths. A POU with child objects remains protected. Readback verifies logic before publication.")]
     public Task<CallToolResult> WriteGraph(string workspaceName, string expectedRevision, string parentId, string artifactId, string idempotencyKey, CancellationToken cancellationToken,
         string? objectId = null, string? expectedGraphSha256 = null, int timeoutSeconds = 120)
         => Submit(exchange.ImportAsync(workspaceName, expectedRevision, parentId, artifactId, objectId is null ? "reject" : "replace", false, idempotencyKey,
-            timeoutSeconds, cancellationToken, graph: true, objectId: objectId, expectedGraphSha256: expectedGraphSha256));
+            timeoutSeconds, cancellationToken, graph: true, objectId: objectId, expectedGraphSha256: expectedGraphSha256), graphWrite: true);
 
     private string Evidence => executor.ExecutionMode == "fixture" ? "simulated" : "unverified";
-    private async Task<CallToolResult> Query<T>(Func<Task<T>> action)
+    private async Task<CallToolResult> Query<T>(Func<Task<T>> action, Func<string, string>? explain = null)
     {
         Result<T> result;
         try { result = Result<T>.Success(await action()); }
-        catch (ProjectEditException e) { result = Result<T>.Failure(e.Code, Explain(e.Code)); }
+        catch (ProjectEditException e) { result = Result<T>.Failure(e.Code, explain?.Invoke(e.Code) ?? Explain(e.Code)); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException)
         { result = Result<T>.Failure("artifact_unavailable", "The exchange artifact is unavailable."); }
         return Serialize(new EditingQueryReply<T>("1.3", executor.ExecutionMode, Evidence, false, result.Value, result.Error), result.Error is not null);
@@ -87,10 +87,13 @@ public sealed class ExchangeTools(ExchangeService exchange, EngineeringJobs jobs
         "graph_contains_unrepresented_data" => "The XML contains data outside the bounded graph model. Keep the original artifact and use opaque export/import; do not remove unknown properties to force a graph edit.",
         _ => "The exchange request could not be completed."
     };
-    private async Task<CallToolResult> Submit(Task<Result<JobView>> task)
+    private async Task<CallToolResult> Submit(Task<Result<JobView>> task, bool graphWrite = false)
     {
         var result = await task; if (result.IsSuccess) signal.Pulse();
-        return Serialize(new JobToolReply("1.3", executor.ExecutionMode, Evidence, false, result.Value, result.Error), result.Error is not null);
+        var error = result.Error;
+        if (graphWrite && error is not null && GraphDiagnostics.ExplainWrite(error.Code) is { } message)
+            error = error with { Message = message };
+        return Serialize(new JobToolReply("1.3", executor.ExecutionMode, Evidence, false, result.Value, error), error is not null);
     }
     private static CallToolResult Serialize<T>(T value, bool error)
     {

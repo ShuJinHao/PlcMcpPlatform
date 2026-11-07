@@ -118,7 +118,7 @@ public static class HostApplication
                 if (ToolAccessCatalog.Check(name, executor) is { } error)
                 {
                     var body = JsonSerializer.SerializeToElement(new JobToolReply("1.9", executor.ExecutionMode, "unverified", false, null, error), WorkerJson.Options);
-                    return new CallToolResult { IsError = true, StructuredContent = body, Content = [new TextContentBlock { Text = body.GetRawText() }] };
+                    return McpTextPresentation.Present(new CallToolResult { IsError = true, StructuredContent = body, Content = [new TextContentBlock { Text = body.GetRawText() }] });
                 }
                 var reply = await next(context, token);
                 // Evidence describes this response, not a global IDE certification.
@@ -130,7 +130,7 @@ public static class HostApplication
                     reply.StructuredContent = JsonSerializer.SerializeToElement(node, WorkerJson.Options);
                     reply.Content = [new TextContentBlock { Text = reply.StructuredContent.Value.GetRawText() }];
                 }
-                return reply;
+                return McpTextPresentation.Present(reply);
             });
         });
         var app = builder.Build();
