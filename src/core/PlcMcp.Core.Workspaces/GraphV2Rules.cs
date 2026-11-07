@@ -9,7 +9,7 @@ public static class GraphV2Rules
     public static bool Convergence(string kind) => kind is "selectionConvergence" or "simultaneousConvergence";
     public static bool RequiresV2(GraphicalProgram p) => p.ReturnType is not null || p.PouType == "function" || p.VariableGroups is not null
         || p.Variables?.Any(v => v is not null && (v.StringLength is not null || v.Dimensions is not null || v.Initializer is not null
-            || v.Address is not null || v.Documentation is not null || v.Scope is "temp" or "external")) == true
+            || v.Address is not null || v.Documentation is not null || v.EnumValues is not null || v.Subrange is not null || v.Scope is "temp" or "external")) == true
         || p.Nodes?.Any(n => n is not null && (n.Associations is not null || n.InOuts is not null || n.Priority is not null || n.Duration is not null || TimedQualifier(n.Qualifier)
             || Divergence(n.Kind) || Convergence(n.Kind) || n.Kind is "connector" or "continuation")) == true;
     public static bool TimedQualifier(string qualifier) => qualifier is "L" or "D" or "SD" or "DS" or "SL";
@@ -24,7 +24,7 @@ public static class GraphV2Rules
     }
     public static bool TypeValid(GraphDataType t)
     {
-        if (!GraphRules.Identifier(t.Type) || t.StringLength is not null && (t.Type is not ("STRING" or "WSTRING") || t.StringLength is < 1 or > 65535)) return false;
+        if (!GraphRules.Identifier(t.Type) || !GraphInlineTypes.Valid(t) || t.StringLength is not null && (t.Type is not ("STRING" or "WSTRING") || t.StringLength is < 1 or > 65535)) return false;
         if (t.Dimensions is null) return true;
         if (t.Dimensions.Length is < 1 or > 3) return false;
         long total = 1;
@@ -48,7 +48,7 @@ public static class GraphV2Rules
         if (p.PouType == "function" ? p.ReturnType is null || !TypeValid(p.ReturnType) : p.ReturnType is not null) return "invalid_graph_return_type";
         if (p.Nodes is not { Length: > 0 and <= 256 } || p.Variables is not { Length: <= 512 }
             || p.Nodes.Any(n => n is null) || p.Variables.Any(v => v is null)) return "invalid_graph_size";
-        if (p.Variables.Any(v => !GraphRules.Identifier(v.Name) || !TypeValid(new(v.Type, v.StringLength, v.Dimensions))
+        if (p.Variables.Any(v => !GraphRules.Identifier(v.Name) || !TypeValid(new(v.Type, v.StringLength, v.Dimensions, v.EnumValues, v.Subrange))
             || !GraphDeclarationRules.Scopes.Contains(v.Scope)
             || v.InitialValue is not null && (!GraphRules.Text(v.InitialValue, 256) || v.Dimensions is not null))
             || p.Variables.Select(v => v.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != p.Variables.Length) return "invalid_graph_variables";
@@ -72,7 +72,7 @@ public static class GraphV2Rules
             {
                 var pins = inputs.Concat(outputs).Concat(inouts).ToArray();
                 if (!GraphRules.Identifier(n.TypeName) || n.InstanceName is not null && (!GraphRules.Identifier(n.InstanceName)
-                    || !p.Variables.Any(v => v.Name == n.InstanceName && v.Type == n.TypeName && v.Dimensions is null))
+                    || !p.Variables.Any(v => v.Name == n.InstanceName && v.Type == n.TypeName && v.Dimensions is null && v.EnumValues is null && v.Subrange is null))
                     || n.ExecutionOrder is null or <= 0 || outputs.Length + inouts.Length == 0 || pins.Any(x => !GraphRules.Identifier(x.Name))) return "invalid_graph_block";
                 if (pins.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != pins.Length) return "duplicate_graph_pin";
                 if (inouts.Any(x => x.Negated)) return "invalid_graph_inout";

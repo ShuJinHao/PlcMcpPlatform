@@ -33,7 +33,7 @@ internal static class PlcOpenDeclarationCodec
             g.Variables.Select(name => {
                 var v = variables[name];
                 return new XElement(P + "variable", new XAttribute("name", v.Name), v.Address is null ? null : new XAttribute("address", v.Address),
-                    new XElement(P + "type", PlcOpenGraphCodec.EncodeType(new(v.Type, v.StringLength, v.Dimensions))),
+                    new XElement(P + "type", PlcOpenGraphCodec.EncodeType(new(v.Type, v.StringLength, v.Dimensions, v.EnumValues, v.Subrange))),
                     v.Initializer is not null ? new XElement(P + "initialValue", PlcOpenValueCodec.Encode(v.Initializer))
                         : v.InitialValue is null ? null : new XElement(P + "initialValue", new XElement(P + "simpleValue", new XAttribute("value", v.InitialValue))),
                     Documentation(v.Documentation));
@@ -65,7 +65,7 @@ internal static class PlcOpenDeclarationCodec
                 var name = (string?)variable.Attribute("name") ?? throw new ProjectEditException("invalid_graph_variables"); names.Add(name);
                 variables.Add(new(name, type.Type, scope, initial?.Name == P + "simpleValue" ? (string?)initial.Attribute("value") : null,
                     type.StringLength, type.Dimensions, initial is null || initial.Name == P + "simpleValue" ? null : PlcOpenValueCodec.Decode(initial, ref budget),
-                    (string?)variable.Attribute("address"), ReadDocumentation(variable)));
+                    (string?)variable.Attribute("address"), ReadDocumentation(variable), type.EnumValues, type.Subrange));
             }
             var retain = (bool?)group.Attribute("retain") ?? false; var nonretain = (bool?)group.Attribute("nonretain") ?? false;
             if (retain && nonretain) throw new ProjectEditException("invalid_graph_variable_groups");

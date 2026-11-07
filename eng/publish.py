@@ -19,7 +19,8 @@ def publish(mode, destination, dotnet='dotnet'):
     for directory in ('config', 'contracts', 'docs', 'release'):
         shutil.copytree(root/directory, output/directory, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     (output/'eng').mkdir()
-    helpers = ['bundle.py', 'start.py', 'doctor.py', 'transfer.py', 'mcp_client.py', 'run-regression.py', 'run-regressions.py', 'verify-opencode.py', 'review-acceptance.py', 'retention.py', 'model-regression.py']
+    helpers = ['bundle.py', 'start.py', 'doctor.py', 'transfer.py', 'mcp_client.py', 'run-regression.py', 'run-regressions.py', 'verify-opencode.py', 'review-acceptance.py', 'retention.py', 'model-regression.py', 'windows-regression.py']
+    helpers.append('model_scenarios.py')
     if mode == 'fixture': helpers.append('init-fixture.py')
     for helper in helpers: shutil.copy2(root/'eng'/helper, output/'eng'/helper)
     for filename in ('README.md', 'LICENSE'):

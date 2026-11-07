@@ -3403,6 +3403,50 @@
                           "null"
                         ],
                         "default": null
+                      },
+                      "enumValues": {
+                        "type": [
+                          "array",
+                          "null"
+                        ],
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ]
+                        },
+                        "default": null
+                      },
+                      "subrange": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "lower": {
+                            "type": "string"
+                          },
+                          "upper": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "lower",
+                          "upper"
+                        ],
+                        "default": null
                       }
                     },
                     "required": [
@@ -3667,6 +3711,35 @@
                         "$ref": "#/properties/value/properties/program/properties/variables/items/properties/dimensions/items"
                       },
                       "default": null
+                    },
+                    "enumValues": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/properties/value/properties/program/properties/variables/items/properties/enumValues/items"
+                      },
+                      "default": null
+                    },
+                    "subrange": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "lower": {
+                          "type": "string"
+                        },
+                        "upper": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "lower",
+                        "upper"
+                      ],
+                      "default": null
                     }
                   },
                   "required": [
@@ -3788,7 +3861,7 @@
   },
   {
     "name": "plc_graph_generate",
-    "description": "Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. graph-v2 variableGroups reference every variable name exactly once with matching scope; group order/boundaries, constant, retention(default/retain/nonRetain), name and plain documentation are preserved. Variables accept address and plain documentation; scopes include temp/external. SFC actionBlock associations contain id, action, qualifier, duration and optional executionOrder; do not combine with legacy action/qualifier/duration. Association list order is preserved, not a runtime execution guarantee. Target write checks apply Inovance restrictions separately. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.",
+    "description": "Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. Types accept enumValues [{name,value?}] (type=ENUM for implicit INT base, or explicit integer base) or subrange {lower,upper} with decimal string bounds; these are mutually exclusive. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. graph-v2 variableGroups reference every variable name exactly once with matching scope; group order/boundaries, constant, retention(default/retain/nonRetain), name and plain documentation are preserved. Variables accept address and plain documentation; scopes include temp/external. Use empty pin name for non-block nodes. Connections belong on inputs, not outputs. Positive executionOrder is required on block/coil/outVariable and forbidden on inVariable/rails/SFC nodes. SFC step/transition have one output; jumpStep/actionBlock have none. An actionBlock has one input from its owning step and associations [{id,action,qualifier:N}]; the referenced action must be in program.actions as {name,implementation}. Omit unused optional fields; do not send null for qualifier/edge/storage. Do not combine associations with legacy action/qualifier/duration. Association list order is preserved, not a runtime execution guarantee. Target write checks apply Inovance restrictions separately. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -3982,6 +4055,50 @@
                     "type": [
                       "string",
                       "null"
+                    ],
+                    "default": null
+                  },
+                  "enumValues": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "default": null
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ]
+                    },
+                    "default": null
+                  },
+                  "subrange": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "lower": {
+                        "type": "string"
+                      },
+                      "upper": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "lower",
+                      "upper"
                     ],
                     "default": null
                   }
@@ -4247,6 +4364,35 @@
                   "items": {
                     "$ref": "#/properties/program/properties/variables/items/properties/dimensions/items"
                   },
+                  "default": null
+                },
+                "enumValues": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "$ref": "#/properties/program/properties/variables/items/properties/enumValues/items"
+                  },
+                  "default": null
+                },
+                "subrange": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "lower": {
+                      "type": "string"
+                    },
+                    "upper": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "lower",
+                    "upper"
+                  ],
                   "default": null
                 }
               },
@@ -4559,6 +4705,50 @@
                               "null"
                             ],
                             "default": null
+                          },
+                          "enumValues": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "default": null
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ]
+                            },
+                            "default": null
+                          },
+                          "subrange": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "lower": {
+                                "type": "string"
+                              },
+                              "upper": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "lower",
+                              "upper"
+                            ],
+                            "default": null
                           }
                         },
                         "required": [
@@ -4822,6 +5012,35 @@
                           "items": {
                             "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/dimensions/items"
                           },
+                          "default": null
+                        },
+                        "enumValues": {
+                          "type": [
+                            "array",
+                            "null"
+                          ],
+                          "items": {
+                            "$ref": "#/properties/value/properties/graph/properties/program/properties/variables/items/properties/enumValues/items"
+                          },
+                          "default": null
+                        },
+                        "subrange": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "lower": {
+                              "type": "string"
+                            },
+                            "upper": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "lower",
+                            "upper"
+                          ],
                           "default": null
                         }
                       },

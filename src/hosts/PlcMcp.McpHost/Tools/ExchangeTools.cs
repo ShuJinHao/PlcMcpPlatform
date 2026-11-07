@@ -33,7 +33,7 @@ public sealed class ExchangeTools(ExchangeService exchange, EngineeringJobs jobs
         => Query(() => exchange.InspectAsync(artifactId, cancellationToken));
 
     [McpServerTool(Name = "plc_graph_generate", ReadOnly = false, Destructive = false, Idempotent = true, OpenWorld = false, UseStructuredContent = true, OutputSchemaType = typeof(EditingQueryReply<GeneratedGraph>))]
-    [Description("Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. graph-v2 variableGroups reference every variable name exactly once with matching scope; group order/boundaries, constant, retention(default/retain/nonRetain), name and plain documentation are preserved. Variables accept address and plain documentation; scopes include temp/external. SFC actionBlock associations contain id, action, qualifier, duration and optional executionOrder; do not combine with legacy action/qualifier/duration. Association list order is preserved, not a runtime execution guarantee. Target write checks apply Inovance restrictions separately. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.")]
+    [Description("Generate original PLCopen TC6 XML. Default graph-v1 stays compatible; graph-v2 adds Function returnType, arrays/stringLength, labels, inOuts and structured SFC. Types accept enumValues [{name,value?}] (type=ENUM for implicit INT base, or explicit integer base) or subrange {lower,upper} with decimal string bounds; these are mutually exclusive. A variable's initializer supports kind=array with items(value,repeat) or kind=struct with members(name,value); nested leaves use kind=simple/value. Do not also set initialValue; arrays may be partially initialized but must fit declared capacity. graph-v2 variableGroups reference every variable name exactly once with matching scope; group order/boundaries, constant, retention(default/retain/nonRetain), name and plain documentation are preserved. Variables accept address and plain documentation; scopes include temp/external. Use empty pin name for non-block nodes. Connections belong on inputs, not outputs. Positive executionOrder is required on block/coil/outVariable and forbidden on inVariable/rails/SFC nodes. SFC step/transition have one output; jumpStep/actionBlock have none. An actionBlock has one input from its owning step and associations [{id,action,qualifier:N}]; the referenced action must be in program.actions as {name,implementation}. Omit unused optional fields; do not send null for qualifier/edge/storage. Do not combine associations with legacy action/qualifier/duration. Association list order is preserved, not a runtime execution guarantee. Target write checks apply Inovance restrictions separately. Selection output order, priorities 1..N and left-to-right X must agree. Return artifact and semantic hash; no IDE/compiler is run.")]
     public Task<CallToolResult> Generate(GraphicalProgram program, CancellationToken cancellationToken)
         => Query(() => exchange.GenerateAsync(program, cancellationToken));
 
@@ -71,11 +71,22 @@ public sealed class ExchangeTools(ExchangeService exchange, EngineeringJobs jobs
     {
         Result<T> result;
         try { result = Result<T>.Success(await action()); }
-        catch (ProjectEditException e) { result = Result<T>.Failure(e.Code, "The exchange request could not be completed."); }
+        catch (ProjectEditException e) { result = Result<T>.Failure(e.Code, Explain(e.Code)); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException)
         { result = Result<T>.Failure("artifact_unavailable", "The exchange artifact is unavailable."); }
         return Serialize(new EditingQueryReply<T>("1.3", executor.ExecutionMode, Evidence, false, result.Value, result.Error), result.Error is not null);
     }
+    private static string Explain(string code) => code switch
+    {
+        "graph_execution_order_required" or "invalid_graph_block" => "Use a positive executionOrder on block, coil and outVariable nodes. Omit executionOrder on inVariable, rails and all SFC nodes. Blocks also need typeName and named pins.",
+        "graph_field_not_applicable" => "A field was supplied on the wrong node kind. executionOrder is allowed only on block/coil/outVariable; name only on step/jumpStep/connector/continuation; action/associations/qualifier/duration only on actionBlock. Omit unused fields instead of null.",
+        "invalid_graph_ports" => "Use unnamed pins for non-block nodes. inVariable/leftPowerRail: no input, one output; outVariable/rightPowerRail/jumpStep/actionBlock: one input, no output; contact/coil/transition: one input and one output; initial step: zero or one input, one output.",
+        "invalid_sfc_action" or "invalid_sfc_action_associations" => "An actionBlock needs action plus qualifier N/S/R/P or associations [{id:1,action:'ActionName',qualifier:'N'}]. Include matching {name:'ActionName',implementation:'ST code'} in program.actions. Do not supply both forms or null qualifier.",
+        "invalid_graph_connection" or "invalid_graph_pin" => "Put connections [{sourceId:nodeId,sourcePin:optionalNamedOutput}] on input pins only; source nodes must expose the referenced output. Non-block pins use name ''. Each ordinary FBD/SFC input has one connection.",
+        "invalid_graph_variables" => "Check unique variable names, IEC types, scope and initial values. enumValues and subrange are mutually exclusive; enum names must be unique; decimal bounds/values must fit their integer base type. graph-v1 does not accept extended declarations.",
+        "graph_contains_unrepresented_data" => "The XML contains data outside the bounded graph model. Keep the original artifact and use opaque export/import; do not remove unknown properties to force a graph edit.",
+        _ => "The exchange request could not be completed."
+    };
     private async Task<CallToolResult> Submit(Task<Result<JobView>> task)
     {
         var result = await task; if (result.IsSuccess) signal.Pulse();

@@ -194,6 +194,50 @@
               "null"
             ],
             "default": null
+          },
+          "enumValues": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "default": null
+          },
+          "subrange": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "lower": {
+                "type": "string"
+              },
+              "upper": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "lower",
+              "upper"
+            ],
+            "default": null
           }
         },
         "required": [
@@ -457,6 +501,35 @@
           "items": {
             "$ref": "#/properties/variables/items/properties/dimensions/items"
           },
+          "default": null
+        },
+        "enumValues": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/properties/variables/items/properties/enumValues/items"
+          },
+          "default": null
+        },
+        "subrange": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "lower": {
+              "type": "string"
+            },
+            "upper": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "lower",
+            "upper"
+          ],
           "default": null
         }
       },

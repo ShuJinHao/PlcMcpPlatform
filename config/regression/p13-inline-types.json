@@ -1,0 +1,563 @@
+{
+  "schemaVersion": 1,
+  "description": "Inline enum and integer subrange generation, guarded batch modification, full-width bounds, rejection, readback, diff and exact revision delivery. Fixture is simulated; real import/compilation requires target IDE validation.",
+  "cases": [
+    {
+      "id": "create",
+      "tool": "plc_project_create",
+      "arguments": {
+        "workspaceName": "p13-${runId}",
+        "templateId": "${templateId}"
+      },
+      "bind": {
+        "baseRevision": "/result/revision"
+      }
+    },
+    {
+      "id": "generate",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "InlineTypes",
+          "pouType": "program",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "State",
+              "type": "ENUM",
+              "enumValues": [
+                {
+                  "name": "Idle",
+                  "value": "0"
+                },
+                {
+                  "name": "Running"
+                },
+                {
+                  "name": "Fault",
+                  "value": "100"
+                }
+              ]
+            },
+            {
+              "name": "Limit",
+              "type": "INT",
+              "initialValue": "10",
+              "subrange": {
+                "lower": "-100",
+                "upper": "100"
+              }
+            },
+            {
+              "name": "Wide",
+              "type": "ULINT",
+              "subrange": {
+                "lower": "0",
+                "upper": "18446744073709551615"
+              }
+            },
+            {
+              "name": "History",
+              "type": "ENUM",
+              "enumValues": [
+                {
+                  "name": "Off"
+                },
+                {
+                  "name": "On"
+                }
+              ],
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 2
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "Off"
+                    },
+                    "repeat": 3
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Result",
+              "type": "INT"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "expression": "Limit",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "outVariable",
+              "expression": "Result",
+              "executionOrder": 1,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "artifact": "/value/artifact/artifactId",
+        "hash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "decode",
+      "tool": "plc_graph_decode",
+      "arguments": {
+        "artifactId": "${artifact}"
+      },
+      "expect": [
+        {
+          "path": "/value/program/variables/2/subrange/upper",
+          "equals": "18446744073709551615"
+        }
+      ]
+    },
+    {
+      "id": "preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p13-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "graph",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InlineTypes",
+                "artifactId": "${artifact}"
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "planHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p13-${runId}",
+        "expectedRevision": "${baseRevision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "graph",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InlineTypes",
+                "artifactId": "${artifact}"
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${planHash}"
+      },
+      "bind": {
+        "revision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "graphId": "/result/engineeringResult/batch/aliases/graph"
+      }
+    },
+    {
+      "id": "read",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${graphId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${hash}"
+        }
+      ]
+    },
+    {
+      "id": "reject-overflow",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "InlineTypes",
+          "pouType": "program",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "State",
+              "type": "ENUM",
+              "enumValues": [
+                {
+                  "name": "Idle",
+                  "value": "0"
+                },
+                {
+                  "name": "Running"
+                },
+                {
+                  "name": "Fault",
+                  "value": "100"
+                }
+              ]
+            },
+            {
+              "name": "Limit",
+              "type": "INT",
+              "initialValue": "10",
+              "subrange": {
+                "lower": "-100",
+                "upper": "100"
+              }
+            },
+            {
+              "name": "Wide",
+              "type": "ULINT",
+              "subrange": {
+                "lower": "0",
+                "upper": "18446744073709551616"
+              }
+            },
+            {
+              "name": "History",
+              "type": "ENUM",
+              "enumValues": [
+                {
+                  "name": "Off"
+                },
+                {
+                  "name": "On"
+                }
+              ],
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 2
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "Off"
+                    },
+                    "repeat": 3
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Result",
+              "type": "INT"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "expression": "Limit",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "outVariable",
+              "expression": "Result",
+              "executionOrder": 1,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expectToolError": true,
+      "expect": [
+        {
+          "path": "/error/code",
+          "equals": "invalid_graph_variables"
+        }
+      ]
+    },
+    {
+      "id": "generate-change",
+      "tool": "plc_graph_generate",
+      "arguments": {
+        "program": {
+          "name": "InlineTypes",
+          "pouType": "program",
+          "language": "FBD",
+          "profile": "graph-v2",
+          "variables": [
+            {
+              "name": "State",
+              "type": "ENUM",
+              "enumValues": [
+                {
+                  "name": "Idle",
+                  "value": "0"
+                },
+                {
+                  "name": "Running",
+                  "value": "5"
+                },
+                {
+                  "name": "Fault",
+                  "value": "100"
+                }
+              ]
+            },
+            {
+              "name": "Limit",
+              "type": "INT",
+              "initialValue": "10",
+              "subrange": {
+                "lower": "-100",
+                "upper": "120"
+              }
+            },
+            {
+              "name": "Wide",
+              "type": "ULINT",
+              "subrange": {
+                "lower": "0",
+                "upper": "18446744073709551615"
+              }
+            },
+            {
+              "name": "History",
+              "type": "ENUM",
+              "enumValues": [
+                {
+                  "name": "Off"
+                },
+                {
+                  "name": "On"
+                }
+              ],
+              "dimensions": [
+                {
+                  "lower": 0,
+                  "upper": 2
+                }
+              ],
+              "initializer": {
+                "kind": "array",
+                "items": [
+                  {
+                    "value": {
+                      "kind": "simple",
+                      "value": "Off"
+                    },
+                    "repeat": 3
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Result",
+              "type": "INT"
+            }
+          ],
+          "nodes": [
+            {
+              "id": 1,
+              "kind": "inVariable",
+              "expression": "Limit",
+              "outputs": [
+                {
+                  "name": ""
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "kind": "outVariable",
+              "expression": "Result",
+              "executionOrder": 1,
+              "inputs": [
+                {
+                  "name": "",
+                  "connections": [
+                    {
+                      "sourceId": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "bind": {
+        "newArtifact": "/value/artifact/artifactId",
+        "newHash": "/value/graph/semanticSha256"
+      }
+    },
+    {
+      "id": "patch-preview",
+      "tool": "plc_project_batch_preview",
+      "arguments": {
+        "workspaceName": "p13-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "graph",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InlineTypes",
+                "artifactId": "${newArtifact}",
+                "objectId": "${graphId}",
+                "expectedGraphSha256": "${hash}"
+              }
+            }
+          ]
+        }
+      },
+      "bind": {
+        "patchHash": "/value/planSha256"
+      }
+    },
+    {
+      "id": "patch-apply",
+      "tool": "plc_project_batch_apply",
+      "arguments": {
+        "workspaceName": "p13-${runId}",
+        "expectedRevision": "${revision}",
+        "plan": {
+          "applicationId": "${applicationId}",
+          "steps": [
+            {
+              "id": "graph",
+              "operation": "pou.graph.write",
+              "change": {
+                "parentId": "${applicationId}",
+                "name": "InlineTypes",
+                "artifactId": "${newArtifact}",
+                "objectId": "${graphId}",
+                "expectedGraphSha256": "${hash}"
+              }
+            }
+          ]
+        },
+        "expectedPlanSha256": "${patchHash}"
+      },
+      "bind": {
+        "patchedRevision": "/result/revision",
+        "projectPath": "/result/projectPath",
+        "newGraphId": "/result/engineeringResult/batch/aliases/graph"
+      }
+    },
+    {
+      "id": "readback",
+      "tool": "plc_pou_graph_read",
+      "arguments": {
+        "projectPath": "${projectPath}",
+        "objectId": "${newGraphId}"
+      },
+      "expect": [
+        {
+          "path": "/result/exchange/graph/semanticSha256",
+          "equals": "${newHash}"
+        },
+        {
+          "path": "/result/exchange/graph/program/variables/0/enumValues/1/value",
+          "equals": "5"
+        },
+        {
+          "path": "/result/exchange/graph/program/variables/1/subrange/upper",
+          "equals": "120"
+        }
+      ]
+    },
+    {
+      "id": "type-diff",
+      "tool": "plc_project_diff",
+      "arguments": {
+        "workspaceName": "p13-${runId}",
+        "expectedHeadRevision": "${patchedRevision}",
+        "fromRevision": "${revision}",
+        "toRevision": "${patchedRevision}",
+        "applicationId": "${applicationId}",
+        "objectId": "${graphId}",
+        "toObjectId": "${newGraphId}",
+        "graph": true
+      },
+      "expect": [
+        {
+          "path": "/result/objectDifference/beforeSemanticSha256",
+          "equals": "${hash}"
+        },
+        {
+          "path": "/result/objectDifference/afterSemanticSha256",
+          "equals": "${newHash}"
+        },
+        {
+          "path": "/result/objectDifference/totalChanges",
+          "equals": 2
+        }
+      ]
+    },
+    {
+      "id": "package",
+      "tool": "plc_delivery_create",
+      "arguments": {
+        "workspaceName": "p13-${runId}",
+        "expectedRevision": "${patchedRevision}",
+        "applicationId": "${applicationId}"
+      },
+      "bind": {
+        "packageId": "/result/artifact/artifactId",
+        "packageSha": "/result/artifact/sha256"
+      }
+    }
+  ]
+}

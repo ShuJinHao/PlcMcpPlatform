@@ -14,6 +14,37 @@ model=importlib.util.module_from_spec(spec);spec.loader.exec_module(model)
 
 
 class ModelRegressionTests(unittest.TestCase):
+    def test_each_graph_language_requires_two_distinct_written_semantics_and_final_readback(self):
+        import copy
+        import model_scenarios
+        programs = [dict(name='ModelLD', nodes=[dict(kind='coil', negated=True)]),
+                    dict(name='ModelFBD', nodes=[dict(kind='inVariable', expression='2')]),
+                    dict(name='ModelSFC', nodes=[], actions=[dict(name='Mark', implementation='Counter := Counter + 2;')])]
+        for p in programs:
+            p.update(variableGroups=[dict(scope='local', variables=['x'])], variables=[dict(name='x', documentation='model regression')])
+        jobs = [dict(status='Succeeded', executionMode='fixture', operation='project.create', result={})]
+        for p in programs:
+            for number in (1, 2):
+                jobs.append(dict(status='Succeeded', executionMode='fixture', operation='pou.graph.write',
+                                 result=dict(exchange=dict(graph=dict(program=p, semanticSha256=p['name']+str(number))))))
+            jobs.append(dict(status='Succeeded', executionMode='fixture', operation='pou.graph.read',
+                             result=dict(revision='sha', exchange=dict(graph=dict(program=p)))))
+        artifact=dict(workspaceName='case', revision='m2:final', executionMode='fixture', artifactId='zip')
+        jobs.append(dict(status='Succeeded', executionMode='fixture', operation='project.package', result=dict(artifact=artifact)))
+        head=dict(projectPath='/case/project', files=[dict(path='project', sha256='sha')], revision='m2:final')
+        self.assertEqual(model_scenarios.prove('graphics', [], jobs, head, 'case', 'fixture', {})['artifactId'], 'zip')
+        broken = copy.deepcopy(jobs)
+        for j in broken:
+            if j['operation'] == 'pou.graph.write' and j['result']['exchange']['graph']['program']['name'] == 'ModelSFC':
+                j['result']['exchange']['graph']['semanticSha256'] = 'unchanged'
+        with self.assertRaisesRegex(ValueError, 'modification_missing'):
+            model_scenarios.prove('graphics', [], broken, head, 'case', 'fixture', {})
+        broken = copy.deepcopy(jobs)
+        for j in broken:
+            if j['operation'] == 'pou.graph.read': j['result']['revision'] = 'old-file-hash'
+        with self.assertRaisesRegex(ValueError, 'readback_missing'):
+            model_scenarios.prove('graphics', [], broken, head, 'case', 'fixture', {})
+
     def test_final_narrative_and_connection_are_not_tool_evidence(self):
         with self.assertRaisesRegex(ValueError,'no_observed_mcp_calls'):
             model.calls_from_events(json.dumps(dict(type='text',part=dict(text='Everything compiled successfully.'))),{'plc_job_get'})

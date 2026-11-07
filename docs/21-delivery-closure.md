@@ -60,9 +60,9 @@ python3 eng/retention.py apply --bundle . --data-directory ../fixture-data --wor
 
 ## 真实模型回归入口
 
-`eng/verify-opencode.py` 仍只检查 CLI 连接。新入口 `eng/model-regression.py` 使用官方 OpenCode **1.19.5** 的 `run --format json --model`，是验收辅助脚本，不进入服务依赖或生产用例。
+`eng/verify-opencode.py` 仍只检查 CLI 连接。新入口 `eng/model-regression.py` 使用原生 OpenCode 的 `run --format json --model`，是验收辅助脚本，不进入服务依赖或生产用例。CI 固定 1.19.5；本地按 CLI 参数、工具事件、服务端作业和最终交付验证兼容性，不机械限制版本号。
 
-没有模型或没有显式 `--execute` 时写出 `status=skipped`，退出码 3；失败退出码 2；仅该场景通过时退出码 0。CI 不自动使用模型密钥或产生模型费用。本批实际模型运行仍未执行。
+没有模型或没有显式 `--execute` 时写出 `status=skipped`，退出码 3；失败退出码 2；仅该场景通过时退出码 0。CI 不自动使用模型密钥或产生模型费用。P10 时未执行模型；P13 已开始在 Mac 上使用 DeepSeek Flash 实际验收，当前结果见 docs/26。
 
 ```bash
 # 可以现在运行：明确记录模型尚未执行，不要求启动服务。

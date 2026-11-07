@@ -39,10 +39,17 @@ public static class PlcOpenGraphCodec
     {
         var scalar = PrimitiveTypes.Contains(type.Type) ? E(type.Type) : type.Type is "STRING" or "WSTRING"
             ? E(type.Type.ToLowerInvariant(), A("length", type.StringLength)) : E("derived", A("name", type.Type));
+        if (type.EnumValues is { } values)
+            scalar = E("enum", E("values", values.Select(v => E("value", A("name", v.Name), A("value", v.Value)))),
+                type.Type == "ENUM" ? null : E("baseType", scalar));
+        if (type.Subrange is { } range)
+            scalar = E(GraphInlineTypes.Unsigned(type.Type) ? "subrangeUnsigned" : "subrangeSigned",
+                E("range", A("lower", range.Lower), A("upper", range.Upper)), E("baseType", scalar));
         return type.Dimensions is null ? scalar : E("array", type.Dimensions.Select(d => E("dimension", A("lower", d.Lower), A("upper", d.Upper))), E("baseType", scalar));
     }
-    internal static GraphDataType DecodeType(XElement container)
+    internal static GraphDataType DecodeType(XElement container, int depth = 0)
     {
+        if (depth > 2) throw new ProjectEditException("graph_contains_unrepresented_data");
         PlcOpenDeclarationCodec.Attributes(container);
         var type = container.Elements().Single(); GraphDimension[]? dimensions = null;
         if (type.Name == P + "array")
@@ -57,6 +64,34 @@ public static class PlcOpenGraphCodec
             dimensions = type.Elements(P + "dimension").Select(d => new GraphDimension((int)d.Attribute("lower")!, (int)d.Attribute("upper")!)).ToArray();
             var baseType = type.Elements(P + "baseType").Single(); PlcOpenDeclarationCodec.Attributes(baseType);
             type = baseType.Elements().Single();
+        }
+        if (type.Name == P + "enum")
+        {
+            PlcOpenDeclarationCodec.Attributes(type);
+            if (type.Elements().Any(e => e.Name != P + "values" && e.Name != P + "baseType")) throw new ProjectEditException("graph_contains_unrepresented_data");
+            var values = type.Elements(P + "values").Single(); PlcOpenDeclarationCodec.Attributes(values);
+            if (values.Elements().Any(e => e.Name != P + "value")) throw new ProjectEditException("graph_contains_unrepresented_data");
+            var entries = values.Elements().Select(e => {
+                PlcOpenDeclarationCodec.Attributes(e, "name", "value");
+                if (e.Nodes().Any()) throw new ProjectEditException("graph_contains_unrepresented_data");
+                return new GraphEnumValue(S(e, "name")!, S(e, "value"));
+            }).ToArray();
+            var baseContainer = type.Elements(P + "baseType").SingleOrDefault();
+            var baseType = baseContainer is null ? new GraphDataType("ENUM") : DecodeType(baseContainer, depth + 1);
+            if (baseType.Dimensions is not null || baseType.StringLength is not null || baseType.EnumValues is not null || baseType.Subrange is not null)
+                throw new ProjectEditException("graph_contains_unrepresented_data");
+            return baseType with { Dimensions = dimensions, EnumValues = entries };
+        }
+        if (type.Name == P + "subrangeSigned" || type.Name == P + "subrangeUnsigned")
+        {
+            PlcOpenDeclarationCodec.Attributes(type);
+            if (type.Elements().Any(e => e.Name != P + "range" && e.Name != P + "baseType")) throw new ProjectEditException("graph_contains_unrepresented_data");
+            var range = type.Elements(P + "range").Single(); PlcOpenDeclarationCodec.Attributes(range, "lower", "upper");
+            if (range.Nodes().Any()) throw new ProjectEditException("graph_contains_unrepresented_data");
+            var baseType = DecodeType(type.Elements(P + "baseType").Single(), depth + 1);
+            if (baseType.Dimensions is not null || baseType.StringLength is not null || baseType.EnumValues is not null || baseType.Subrange is not null
+                || (type.Name == P + "subrangeUnsigned") != GraphInlineTypes.Unsigned(baseType.Type)) throw new ProjectEditException("graph_contains_unrepresented_data");
+            return baseType with { Dimensions = dimensions, Subrange = new(S(range, "lower")!, S(range, "upper")!) };
         }
         PlcOpenDeclarationCodec.Attributes(type, type.Name == P + "derived" ? ["name"] : type.Name == P + "string" || type.Name == P + "wstring" ? ["length"] : []);
         if (type.HasElements) throw new ProjectEditException("graph_contains_unrepresented_data");

@@ -1,13 +1,10 @@
-PLC MCP Platform 0.1.0-rc.3 候选发布。新增工程声明语义与多动作 SFC，供后续集中回归；真实 InoProShop、模型生成与 PLC 运行仍未验收。
+PLC MCP Platform 0.1.0-rc.4 候选交付。承接 P12，补充 Mac OpenCode 接入、图形类型和 Windows 集中回归准备。CFC/PDO/图形子对象仍有阻塞，未达到汇川全覆盖完成口径。
 
-- graph-v2 新增有序声明分组：常量、RETAIN/NON_RETAIN、绝对地址、纯文本注释、temp/external 变量；保留旧 graph-v1/v2 请求与语义摘要。
-- SFC actionBlock 支持多项关联，保留独立 ID、引用、限定符、延时、顺序元数据及列表次序。列表顺序不等于控制器执行顺序。
-- portable 模型与汇川目标规则分层；图形写入和批量预览/执行检查目标约束，恢复任务在进入候选生命周期前重新校验制品。
-- 新字段接入生成/解码、批量、读回证明、变量/分组/动作差异、编译失败保护及准确修订 ZIP；原图形子对象保护保留。
-- 扩展 P8/P11 原创样例为完整电机、参数统计、多动作顺控工程，新增 26 项集中场景；统一回归包含 P3～P8、P11、P12。
-- 74 个标准 MCP 工具实现；生产宿主在未验收环境开放 22 个本地工具，其余按实际验收范围开放。
-- production、validation、fixture 三种隔离包，附来源提交、逐文件清单和 SHA256；不分发真实验收记录或供应商文件。
+- graph-v2 新增有界枚举、整数子范围及数组元素/函数返回类型表达；64 位边界用十进制字符串保留。旧 graph-v1/v2 摘要兼容。
+- 新类型接入语义摘要、读回、批量修改、差异和准确修订 ZIP；新增 P13 集中场景，不增加空工具。
+- Mac dev 入口提供 setup/start/stop/restart/status/opencode/model，独立模拟工作区和认证，保留现有 OpenCode 用户配置；停止只处理自己的进程。
+- 本地 OpenCode 依据实际接口/事件/作业/交付验证；CI 仍固定 1.19.5。Mac 1.18.2 + DeepSeek Flash 已完成真实模型调用，实际场景结果见 docs/26。
+- Windows 统一入口提供只读环境预检、对象身份发现、已有全套场景、逐场景诊断/修订/失败位置；操作值集中配置，模糊身份不猜测。
+- production、validation、fixture 三包绑定同一源码提交，附 SHA256、逐文件清单和运行说明；不包含凭据、供应商原文或真实工程。
 
-启动阅读 `docs/21-delivery-closure.md`，新增能力阅读 `docs/25-engineering-semantics.md`。需要 .NET 8 ASP.NET Core Runtime；Python 用于辅助命令。Mac 可运行 fixture；真实工程验证需要 Windows 与目标 InoProShop，离线 IDE 工程验证不要求连接 PLC。
-
-CFC 结构化编辑、EtherCAT PDO 专用布局、在线 PLC 操作、图形子对象安全替换仍未完成。fixture、XSD 和 CLI 连接检查不能晋升为厂商能力支持，也不能替代真实模型或 PLC 验收。
+从 docs/26-mac-windows-handoff.md 开始。Mac 的工程执行仍是 fixture/simulated。目标 Windows/InoProShop、保存重开、编译和版本差异待真实回归，所有厂商能力保持 Unverified，PLC 在线功能不在本批。

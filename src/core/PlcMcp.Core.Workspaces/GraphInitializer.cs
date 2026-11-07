@@ -29,10 +29,10 @@ public static class GraphInitializerRules
                 long capacity = 1; foreach (var d in dimensions) capacity *= (long)d.Upper - d.Lower + 1;
                 if (value.Items is not null && value.Items.Where(i => i is not null).Sum(i => (long)i.Repeat) > capacity)
                     return "graph_initializer_exceeds_array";
-                if (Elementary(variable.Type) && value.Items?.Any(i => i?.Value?.Kind != "simple") == true)
+                if ((Elementary(variable.Type) || variable.EnumValues is not null) && value.Items?.Any(i => i?.Value?.Kind != "simple") == true)
                     return "invalid_graph_initializer";
             }
-            else if (value.Kind != "struct" || Elementary(variable.Type)) return "invalid_graph_initializer";
+            else if (value.Kind != "struct" || Elementary(variable.Type) || variable.EnumValues is not null) return "invalid_graph_initializer";
             if (Visit(value, 1, ref budget, out var expanded) is { } error) return error;
             total += expanded;
             if (total > 4L * MaxExpandedValues) return "graph_initializer_too_large";

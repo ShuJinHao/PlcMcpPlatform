@@ -1,5 +1,26 @@
 # 验收方案与当前证据
 
+## 当前工作分支验证（P13）
+
+本批承接 P12，不把尚未合并的分支当作已发布主线。Mac 已安装独立 .NET 8.0.427 SDK；P13 最终全量检查通过：Release 构建零警告/错误，253 个 .NET 测试、102 个 Python 测试，以及 MCP/执行/编辑/组态/交换/交付/增量/成员/图形/初始化/语义/维护/发布检查。日志保存在本机 `artifacts/mac/full-verification.log`，交付范围及证据登记见 [本批说明](26-mac-windows-handoff.md)。
+
+真实 OpenCode 1.18.2 + `deepseek/deepseek-flash` 已执行 ST 失败诊断修复、LD/FBD/SFC 创建修改、声明/成员及设备/任务/库/IO 修改；加上已有工程/恢复/交换复验，五组分别观察到 30、155、50、51、47 次工具调用，并独立核对服务作业、最终工程和交付 ZIP。这里证明模型真实调用，工程执行仍为模拟。新增类型生成 XML 通过官方 TC6 2.01 XSD 校验；不等于目标汇川 IDE 已验收。
+
+## 此前主线验证基线（P11）
+
+当前已合入主线的候选为 `0.1.0-rc.2`，对应提交 `7defc7c91aee55a4322dc367503d243b2640b5bb`。以下区分该提交的自动检查与尚未完成的真实验收；本页后续 P0～P7 的记录仅说明对应批次，旧工具数量不代表当前数量。
+
+| 验证层次 | 当前证据与边界 |
+|---|---|
+| 构建与自动回归 | [main CI](https://github.com/ShuJinHao/PlcMcpPlatform/actions/runs/42245282082) 的 Ubuntu、Windows、macOS 作业均成功，包含 locked restore、Release build、标准 dotnet test、HTTP/脚本/发布检查 |
+| 候选包 | [v0.1.0-rc.2](https://github.com/ShuJinHao/PlcMcpPlatform/releases/tag/v0.1.0-rc.2) 已发布 production / validation / fixture 三种包及摘要；发布成功不代表厂商已验收 |
+| OpenCode CLI 连接 | Linux CI 的 delivery 检查使用固定 OpenCode 1.19.5 验证 MCP 连接；`eng/verify-opencode.py` 不调用模型，明确返回 `llmGenerationVerified=false` |
+| 真实模型编程 | P11 时未执行；P13 的 Mac 实际模型结果见上节 |
+| 汇川 InoProShop | 尚无真实版本、Profile、脚本执行与工程保存重开的验收记录；工程能力保持 `Unverified` |
+| PLC 运行 | 尚未验收；不能由离线回归或 IDE 编译推导 |
+
+第一阶段完成标准见 [需求文档](01-requirements.md#厂商接入路线与第一阶段完成标准)，当前 74 个实现与 22 个本地工具见 [工具清单](22-current-tools.md)。上述 GitHub 检查是候选提交的既有证据，不代表后续工作区改动已通过运行验证。
+
 ## P0 自动验证
 
 | 范围 | 核验 |

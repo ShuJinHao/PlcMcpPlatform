@@ -14,8 +14,18 @@ import uuid
 import zipfile
 from mcp_client import McpClient
 from transfer import download_delivery
+import model_scenarios
 
-PINNED_OPENCODE = '1.19.5'
+CI_OPENCODE_BASELINE = '1.19.5'
+
+
+def check_cli(executable, directory, env):
+    version = subprocess.check_output([executable, '--version'], cwd=directory, env=env, timeout=30, text=True).strip()
+    help_text = subprocess.check_output([executable, 'run', '--help'], cwd=directory, env=env, timeout=30, text=True, stderr=subprocess.STDOUT)
+    if not all(flag in help_text for flag in ('--format', '--model')):
+        raise ValueError('opencode_run_protocol_unavailable')
+    return dict(openCodeVersion=version, ciOpenCodeBaseline=CI_OPENCODE_BASELINE,
+                matchesCiBaseline=version == CI_OPENCODE_BASELINE, compatibilityCheck='cli_events_server_jobs_delivery')
 
 
 def objects(value):
@@ -140,6 +150,8 @@ def environment(directory, provider_names, key, config):
 def run(args, report):
     if not args.execute or not args.model:
         report.update(status='skipped', reason='explicit_execute_and_model_required'); return 3
+    if any(not os.environ.get(name) for name in args.provider_env):
+        report.update(status='skipped', reason='provider_credentials_missing'); return 3
     if not re.fullmatch(r'[^\s/]+/[^\s]+', args.model) or not 30 <= args.timeout <= 3600: raise ValueError('model_or_timeout_invalid')
     key = os.environ.get('PLCMCP_API_KEY') or os.environ.get('PlcMcp__ApiKey')
     if not key: raise ValueError('mcp_key_missing')
@@ -172,10 +184,10 @@ def run(args, report):
         config.update(custom)
     with tempfile.TemporaryDirectory(prefix='plcmcp-model-') as tmp:
         directory = Path(tmp); env = environment(directory, args.provider_env, key, config)
-        version = subprocess.check_output([args.opencode, '--version'], cwd=directory, env=env, timeout=30, text=True).strip()
-        report['openCodeVersion'] = version
-        if version != PINNED_OPENCODE: raise ValueError('opencode_version_not_pinned')
-        text = prompt(workspace, template, app, args.expect_mode)
+        report.update(check_cli(args.opencode, directory, env))
+        scenario = getattr(args, 'scenario', 'repair')
+        report['scenario'] = scenario
+        text = prompt(workspace, template, app, args.expect_mode) if scenario == 'repair' else model_scenarios.prompt(scenario, workspace, template, app, args.expect_mode, variables)
         with (directory/'events').open('w+b') as output, (directory/'stderr').open('w+b') as errors:
             process = subprocess.Popen([args.opencode, 'run', '--format', 'json', '--model', args.model, text],
                                        cwd=directory, env=env, stdout=output, stderr=errors)
@@ -190,6 +202,20 @@ def run(args, report):
                 if process.returncode != 0: raise ValueError('model_cli_failed')
             finally:
                 if process.poll() is None: process.kill(); process.wait(timeout=10)
+                output.seek(0); captured = output.read(32*1024*1024)
+                report['eventStreamSha256'] = hashlib.sha256(captured).hexdigest()
+                observed = []; job_ids = set()
+                for line in captured.decode('utf-8', errors='replace').splitlines():
+                    try: event = json.loads(line)
+                    except ValueError: continue
+                    if event.get('type') != 'tool_use': continue
+                    part = event.get('part', {}); state = part.get('state', {})
+                    observed.append(dict(tool=part.get('tool'), status=state.get('status')))
+                    for row in objects(decode_output(state.get('output'))):
+                        if isinstance(row.get('jobId'), str): job_ids.add(row['jobId'])
+                    if isinstance(state.get('input', {}).get('jobId'), str): job_ids.add(state['input']['jobId'])
+                report.update(observedToolCalls=len(observed), failedToolCalls=sum(c['status']=='error' for c in observed),
+                              observedJobIds=sorted(job_ids), lastTool=observed[-1]['tool'] if observed else None)
         report['eventStreamSha256'] = hashlib.sha256(raw).hexdigest()
         calls = calls_from_events(raw.decode('utf-8'), allowed_tools)
         ids = {row['jobId'] for call in calls for row in objects(call['output']) if isinstance(row.get('jobId'), str)}
@@ -197,7 +223,8 @@ def run(args, report):
         if len(ids) > 128: raise ValueError('too_many_jobs')
         jobs = [client.call('plc_job_get', dict(jobId=str(uuid.UUID(i))))['job'] for i in sorted(ids)]
         head = client.call('plc_workspace_get', dict(workspaceName=workspace))['value']
-        artifact, source_id = prove(calls, jobs, head, workspace, args.expect_mode)
+        if scenario == 'repair': artifact, source_id = prove(calls, jobs, head, workspace, args.expect_mode)
+        else: artifact, source_id = model_scenarios.prove(scenario, calls, jobs, head, workspace, args.expect_mode, variables), None
         with tempfile.TemporaryDirectory(prefix='plcmcp-model-delivery-') as delivery:
             package = Path(delivery)/'result.zip'
             download_delivery(client, artifact['artifactId'], package, artifact['sha256'])
@@ -210,10 +237,17 @@ def run(args, report):
                 compile_report = json.loads(archive.read('reports/compile.json'))
                 tasks = json.loads(archive.read('reports/tasks.json'))
                 if not any(row.get('succeeded') is True for row in objects(compile_report)): raise ValueError('delivery_compilation_missing')
-                if not any(row.get('pouName') == 'P10Main' and row.get('pouId') == source_id for row in objects(tasks)): raise ValueError('task_binding_missing')
+                if scenario == 'repair' and not any(row.get('pouName') == 'P10Main' and row.get('pouId') == source_id for row in objects(tasks)): raise ValueError('task_binding_missing')
+                if scenario == 'configuration' and not any(row.get('pouName') == variables['programName'] and row.get('pouId') == variables['programId'] for row in objects(tasks)):
+                    raise ValueError('task_binding_missing')
+                for stamp in manifest['files']:
+                    data = archive.read('project/'+stamp['path'])
+                    if len(data) != stamp['length'] or hashlib.sha256(data).hexdigest() != stamp['sha256']:
+                        raise ValueError('delivery_project_integrity_mismatch')
         report.update(status='passed', llmGenerationVerified=True, realIdeScenarioPassed=args.expect_mode == 'real',
                       evidenceKind='simulated' if args.expect_mode == 'fixture' else 'unverified',
-                      toolCalls=len(calls), jobIds=sorted(ids), finalRevision=head['revision'], deliverySha256=artifact['sha256'])
+                      toolCalls=len(calls), jobIds=sorted(ids), finalRevision=head['revision'], deliverySha256=artifact['sha256'],
+                      jobs=[dict(jobId=j['jobId'], operation=j['operation'], status=j['status'], errorCode=j.get('errorCode')) for j in jobs])
     return 0
 
 
@@ -223,6 +257,7 @@ def main():
     parser.add_argument('--model'); parser.add_argument('--opencode', default='opencode')
     parser.add_argument('--provider-env', action='append', default=[]); parser.add_argument('--provider-config')
     parser.add_argument('--variables'); parser.add_argument('--timeout', type=int, default=900)
+    parser.add_argument('--scenario', choices=model_scenarios.SCENARIOS, default='repair')
     parser.add_argument('--expect-mode', choices=['fixture', 'real'], default='fixture')
     parser.add_argument('--url', default='http://127.0.0.1:5088/mcp'); args = parser.parse_args()
     destination = Path(args.report).resolve()

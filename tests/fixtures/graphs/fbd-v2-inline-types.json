@@ -1,0 +1,104 @@
+{
+  "name": "InlineTypes",
+  "pouType": "program",
+  "language": "FBD",
+  "profile": "graph-v2",
+  "variables": [
+    {
+      "name": "State",
+      "type": "ENUM",
+      "enumValues": [
+        {
+          "name": "Idle",
+          "value": "0"
+        },
+        {
+          "name": "Running"
+        },
+        {
+          "name": "Fault",
+          "value": "100"
+        }
+      ]
+    },
+    {
+      "name": "Limit",
+      "type": "INT",
+      "initialValue": "10",
+      "subrange": {
+        "lower": "-100",
+        "upper": "100"
+      }
+    },
+    {
+      "name": "Wide",
+      "type": "ULINT",
+      "subrange": {
+        "lower": "0",
+        "upper": "18446744073709551615"
+      }
+    },
+    {
+      "name": "History",
+      "type": "ENUM",
+      "enumValues": [
+        {
+          "name": "Off"
+        },
+        {
+          "name": "On"
+        }
+      ],
+      "dimensions": [
+        {
+          "lower": 0,
+          "upper": 2
+        }
+      ],
+      "initializer": {
+        "kind": "array",
+        "items": [
+          {
+            "value": {
+              "kind": "simple",
+              "value": "Off"
+            },
+            "repeat": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Result",
+      "type": "INT"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "inVariable",
+      "expression": "Limit",
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "outVariable",
+      "expression": "Result",
+      "executionOrder": 1,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
