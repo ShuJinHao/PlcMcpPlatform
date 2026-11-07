@@ -6,6 +6,12 @@ P14 从 `0ffa17b` 继续，本机 .NET 8.0.427 Release 构建零警告/错误，
 
 新声明 XML 已通过官方 TC6 2.01 XSD 校验。日志和摘要位于本机 `artifacts/p14/full-verification-final.log`、`python-verification-final.log`、`xsd-verification.json`。八次真实模型回归全部通过，共 361 次工具调用、35 次无效调用；逐场景结果见 [P14 说明](27-standard-declarations.md)；所有工程执行仍为 fixture/simulated，Windows 与样例采集均未提前进行。
 
+## P14 审查修正：失败模型证据
+
+合并前审查发现，集中模型回归原先在失败/超时后直接停止，只保留报告和已观察作业 ID，没有自动保存服务端作业快照。本次仅修改证据采集脚本与针对测试：无论模型结果如何先只读采集作业/工作区，保存部分结果和安全读取错误，保留原模型错误码与退出码；只有成功场景才要求完整终态快照及准确修订 ZIP。未知写入不等待、不重放。
+
+修正后重新执行 locked restore、Release build 和 294 项 .NET 测试，零警告/错误；Python 全套 126 项通过（新增 10 项），覆盖失败/超时、未决作业、部分读取失败、原始失败保留、失败即停及成功交付门禁。另通过真实 HTTP 只读采集两轮失败和八轮成功的 160 个历史作业，核对八个成功交付 ZIP 及人为加入的一个不存在作业 ID；完整证据在本机 `artifacts/p14-review-fix/`。这次验证没有重跑模型或写入 PLC 工程；上节八轮真实模型结果仍绑定原运行记录。
+
 ## 上批工作分支验证（P13）
 
 本批承接 P12，不把尚未合并的分支当作已发布主线。Mac 已安装独立 .NET 8.0.427 SDK；P13 最终全量检查通过：Release 构建零警告/错误，253 个 .NET 测试、102 个 Python 测试，以及 MCP/执行/编辑/组态/交换/交付/增量/成员/图形/初始化/语义/维护/发布检查。日志保存在本机 `artifacts/mac/full-verification.log`，交付范围及证据登记见 [本批说明](26-mac-windows-handoff.md)。
