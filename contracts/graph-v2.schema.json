@@ -180,6 +180,307 @@
               "kind"
             ],
             "default": null
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "documentation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "enumValues": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "default": null
+          },
+          "subrange": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "lower": {
+                "type": "string"
+              },
+              "upper": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "lower",
+              "upper"
+            ],
+            "default": null
+          },
+          "structMembers": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    },
+                    "stringLength": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "default": null
+                    },
+                    "dimensions": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/properties/variables/items/properties/dimensions/items"
+                      },
+                      "default": null
+                    },
+                    "enumValues": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/properties/variables/items/properties/enumValues/items"
+                      },
+                      "default": null
+                    },
+                    "subrange": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "lower": {
+                          "type": "string"
+                        },
+                        "upper": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "lower",
+                        "upper"
+                      ],
+                      "default": null
+                    },
+                    "structMembers": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/properties/variables/items/properties/structMembers/items"
+                      },
+                      "default": null
+                    },
+                    "pointerTo": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "stringLength": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "default": null
+                        },
+                        "dimensions": {
+                          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                          "default": null,
+                          "items": {}
+                        },
+                        "enumValues": {
+                          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                          "default": null,
+                          "items": {}
+                        },
+                        "subrange": {
+                          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                          "default": null
+                        },
+                        "structMembers": {
+                          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                          "default": null,
+                          "items": {}
+                        },
+                        "pointerTo": {
+                          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
+                          "default": null
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "default": null
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "initialValue": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "initializer": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "default": null
+                    },
+                    "items": {
+                      "$ref": "#/properties/variables/items/properties/initializer/properties/items",
+                      "default": null,
+                      "items": {}
+                    },
+                    "members": {
+                      "$ref": "#/properties/variables/items/properties/initializer/properties/items/items/properties/value/properties/members",
+                      "default": null,
+                      "items": {}
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "default": null
+                },
+                "address": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "documentation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "documentationXhtml": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ]
+            },
+            "default": null
+          },
+          "pointerTo": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "stringLength": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "default": null
+              },
+              "dimensions": {
+                "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+                "default": null,
+                "items": {}
+              },
+              "enumValues": {
+                "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+                "default": null,
+                "items": {}
+              },
+              "subrange": {
+                "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+                "default": null
+              },
+              "structMembers": {
+                "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+                "default": null,
+                "items": {}
+              },
+              "pointerTo": {
+                "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
+                "default": null
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "default": null
+          },
+          "documentationXhtml": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
           }
         },
         "required": [
@@ -349,6 +650,46 @@
               "null"
             ],
             "default": null
+          },
+          "associations": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "qualifier": {
+                  "type": "string",
+                  "default": "N"
+                },
+                "duration": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "executionOrder": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "action"
+              ]
+            },
+            "default": null
           }
         },
         "required": [
@@ -396,13 +737,26 @@
           "default": null
         },
         "dimensions": {
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "$ref": "#/properties/variables/items/properties/dimensions/items"
-          },
+          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/dimensions",
+          "default": null,
+          "items": {}
+        },
+        "enumValues": {
+          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/enumValues",
+          "default": null,
+          "items": {}
+        },
+        "subrange": {
+          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/subrange",
+          "default": null
+        },
+        "structMembers": {
+          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/structMembers",
+          "default": null,
+          "items": {}
+        },
+        "pointerTo": {
+          "$ref": "#/properties/variables/items/properties/structMembers/items/properties/type/properties/pointerTo",
           "default": null
         }
       },
@@ -414,6 +768,64 @@
     "profile": {
       "type": "string",
       "default": "graph-v1"
+    },
+    "variableGroups": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "constant": {
+            "type": "boolean",
+            "default": false
+          },
+          "retention": {
+            "type": "string",
+            "default": "default"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "documentation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          },
+          "persistence": {
+            "type": "string",
+            "default": "default"
+          },
+          "documentationXhtml": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "scope",
+          "variables"
+        ]
+      },
+      "default": null
     }
   },
   "required": [

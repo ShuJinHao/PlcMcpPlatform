@@ -1,0 +1,236 @@
+{
+  "name": "Sequence",
+  "pouType": "program",
+  "language": "SFC",
+  "variables": [
+    {
+      "name": "Start",
+      "type": "BOOL",
+      "scope": "input"
+    },
+    {
+      "name": "Stop",
+      "type": "BOOL",
+      "scope": "input"
+    },
+    {
+      "name": "Running",
+      "type": "BOOL"
+    },
+    {
+      "name": "CycleActive",
+      "type": "BOOL"
+    },
+    {
+      "name": "ParameterSnapshot",
+      "type": "INT"
+    },
+    {
+      "name": "RemoteEnable",
+      "type": "BOOL",
+      "scope": "external"
+    }
+  ],
+  "actions": [
+    {
+      "name": "ResetOutput",
+      "implementation": "Running := FALSE;"
+    },
+    {
+      "name": "DriveOutput",
+      "implementation": "Running := TRUE;"
+    },
+    {
+      "name": "MarkCycle",
+      "implementation": "CycleActive := TRUE;"
+    },
+    {
+      "name": "CaptureParameter",
+      "implementation": "ParameterSnapshot := InitFBD.Result;"
+    },
+    {
+      "name": "ResetCycle",
+      "implementation": "CycleActive := FALSE;"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "step",
+      "name": "Idle",
+      "initial": true,
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "transition",
+      "expression": "Start AND RemoteEnable",
+      "y": 50,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "step",
+      "name": "Run",
+      "y": 100,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 2
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "actionBlock",
+      "x": 100,
+      "y": 100,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 3
+            }
+          ]
+        }
+      ],
+      "associations": [
+        {
+          "id": 40,
+          "action": "DriveOutput",
+          "qualifier": "N",
+          "executionOrder": 1
+        },
+        {
+          "id": 41,
+          "action": "MarkCycle",
+          "qualifier": "N",
+          "executionOrder": 2
+        },
+        {
+          "id": 42,
+          "action": "CaptureParameter",
+          "qualifier": "D",
+          "duration": "T#100ms",
+          "executionOrder": 3
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "kind": "transition",
+      "expression": "Stop",
+      "y": 150,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 3
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "kind": "jumpStep",
+      "name": "Idle",
+      "y": 200,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "kind": "actionBlock",
+      "x": 100,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ],
+      "associations": [
+        {
+          "id": 70,
+          "action": "ResetOutput"
+        },
+        {
+          "id": 71,
+          "action": "ResetCycle"
+        }
+      ]
+    }
+  ],
+  "profile": "graph-v2",
+  "variableGroups": [
+    {
+      "scope": "input",
+      "variables": [
+        "Start",
+        "Stop"
+      ]
+    },
+    {
+      "scope": "local",
+      "variables": [
+        "Running",
+        "CycleActive",
+        "ParameterSnapshot"
+      ],
+      "retention": "nonRetain",
+      "name": "SequenceState"
+    },
+    {
+      "scope": "external",
+      "variables": [
+        "RemoteEnable"
+      ]
+    }
+  ]
+}

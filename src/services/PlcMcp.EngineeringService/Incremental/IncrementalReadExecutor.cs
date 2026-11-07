@@ -161,7 +161,7 @@ public sealed class IncrementalReadExecutor(IEngineeringExecutor worker, IManage
     {
         JsonNode? Graph(JsonElement? value) => value is { } v ? JsonNode.Parse(v.GetProperty("exchange").GetProperty("graph").GetRawText()) : null;
         var a = Graph(before); var b = Graph(after); var deltas = new List<object>();
-        foreach (var field in new[] { "name", "pouType", "language", "variables", "nodes", "actions", "returnType", "profile" })
+        foreach (var field in new[] { "name", "pouType", "language", "variables", "variableGroups", "nodes", "actions", "returnType", "profile" })
         {
             var oldValue = a?["program"]?[field]; var newValue = b?["program"]?[field];
             if (field is "variables" or "nodes" or "actions")

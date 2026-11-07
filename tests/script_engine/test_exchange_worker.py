@@ -162,5 +162,67 @@ class ExchangeWorkerTests(unittest.TestCase):
         altered=XML.replace('</pou>','<addData><vendor value="changed"/></addData></pou>')
         self.assertNotEqual(canonical(XML,'plcopen',fail),canonical(altered,'plcopen',fail))
 
+    def test_xhtml_spacing_tails_and_attributes_are_proof_data(self):
+        def fail(code): raise ValueError(code)
+        content='<xhtml xmlns="http://www.w3.org/1999/xhtml"> <span width="12" height="7" persistent="false" qualifier="N">one</span> <span>two</span> </xhtml>'
+        xml=XML.replace('<interface/>','<interface><localVars><documentation>'+content+'</documentation></localVars></interface>')
+        variants=[xml.replace('> <span width','><span width'), xml.replace('</span> <span>','</span><span>'),
+                  xml.replace('</span> </xhtml>','</span></xhtml>'), xml.replace('width="12"','width="13"'),
+                  xml.replace('height="7"','height="8"'), xml.replace(' persistent="false"',''), xml.replace(' qualifier="N"','')]
+        for format_name in ('plcopen','codesys-native'):
+            expected=canonical(xml,format_name,fail)
+            for altered in variants:
+                with self.subTest(format=format_name,altered=altered):
+                    self.assertNotEqual(expected,canonical(altered,format_name,fail))
+        prefixed=xml.replace('<xhtml xmlns="http://www.w3.org/1999/xhtml">','<h:xhtml xmlns:h="http://www.w3.org/1999/xhtml">').replace('</xhtml>','</h:xhtml>').replace('<span','<h:span').replace('</span>','</h:span>')
+        self.assertEqual(canonical(xml,'plcopen',fail),canonical(prefixed,'plcopen',fail))
+
+    def test_tc6_declaration_boolean_defaults_match_graph_semantics_only_in_their_scope(self):
+        def fail(code): raise ValueError(code)
+        for scope in ('local','input','output','inOut','temp','external'):
+            base=XML.replace('<interface/>','<interface><'+scope+'Vars/></interface>')
+            for flag in ('constant','retain','nonretain','persistent','nonpersistent'):
+                value=lambda text:base.replace(scope+'Vars/>',scope+'Vars '+flag+'="'+text+'"/>')
+                with self.subTest(scope=scope,flag=flag):
+                    self.assertEqual(canonical(base,'plcopen',fail),canonical(value('false'),'plcopen',fail))
+                    self.assertEqual(canonical(base,'plcopen',fail),canonical(value('0'),'plcopen',fail))
+                    self.assertEqual(canonical(value('true'),'plcopen',fail),canonical(value('1'),'plcopen',fail))
+                    self.assertNotEqual(canonical(base,'plcopen',fail),canonical(value('true'),'plcopen',fail))
+                    self.assertNotEqual(canonical(base,'codesys-native',fail),canonical(value('false'),'codesys-native',fail))
+        base=XML.replace('<interface/>','<interface><localVars xmlns:v="urn:vendor"/></interface>')
+        altered=base.replace('xmlns:v="urn:vendor"','xmlns:v="urn:vendor" v:persistent="false"')
+        self.assertNotEqual(canonical(base,'plcopen',fail),canonical(altered,'plcopen',fail))
+
+    def test_xhtml_whitespace_loss_after_save_reopen_is_rejected(self):
+        content='<xhtml xmlns="http://www.w3.org/1999/xhtml"><span>left</span> <span>right</span></xhtml>'
+        xml=XML.replace('<interface/>','<interface><localVars><documentation>'+content+'</documentation></localVars></interface>')
+        saved_open=self.h.projects.open
+        def reopen(*args,**kwargs):
+            project=saved_open(*args,**kwargs)
+            if self.harness.saved is not None:
+                for node in project.children[0].children:
+                    if hasattr(node,'exchange_xml'): node.exchange_xml=node.exchange_xml.replace('</span> <span>','</span><span>')
+            return project
+        self.h.projects.open=reopen
+        result=self.run_request(xml=xml)
+        self.assertEqual('exchange_reopen_mismatch',result['errorCode'])
+        self.assertFalse(result['payload']['published'])
+        self.assertEqual(1,self.harness.save_count)
+
+    def test_declaration_default_normalization_after_save_reopen_is_accepted(self):
+        xml=XML.replace('<interface/>','<interface><localVars persistent="1" nonpersistent="false"/></interface>')
+        saved_open=self.h.projects.open
+        def reopen(*args,**kwargs):
+            project=saved_open(*args,**kwargs)
+            if self.harness.saved is not None:
+                for node in project.children[0].children:
+                    if hasattr(node,'exchange_xml'):
+                        node.exchange_xml=node.exchange_xml.replace('persistent="1"','persistent="true"').replace(' nonpersistent="false"','')
+            return project
+        self.h.projects.open=reopen
+        result=self.run_request(xml=xml)
+        self.assertEqual('succeeded',result['outcome'],result)
+        self.assertTrue(result['payload']['exchange']['reexportVerified'])
+
 
 if __name__=='__main__': unittest.main()

@@ -1,0 +1,155 @@
+{
+  "name": "StandardDeclarations",
+  "pouType": "program",
+  "language": "FBD",
+  "profile": "graph-v2",
+  "variables": [
+    {
+      "name": "State",
+      "type": "STRUCT",
+      "structMembers": [
+        {
+          "name": "Count",
+          "type": {
+            "type": "DINT"
+          },
+          "initialValue": "1",
+          "documentation": "structure member"
+        },
+        {
+          "name": "Samples",
+          "type": {
+            "type": "INT",
+            "dimensions": [
+              {
+                "lower": 0,
+                "upper": 2
+              }
+            ]
+          },
+          "initializer": {
+            "kind": "array",
+            "items": [
+              {
+                "value": {
+                  "kind": "simple",
+                  "value": "1"
+                },
+                "repeat": 1
+              },
+              {
+                "value": {
+                  "kind": "simple",
+                  "value": "2"
+                },
+                "repeat": 1
+              },
+              {
+                "value": {
+                  "kind": "simple",
+                  "value": "3"
+                },
+                "repeat": 1
+              }
+            ]
+          }
+        },
+        {
+          "name": "Nested",
+          "type": {
+            "type": "STRUCT",
+            "structMembers": [
+              {
+                "name": "Enabled",
+                "type": {
+                  "type": "BOOL"
+                },
+                "initialValue": "TRUE"
+              }
+            ]
+          }
+        }
+      ],
+      "documentationXhtml": "<xhtml xmlns=\"http://www.w3.org/1999/xhtml\"><p>Keep <strong>format</strong> and tail text.</p></xhtml>"
+    },
+    {
+      "name": "Cursor",
+      "type": "POINTER",
+      "pointerTo": {
+        "type": "DINT"
+      }
+    },
+    {
+      "name": "Cursors",
+      "type": "POINTER",
+      "pointerTo": {
+        "type": "INT"
+      },
+      "dimensions": [
+        {
+          "lower": 0,
+          "upper": 1
+        }
+      ]
+    },
+    {
+      "name": "RetainedCount",
+      "type": "DINT",
+      "initialValue": "5"
+    },
+    {
+      "name": "Result",
+      "type": "DINT"
+    }
+  ],
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "inVariable",
+      "expression": "State.Count",
+      "outputs": [
+        {
+          "name": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "outVariable",
+      "expression": "Result",
+      "executionOrder": 1,
+      "inputs": [
+        {
+          "name": "",
+          "connections": [
+            {
+              "sourceId": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variableGroups": [
+    {
+      "scope": "local",
+      "name": "Normal",
+      "variables": [
+        "State",
+        "Cursor",
+        "Cursors",
+        "Result"
+      ],
+      "persistence": "nonPersistent"
+    },
+    {
+      "scope": "local",
+      "name": "Retained",
+      "variables": [
+        "RetainedCount"
+      ],
+      "retention": "retain",
+      "persistence": "persistent"
+    }
+  ]
+}

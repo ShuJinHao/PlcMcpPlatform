@@ -1,7 +1,7 @@
 # InoProShop ScriptEngine 能力清单与验证矩阵
 
 
-当前 P8 实现增量：graph-v2 类型、LD/FBD 连线与双向引脚、结构化 SFC 分支；测试/验证宿主仍为 74 个工具。厂商能力全部 Unverified，历史批次不代表最新完整实现范围；见 [P8](19-graph-v2-engineering.md)。
+当前 P14 在既有能力上补充标准内嵌结构体、指针、持久性声明及 XHTML 保留；仍为 74 个工具。标准实现见 [P14](27-standard-declarations.md)，缺资料和未实现范围见 [缺口清单](23-capability-closure.md)。厂商能力全部 Unverified，不能由模型模拟结果提升。
 
 ## 状态规则
 

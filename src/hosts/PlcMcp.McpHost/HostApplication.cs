@@ -74,6 +74,7 @@ public static class HostApplication
         builder.Services.AddSingleton<IncrementalService>();
         builder.Services.AddSingleton<IExchangeArtifacts>(new ExchangeArtifacts(Path.Combine(data, "exchange"), maximum));
         builder.Services.AddSingleton<ExchangeService>();
+        builder.Services.AddSingleton<IPlcGraphPolicy, InovanceGraphPolicy>();
         builder.Services.AddSingleton<IExchangeUploads>(sp => new ExchangeUploads(Path.Combine(data, "uploads"), async (format, xml, token) =>
         {
             _ = ExchangeXml.Inspect(format, xml);
@@ -88,6 +89,7 @@ public static class HostApplication
             IEngineeringExecutor composed = new IncrementalReadExecutor(new DeliveryExecutor(
             new ManagedProjectExecutor(new BatchExecutor(new IncrementalEditExecutor(new ExchangeExecutor(rawWorker, sp.GetRequiredService<IExchangeArtifacts>())), sp.GetRequiredService<IBatchJournal>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>()),
             sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IDeliveryArtifacts>()), sp.GetRequiredService<IManagedProjectFiles>(), sp.GetRequiredService<IProjectChangeStore>(), sp.GetRequiredService<IProjectHistoryStore>());
+            composed = new GraphPolicyExecutor(composed, sp.GetRequiredService<IExchangeArtifacts>(), sp.GetRequiredService<IPlcGraphPolicy>());
             return !fixture && !validation && rawWorker is InovanceExecutor inovance
                 ? new AcceptedExecution(composed, inovance.Acceptance) : composed;
         });
@@ -116,7 +118,7 @@ public static class HostApplication
                 if (ToolAccessCatalog.Check(name, executor) is { } error)
                 {
                     var body = JsonSerializer.SerializeToElement(new JobToolReply("1.9", executor.ExecutionMode, "unverified", false, null, error), WorkerJson.Options);
-                    return new CallToolResult { IsError = true, StructuredContent = body, Content = [new TextContentBlock { Text = body.GetRawText() }] };
+                    return McpTextPresentation.Present(new CallToolResult { IsError = true, StructuredContent = body, Content = [new TextContentBlock { Text = body.GetRawText() }] });
                 }
                 var reply = await next(context, token);
                 // Evidence describes this response, not a global IDE certification.
@@ -128,7 +130,7 @@ public static class HostApplication
                     reply.StructuredContent = JsonSerializer.SerializeToElement(node, WorkerJson.Options);
                     reply.Content = [new TextContentBlock { Text = reply.StructuredContent.Value.GetRawText() }];
                 }
-                return reply;
+                return McpTextPresentation.Present(reply);
             });
         });
         var app = builder.Build();

@@ -1,0 +1,16 @@
+{
+  "provider": {
+    "deepseek": {
+      "options": {
+        "baseURL": "https://api.deepseek.com",
+        "apiKey": "{env:DEEPSEEK_API_KEY}"
+      },
+      "models": {
+        "deepseek-flash": {
+          "name": "DeepSeek Flash",
+          "tool_call": true
+        }
+      }
+    }
+  }
+}

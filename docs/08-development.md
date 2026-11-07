@@ -1,8 +1,10 @@
 # 开发与 OpenCode 接入
 
+Mac 的统一入口为 `python3 eng/dev.py setup/start/stop/restart/status/opencode/model`（每次选择一个动作），详细命令与 Windows 集中入口见 [本批接入说明](26-mac-windows-handoff.md)。
+
 ## 环境
 
-核心工程需要 .NET 8 SDK；`global.json` 允许已安装的 .NET 8 新 feature band。CI 已扩展到 Windows/Linux/macOS；汇川 IDE 执行必须在后续目标 Windows 环境验证。运行 Host 不需要安装 InoProShop，但它目前只能查询平台能力和状态。
+核心工程需要 .NET 8 SDK；`global.json` 允许已安装的 .NET 8 新 feature band。可先用 `dotnet --list-sdks` 确认已安装 8.0 SDK；只安装 .NET 10 不满足当前 SDK 选择规则。CI 已扩展到 Windows/Linux/macOS；汇川 IDE 执行必须在后续目标 Windows 环境验证。运行 Host 不需要安装 InoProShop：未提供真实验收记录时，正式宿主开放 22 个不依赖 IDE 的本地工具，工程读写与编译等 IDE 工具仍按验收范围开放。工具分类见 [当前清单](22-current-tools.md)。
 
 ## 构建与启动
 
@@ -71,3 +73,7 @@ P2 已实现受控副本编辑、保存重开与证据恢复。Mac/Windows 编�
 ## P8 图形回归
 
 完成 Release 构建后运行 `python eng/verify-graphs.py`，或在现有验证/测试宿主上用 `eng/run-regressions.py --suite p8`。31 个场景覆盖四种图形样例、ST/GVL/DUT/任务组合、批量修改、返回类型差异、旧哈希拒绝和交付包。`--suite all` 已包含 P8，完整说明见 [docs/19](19-graph-v2-engineering.md)。
+
+## P14 连续模型验证
+
+在源码根目录运行 `python3 eng/dev.py model-suite --no-build --report artifacts/p14/models --timeout 1200`。选择新的报告目录；需要已配置的 DeepSeek 认证。串行执行八次独立流程，失败即停，不重试未知工程写入。每次保留模型报告、服务作业、工程修订和准确 ZIP，汇总在 summary.json。Windows 操作及样例采集留到最后，详见 [P14](27-standard-declarations.md)。

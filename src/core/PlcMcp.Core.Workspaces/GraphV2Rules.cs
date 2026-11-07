@@ -7,9 +7,10 @@ public static class GraphV2Rules
 {
     public static bool Divergence(string kind) => kind is "selectionDivergence" or "simultaneousDivergence";
     public static bool Convergence(string kind) => kind is "selectionConvergence" or "simultaneousConvergence";
-    public static bool RequiresV2(GraphicalProgram p) => p.ReturnType is not null || p.PouType == "function"
-        || p.Variables?.Any(v => v is not null && (v.StringLength is not null || v.Dimensions is not null || v.Initializer is not null)) == true
-        || p.Nodes?.Any(n => n is not null && (n.InOuts is not null || n.Priority is not null || n.Duration is not null || TimedQualifier(n.Qualifier)
+    public static bool RequiresV2(GraphicalProgram p) => p.ReturnType is not null || p.PouType == "function" || p.VariableGroups is not null
+        || p.Variables?.Any(v => v is not null && (v.StringLength is not null || v.Dimensions is not null || v.Initializer is not null
+            || v.Address is not null || v.Documentation is not null || v.DocumentationXhtml is not null || v.StructMembers is not null || v.PointerTo is not null || v.EnumValues is not null || v.Subrange is not null || v.Scope is "temp" or "external")) == true
+        || p.Nodes?.Any(n => n is not null && (n.Associations is not null || n.InOuts is not null || n.Priority is not null || n.Duration is not null || TimedQualifier(n.Qualifier)
             || Divergence(n.Kind) || Convergence(n.Kind) || n.Kind is "connector" or "continuation")) == true;
     public static bool TimedQualifier(string qualifier) => qualifier is "L" or "D" or "SD" or "DS" or "SL";
     // Bounded TIME literals only; expressions, variable durations and LTIME require separate evidence.
@@ -21,9 +22,10 @@ public static class GraphV2Rules
         ulong unit = match.Groups[2].Value.ToLowerInvariant() switch { "ms" => 1, "s" => 1000, "m" => 60000, "h" => 3600000, _ => 86400000 };
         return count > 0 && count <= uint.MaxValue / unit;
     }
-    public static bool TypeValid(GraphDataType t)
+    public static bool TypeValid(GraphDataType t) => GraphCompositeTypes.Valid(t);
+    internal static bool ScalarTypeValid(GraphDataType t)
     {
-        if (!GraphRules.Identifier(t.Type) || t.StringLength is not null && (t.Type is not ("STRING" or "WSTRING") || t.StringLength is < 1 or > 65535)) return false;
+        if (!GraphRules.Identifier(t.Type) || !GraphInlineTypes.Valid(t) || t.StringLength is not null && (t.Type is not ("STRING" or "WSTRING") || t.StringLength is < 1 or > 65535)) return false;
         if (t.Dimensions is null) return true;
         if (t.Dimensions.Length is < 1 or > 3) return false;
         long total = 1;
@@ -47,11 +49,13 @@ public static class GraphV2Rules
         if (p.PouType == "function" ? p.ReturnType is null || !TypeValid(p.ReturnType) : p.ReturnType is not null) return "invalid_graph_return_type";
         if (p.Nodes is not { Length: > 0 and <= 256 } || p.Variables is not { Length: <= 512 }
             || p.Nodes.Any(n => n is null) || p.Variables.Any(v => v is null)) return "invalid_graph_size";
-        if (p.Variables.Any(v => !GraphRules.Identifier(v.Name) || !TypeValid(new(v.Type, v.StringLength, v.Dimensions))
-            || v.Scope is not ("local" or "input" or "output" or "inOut")
+        if (p.Variables.Any(v => !GraphRules.Identifier(v.Name) || !TypeValid(GraphCompositeTypes.TypeOf(v))
+            || !GraphDeclarationRules.Scopes.Contains(v.Scope)
             || v.InitialValue is not null && (!GraphRules.Text(v.InitialValue, 256) || v.Dimensions is not null))
             || p.Variables.Select(v => v.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != p.Variables.Length) return "invalid_graph_variables";
-        if (GraphInitializerRules.Validate(p.Variables) is { } initializerError) return initializerError;
+        if (!GraphCompositeTypes.ValidProgram(p)) return "invalid_graph_variables";
+        if (GraphDeclarationRules.Validate(p) is { } declarationError) return declarationError;
+        if (GraphInitializerRules.Validate(p.Variables, p.ReturnType) is { } initializerError) return initializerError;
         if (p.Nodes.Any(n => n.Id <= 0) || p.Nodes.Select(n => n.Id).Distinct().Count() != p.Nodes.Length) return "duplicate_or_invalid_local_id";
         if (p.Nodes.Any(n => (n.Inputs ?? []).Concat(n.Outputs ?? []).Concat(n.InOuts ?? []).Any(pin => pin is null))) return "invalid_graph_pin";
         var byId = p.Nodes.ToDictionary(n => n.Id);
@@ -70,7 +74,7 @@ public static class GraphV2Rules
             {
                 var pins = inputs.Concat(outputs).Concat(inouts).ToArray();
                 if (!GraphRules.Identifier(n.TypeName) || n.InstanceName is not null && (!GraphRules.Identifier(n.InstanceName)
-                    || !p.Variables.Any(v => v.Name == n.InstanceName && v.Type == n.TypeName && v.Dimensions is null))
+                    || !p.Variables.Any(v => v.Name == n.InstanceName && v.Type == n.TypeName && v.Dimensions is null && v.EnumValues is null && v.Subrange is null && v.StructMembers is null && v.PointerTo is null))
                     || n.ExecutionOrder is null or <= 0 || outputs.Length + inouts.Length == 0 || pins.Any(x => !GraphRules.Identifier(x.Name))) return "invalid_graph_block";
                 if (pins.Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != pins.Length) return "duplicate_graph_pin";
                 if (inouts.Any(x => x.Negated)) return "invalid_graph_inout";
@@ -104,12 +108,7 @@ public static class GraphV2Rules
             if (n.Kind is "step" or "jumpStep" or "connector" or "continuation")
             { if (!GraphRules.Identifier(n.Name)) return "invalid_graph_node_name"; }
             else if (n.Name is not null) return "graph_field_not_applicable";
-            if (n.Kind == "actionBlock")
-            {
-                if (!GraphRules.Identifier(n.Action) || n.Qualifier is not ("N" or "S" or "R" or "P") && !TimedQualifier(n.Qualifier)) return "invalid_sfc_action";
-                if (TimedQualifier(n.Qualifier) ? !DurationValid(n.Duration) : n.Duration is not null) return "invalid_sfc_duration";
-            }
-            else if (n.Action is not null || n.Qualifier != "N" || n.Duration is not null) return "graph_field_not_applicable";
+            if (GraphAssociationRules.Validate(n) is { } associationError) return associationError;
             if (n.Priority is not null && (n.Kind != "transition" || n.Priority <= 0)) return "invalid_sfc_priority";
             if (outputs.Any(x => x.Connections is { Length: > 0 })) return "connections_belong_to_inputs";
             foreach (var pin in InputPins(n))
@@ -124,6 +123,8 @@ public static class GraphV2Rules
                 }
             }
         }
+        if (p.Nodes.Where(n => n.Kind == "actionBlock").Sum(n => GraphAssociationRules.Items(n).Length) > GraphAssociationRules.MaxPerProgram)
+            return "invalid_sfc_action_associations";
         var ordered = p.Nodes.Where(n => n.ExecutionOrder is not null).Select(n => n.ExecutionOrder).ToArray();
         if (ordered.Any(x => x <= 0) || ordered.Distinct().Count() != ordered.Length) return "graph_execution_order_conflict";
         var actions = p.Actions ?? [];

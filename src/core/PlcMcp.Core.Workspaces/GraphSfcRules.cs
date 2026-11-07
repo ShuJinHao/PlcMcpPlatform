@@ -8,7 +8,8 @@ internal static class GraphSfcRules
         var steps = nodes.Where(n => n.Kind == "step").ToArray();
         if (steps.Count(n => n.Initial) != 1 || steps.Select(n => n.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != steps.Length
             || nodes.Any(n => n.Kind == "jumpStep" && !steps.Any(s => s.Name == n.Name))
-            || nodes.Any(n => n.Kind == "actionBlock" && !(p.Actions ?? []).Any(a => a.Name == n.Action))) return "invalid_sfc_topology";
+            || nodes.Where(n => n.Kind == "actionBlock").SelectMany(GraphAssociationRules.Items)
+                .Any(item => !(p.Actions ?? []).Any(a => a.Name == item.Action))) return "invalid_sfc_topology";
         var next = nodes.ToDictionary(n => n.Id, _ => new List<(GraphNode Node, string Pin)>());
         foreach (var n in nodes)
         {

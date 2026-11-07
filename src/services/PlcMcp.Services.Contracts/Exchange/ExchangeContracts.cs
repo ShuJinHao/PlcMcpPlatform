@@ -21,6 +21,11 @@ public sealed record ExchangeInspection(string Format, string RootName, string[]
     bool HasExtensions, string ValidationScope, string[] Limitations);
 public sealed record GraphDocument(GraphicalProgram Program, string SemanticSha256, string Profile = "graph-v1");
 public sealed record GeneratedGraph(ExchangeArtifact Artifact, GraphDocument Graph);
+// Vendor/IDE restrictions are evaluated separately from the portable TC6 representation.
+public interface IPlcGraphPolicy
+{
+    string? Validate(GraphicalProgram program);
+}
 public sealed record UploadSession(string UploadId, string Format, int ByteLength, string Sha256, int NextOffset, ExchangeArtifact? Artifact = null);
 public interface IExchangeUploads
 {

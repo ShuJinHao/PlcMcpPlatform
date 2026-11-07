@@ -1,5 +1,44 @@
 # 验收方案与当前证据
 
+## 当前工作分支验证（P14）
+
+P14 从 `0ffa17b` 继续，本机 .NET 8.0.427 Release 构建零警告/错误，294 项 .NET 与 116 项 Python 测试通过，MCP/执行/编辑/组态/交换/交付/增量/成员/图形/初值/语义/维护/发布检查全部通过。新增 P14 场景验证复合声明、字段诊断、差异、编译失败不发布及准确修订 ZIP；集中场景为十套、241 步。
+
+新声明 XML 已通过官方 TC6 2.01 XSD 校验。日志和摘要位于本机 `artifacts/p14/full-verification-final.log`、`python-verification-final.log`、`xsd-verification.json`。八次真实模型回归全部通过，共 361 次工具调用、35 次无效调用；逐场景结果见 [P14 说明](27-standard-declarations.md)；所有工程执行仍为 fixture/simulated，Windows 与样例采集均未提前进行。
+
+## P14 审查修正：失败模型证据
+
+合并前审查发现，集中模型回归原先在失败/超时后直接停止，只保留报告和已观察作业 ID，没有自动保存服务端作业快照。本次仅修改证据采集脚本与针对测试：无论模型结果如何先只读采集作业/工作区，保存部分结果和安全读取错误，保留原模型错误码与退出码；只有成功场景才要求完整终态快照及准确修订 ZIP。未知写入不等待、不重放。
+
+修正后重新执行 locked restore、Release build 和 294 项 .NET 测试，零警告/错误；Python 全套 126 项通过（新增 10 项），覆盖失败/超时、未决作业、部分读取失败、原始失败保留、失败即停及成功交付门禁。另通过真实 HTTP 只读采集两轮失败和八轮成功的 160 个历史作业，核对八个成功交付 ZIP 及人为加入的一个不存在作业 ID；完整证据在本机 `artifacts/p14-review-fix/`。这次验证没有重跑模型或写入 PLC 工程；上节八轮真实模型结果仍绑定原运行记录。
+
+## P14 审查修正：图形读后修改证明
+
+图形验收新增初始值、成功读取被模型观察、后续修改顺序及对象身份关联检查，拒绝直接生成最终值后仅修改元数据的伪通过。Python 全套 140 项通过；重新运行三个独立 DeepSeek Flash 图形工作区全部通过，分别为 48/47/49 次工具调用、6/5/6 次无效调用，模型耗时共 354.755 秒。保留工具事件与报告摘要一致，服务端作业、最终读回及准确修订 ZIP 独立核对通过；证据位于本机 `artifacts/p14-graphics-review/`。
+
+此次仅重跑图形三轮，其他五组仍引用原运行记录。校验范围与剩余 LD 完整拓扑验收缺口见 [P14 说明](27-standard-declarations.md#图形读后修改证明)；不将读后修改证明扩大为全部拓扑需求或真实 IDE 验收。
+
+## 上批工作分支验证（P13）
+
+本批承接 P12，不把尚未合并的分支当作已发布主线。Mac 已安装独立 .NET 8.0.427 SDK；P13 最终全量检查通过：Release 构建零警告/错误，253 个 .NET 测试、102 个 Python 测试，以及 MCP/执行/编辑/组态/交换/交付/增量/成员/图形/初始化/语义/维护/发布检查。日志保存在本机 `artifacts/mac/full-verification.log`，交付范围及证据登记见 [本批说明](26-mac-windows-handoff.md)。
+
+真实 OpenCode 1.18.2 + `deepseek/deepseek-flash` 已执行 ST 失败诊断修复、LD/FBD/SFC 创建修改、声明/成员及设备/任务/库/IO 修改；加上已有工程/恢复/交换复验，五组分别观察到 30、155、50、51、47 次工具调用，并独立核对服务作业、最终工程和交付 ZIP。这里证明模型真实调用，工程执行仍为模拟。新增类型生成 XML 通过官方 TC6 2.01 XSD 校验；不等于目标汇川 IDE 已验收。
+
+## 此前主线验证基线（P11）
+
+此前主线基线候选为 `0.1.0-rc.2`，对应提交 `7defc7c91aee55a4322dc367503d243b2640b5bb`。以下区分该提交的自动检查与尚未完成的真实验收；本页后续 P0～P7 的记录仅说明对应批次，旧工具数量不代表当前数量。
+
+| 验证层次 | 当前证据与边界 |
+|---|---|
+| 构建与自动回归 | [main CI](https://github.com/ShuJinHao/PlcMcpPlatform/actions/runs/42245282082) 的 Ubuntu、Windows、macOS 作业均成功，包含 locked restore、Release build、标准 dotnet test、HTTP/脚本/发布检查 |
+| 候选包 | [v0.1.0-rc.2](https://github.com/ShuJinHao/PlcMcpPlatform/releases/tag/v0.1.0-rc.2) 已发布 production / validation / fixture 三种包及摘要；发布成功不代表厂商已验收 |
+| OpenCode CLI 连接 | Linux CI 的 delivery 检查使用固定 OpenCode 1.19.5 验证 MCP 连接；`eng/verify-opencode.py` 不调用模型，明确返回 `llmGenerationVerified=false` |
+| 真实模型编程 | P11 时未执行；P13 的 Mac 实际模型结果见上节 |
+| 汇川 InoProShop | 尚无真实版本、Profile、脚本执行与工程保存重开的验收记录；工程能力保持 `Unverified` |
+| PLC 运行 | 尚未验收；不能由离线回归或 IDE 编译推导 |
+
+第一阶段完成标准见 [需求文档](01-requirements.md#厂商接入路线与第一阶段完成标准)，当前 74 个实现与 22 个本地工具见 [工具清单](22-current-tools.md)。上述 GitHub 检查是候选提交的既有证据，不代表后续工作区改动已通过运行验证。
+
 ## P0 自动验证
 
 | 范围 | 核验 |

@@ -1,0 +1,9 @@
+{
+  "dataDirectory": "C:\\PlcMcpValidation\\data",
+  "workspaceRoot": "C:\\PlcMcpValidation\\workspaces",
+  "executablePath": "REPLACE_WITH_ABSOLUTE_INOPROSHOP_EXE_PATH",
+  "engineAssemblyPath": "REPLACE_WITH_ABSOLUTE_SCRIPTENGINE_DLL_PATH",
+  "profilePath": "C:\\PlcMcpValidation\\inovance-validation.json",
+  "profile": "REPLACE_WITH_EXACT_INSTALLED_IDE_PROFILE",
+  "variablesPath": "C:\\PlcMcpValidation\\windows-variables.json"
+}

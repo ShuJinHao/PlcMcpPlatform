@@ -22,6 +22,9 @@ WRITES = ('project.import', 'pou.graph.write')
 MAX_XML = int(os.environ.get('PLCMCP_EXCHANGE_MAX_BYTES', 8 * 1024 * 1024))
 if not 65536 <= MAX_XML <= 64 * 1024 * 1024: raise ValueError('Invalid exchange limit')
 P = '{http://www.plcopen.org/xml/tc6_0201}'
+H = '{http://www.w3.org/1999/xhtml}'
+DECLARATION_GROUPS = tuple(P + scope + 'Vars' for scope in ('local', 'input', 'output', 'inOut', 'temp', 'external'))
+DECLARATION_FLAGS = ('constant', 'retain', 'nonretain', 'persistent', 'nonpersistent')
 
 
 def parse_xml(xml, fail):
@@ -77,12 +80,24 @@ def canonical(xml, format_name, fail):
     root = parse_xml(xml, fail)
     def visit(node):
         # Header timestamps are export metadata. All object/extension data remains in the proof.
-        attrs = sorted((key, value) for key, value in node.attrib.items()
-                       if not (format_name == 'plcopen' and node.tag in (P + 'fileHeader', P + 'contentHeader')
-                               and key in ('creationDateTime', 'modificationDateTime')))
+        attrs = []
+        for key, value in node.attrib.items():
+            if format_name == 'plcopen' and node.tag in (P + 'fileHeader', P + 'contentHeader') and key in ('creationDateTime', 'modificationDateTime'):
+                continue
+            # TC6 declaration flags have a false default; do not apply this rule to
+            # XHTML attributes, namespaced extensions or opaque native objects.
+            if format_name == 'plcopen' and node.tag in DECLARATION_GROUPS and key in DECLARATION_FLAGS:
+                if value in ('false', '0'): continue
+                if value == '1': value = 'true'
+            attrs.append((key, value))
+        attrs.sort()
+        formatted = node.tag.startswith(H)
         text = node.text or ''
-        if len(node) and not text.strip(): text = ''
-        children = tuple((visit(child), child.tail if (child.tail or '').strip() else '') for child in node)
+        if not formatted and len(node) and not text.strip(): text = ''
+        # ElementTree stores text after a child in child.tail. Its semantic owner
+        # is the parent; spaces separating XHTML inline elements must survive.
+        children = tuple((visit(child), (child.tail or '').replace('\r\n', '\n')
+                          if formatted or (child.tail or '').strip() else '') for child in node)
         return (node.tag, tuple(attrs), text.replace('\r\n', '\n'), children)
     return visit(root)
 
